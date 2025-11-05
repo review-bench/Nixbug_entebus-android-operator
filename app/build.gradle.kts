@@ -56,4 +56,34 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.retrofit.converter.scalars)
+
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+
+    implementation(libs.gson)
+
+    implementation(libs.coroutines.core)
+    implementation(libs.coroutines.android)
+}
+
+//Task to generate and re-generate API client library
+tasks.register<Exec>("generateApiClient") {
+    description = "Generates the API client from OpenAPI spec"
+    group = "openapi"
+
+    val outputDir = "$projectDir/src/main/java/com/nixbug/entebus/data/remote"
+
+    commandLine(
+        "openapi-generator-cli", "generate",
+        "-i", "src/main/openApiSpecification/openApiSpecification.json",
+        "-g", "kotlin",
+        "-o", outputDir,
+        "--library", "jvm-retrofit2",
+        "--additional-properties", "useCoroutines=true,serializationLibrary=gson",
+        "--global-property", "apiTests=false,modelTests=false"
+    )
 }

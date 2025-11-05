@@ -42,6 +42,30 @@ Android Studio will automatically download Gradle and dependencies. If not, clic
 # 4. Run the app   
 Choose an emulator or connected device → Press ▶️ Run The app will build and launch automatically.
 ```
+## 🔧 OpenAPI Client Generation
+This project uses OpenAPI Generator to automatically create a Kotlin API client (using Retrofit and Gson) from the backend’s OpenAPI specification.
+
+**Steps to generate API client**
+
+Install the required dependencies and generate the client library
+```
+# Check Java installation
+java -version
+
+# If Java is not installed, install JDK 17 or higher:
+sudo apt update
+sudo apt install openjdk-17-jdk -y
+
+# Install OpenAPI Generator CLI (7.17.0)
+npm install -g @openapitools/openapi-generator-cli@7.17.0
+
+# Ensure that the OpenAPI specifications are stored locally
+# Example: app/src/main/openApiSpecification/openApiSpecification.json
+
+# Run the command below to generate the client:
+./gradlew :app:generateApiClient
+# The generated client files are placed inside app/src/main/java/com/nixbug/entebus/data/remote
+```
 
 ## 🤝 Contributing
 
