@@ -1,5 +1,6 @@
 package com.nixbug.entebus.presentation.authScreen
 
+import AuthViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,6 +37,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -61,16 +64,10 @@ import com.nixbug.entebus.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Auth() {
+fun Auth(viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
-    var selectedCompany by remember { mutableStateOf<String?>(null) }
-    var expanded by remember { mutableStateOf(false) }
-    val companies = listOf("Company A", "Company B", "Company C","Company D", "Company E", "Company F","Company G", "Company H", "Company I","Company J", "Company K", "Company L")
-
-    var userName by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
+    val state = viewModel.uiState.collectAsState().value
 
     Box(
         modifier = Modifier
@@ -133,22 +130,19 @@ fun Auth() {
 
             //Company Drop Down
             CompanyDropdown(
-                selectedCompany = selectedCompany,
-                expanded = expanded,
-                onExpandChange = { expanded = it },
-                companies = companies,
-                onSelect = { company ->
-                    selectedCompany = company
-                    expanded = false
-                }
+                selectedCompany = state.selectedCompany,
+                expanded = state.expanded,
+                onExpandChange = viewModel::expandedFunc,
+                companies = state.companyList,
+                onSelect = viewModel::onCompanySelected
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Username Field
             UsernameField(
-                value = userName,
-                onChange = { userName = it },
+                value = state.userName,
+                onChange = viewModel::onUserNameChange,
                 focusManager = focusManager
             )
 
@@ -156,17 +150,17 @@ fun Auth() {
 
             //password Field
             PasswordField(
-                value = password,
-                onChange = { password = it },
-                visible = passwordVisible,
-                toggle = { passwordVisible = !passwordVisible }
+                value = state.password,
+                onChange = viewModel::onPasswordChange,
+                visible = state.passwordVisible,
+                toggle = viewModel::onTogglePasswordVisibility
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
 
             //Sign in Button
-            SignInButton(onClick = { /* To Handle sign-in*/  })
+            SignInButton(onClick = { /* TODO: Handle sign-in logic*/  })
 
             Spacer(modifier = Modifier.height(15.dp))
 
@@ -235,7 +229,7 @@ fun CompanyDropdown(
 }
 
 @Composable
-fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: androidx.compose.ui.focus.FocusManager) {
+fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: FocusManager) {
     Text(
         text = "Username",
         fontSize = 16.sp,
