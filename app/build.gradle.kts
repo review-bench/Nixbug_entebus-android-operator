@@ -68,6 +68,7 @@ dependencies {
 
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
+    implementation(libs.android.splashScreen)
 }
 
 //Task to generate and re-generate API client library
@@ -87,3 +88,4 @@ tasks.register<Exec>("generateApiClient") {
         "--global-property", "apiTests=false,modelTests=false"
     )
 }
+
