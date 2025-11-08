@@ -80,7 +80,7 @@ tasks.register<Exec>("generateApiClient") {
 
     commandLine(
         "openapi-generator-cli", "generate",
-        "-i", "src/main/openApiSpecification/openApiSpecification.json",
+        "-i", "$projectDir/src/main/openApiSpecification/openApiSpecification.json",
         "-g", "kotlin",
         "-o", outputDir,
         "--library", "jvm-retrofit2",

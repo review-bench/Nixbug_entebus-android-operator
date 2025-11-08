@@ -47,7 +47,7 @@ This project uses OpenAPI Generator to automatically create a Kotlin API client 
 
 **Steps to generate API client**
 
-Install the required dependencies and generate the client library
+Install the required dependencies
 ```
 # Check Java installation
 java -version
@@ -59,7 +59,7 @@ sudo apt install openjdk-17-jdk -y
 # Install OpenAPI Generator CLI (7.17.0)
 npm install -g @openapitools/openapi-generator-cli@7.17.0
 
-# Ensure that the OpenAPI specifications are stored locally
+# Ensure that the OpenAPI specification are stored locally
 # Example: app/src/main/openApiSpecification/openApiSpecification.json
 
 # Run the command below to generate the client:
