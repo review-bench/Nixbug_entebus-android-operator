@@ -40,7 +40,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -56,6 +55,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    implementation(libs.compose.material.icons.extended)
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
     implementation(libs.android.splashScreen)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 }
 
 //Task to generate and re-generate API client library
