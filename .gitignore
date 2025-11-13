@@ -9,6 +9,7 @@
 /.idea/migrations.xml
 /.idea/misc.xml
 /.idea/libraries
+/.idea/modules
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
@@ -21,3 +22,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+/app/src/main/java/com/nixbug/entebus/data/remote
+
