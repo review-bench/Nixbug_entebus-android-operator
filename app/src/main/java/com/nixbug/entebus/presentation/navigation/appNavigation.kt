@@ -14,8 +14,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nixbug.entebus.presentation.components.DialogBox
-import com.nixbug.entebus.presentation.screens.authScreen.Auth
 import com.nixbug.entebus.presentation.screens.locationRequestScreen.LocationRequest
+import com.nixbug.entebus.presentation.screens.locationRequestScreen.authScreen.Auth
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @Composable

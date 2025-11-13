@@ -1,4 +1,4 @@
-package com.nixbug.entebus.presentation.authScreen
+package com.nixbug.entebus.presentation.screens.locationRequestScreen.authScreen
 
 import AuthViewModel
 import androidx.compose.foundation.Image
@@ -38,10 +38,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,11 +56,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nixbug.entebus.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Auth(viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun Auth(viewModel: AuthViewModel = viewModel()) {
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
