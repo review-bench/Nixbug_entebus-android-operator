@@ -21,7 +21,7 @@ fun DialogBox(
     dismissible: Boolean = false,
 ) {
     Dialog(
-        onDismissRequest = { /* Non-cancelable if dismissible = false */ },
+        onDismissRequest = {},
         properties = DialogProperties(
             dismissOnBackPress = dismissible,
             dismissOnClickOutside = dismissible
@@ -67,9 +67,7 @@ fun DialogBox(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D6EFD)),
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(

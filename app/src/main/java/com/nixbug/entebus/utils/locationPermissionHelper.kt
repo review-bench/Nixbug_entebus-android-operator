@@ -10,7 +10,7 @@ import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-object locationPermissionHelper {
+object LocationPermissionHelper {
     fun isPermissionGranted(context: Context): Boolean {
         val fine = ContextCompat.checkSelfPermission(
             context, Manifest.permission.ACCESS_FINE_LOCATION
