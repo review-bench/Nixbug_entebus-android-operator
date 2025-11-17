@@ -4,15 +4,25 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 
-class AuthViewModel: ViewModel(){
+class AuthViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
+    fun onCompanyQueryChange(value: String) {
+        _uiState.update { it.copy(companySearchQuery = value, expanded = true) }
+        if (value == "") {
+            _uiState.update { it.copy(selectedCompany = null) }
+        }
+    }
+
     fun onCompanySelected(company: String) {
-        _uiState.update { it.copy(
-            selectedCompany = company,
-            expanded = false // <-- close dropdown
-        ) }
+        _uiState.update {
+            it.copy(
+                selectedCompany = company,
+                companySearchQuery = company,
+                expanded = false
+            )
+        }
     }
 
     fun onUserNameChange(value: String) {
@@ -31,4 +41,11 @@ class AuthViewModel: ViewModel(){
         _uiState.update { it.copy(expanded = value) }
     }
 
+    fun clearSearchQuery() {
+        _uiState.update { it.copy(companySearchQuery = "") }
+    }
+
+    fun clearSelectedCompany() {
+        _uiState.update { it.copy(selectedCompany = null) }
+    }
 }

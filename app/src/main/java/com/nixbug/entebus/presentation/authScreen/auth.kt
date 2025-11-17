@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,17 +39,12 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -72,15 +68,8 @@ fun Auth(viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewMod
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF2033B1),
-                        Color(0xFF47C7FF),
-                        Color(0xFF10C555)
-                    )
-                )
-            ).pointerInput(Unit) {
+            .background(Color.White)
+            .pointerInput(Unit) {
                 detectTapGestures(onTap = {
                     focusManager.clearFocus()
                 })
@@ -117,24 +106,26 @@ fun Auth(viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewMod
                 text = "Entebus Conductor",
                 fontWeight = FontWeight.Bold,
                 fontSize = 28.sp,
-                color = Color.White
+                color = Color.Black
             )
 
             Text(
                 text = "Sign in to your account",
                 fontSize = 18.sp,
-                color = Color.White.copy(alpha = 0.8f)
+                color = Color.Black.copy(alpha = 0.8f)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             //Company Drop Down
             CompanyDropdown(
-                selectedCompany = state.selectedCompany,
                 expanded = state.expanded,
                 onExpandChange = viewModel::expandedFunc,
-                companies = state.companyList,
-                onSelect = viewModel::onCompanySelected
+                onSelect = viewModel::onCompanySelected,
+                onQueryChange = viewModel::onCompanyQueryChange,
+                clearSelectedCompany = viewModel::clearSelectedCompany,
+                clearSearchQuery = viewModel::clearSearchQuery,
+                uiState = state
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -158,9 +149,8 @@ fun Auth(viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewMod
 
             Spacer(modifier = Modifier.height(20.dp))
 
-
             //Sign in Button
-            SignInButton(onClick = { /* TODO: Handle sign-in logic*/  })
+            SignInButton(onClick = { /* TODO: Handle sign-in logic*/ })
 
             Spacer(modifier = Modifier.height(15.dp))
 
@@ -171,57 +161,84 @@ fun Auth(viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewMod
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompanyDropdown(
-    selectedCompany: String?,
+    uiState: AuthUiState,
     expanded: Boolean,
     onExpandChange: (Boolean) -> Unit,
-    companies: List<String>,
-    onSelect: (String) -> Unit
+    onQueryChange: (String) -> Unit,
+    onSelect: (String) -> Unit,
+    clearSelectedCompany: () -> Unit,
+    clearSearchQuery: () -> Unit
 ) {
     Text(
         text = "Company",
         fontSize = 16.sp,
-        color = Color.White,
+        color = Color.Black,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 5.dp)
     )
-
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = onExpandChange
+        onExpandedChange = onExpandChange,
+        modifier = Modifier.fillMaxWidth()
     ) {
         OutlinedTextField(
-            value = selectedCompany ?: "",
-            onValueChange = {},
-            readOnly = true,
-            placeholder = { Text("Select your company") },
+            value = if (expanded) uiState.companySearchQuery else (uiState.selectedCompany ?: ""),
+            onValueChange = { onQueryChange(it) },
+            singleLine = true,
+            readOnly = !expanded,
+            placeholder = { Text(if (expanded) "Search your company" else "Select your company") },
             modifier = Modifier
                 .menuAnchor(MenuAnchorType.PrimaryEditable)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .shadow(1.dp, RoundedCornerShape(12.dp)),
             trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded)
             },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
                 focusedBorderColor = Color(0xFF47C7FF),
-                unfocusedBorderColor = Color.White,
+                unfocusedBorderColor = Color(0xFFC0C0C0),
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black
             )
         )
-
+        if (!expanded && uiState.selectedCompany == null) {
+            clearSearchQuery()
+        }
+        if ((uiState.selectedCompany != uiState.companySearchQuery) && !expanded) {
+            clearSelectedCompany()
+        }
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { onExpandChange(false) },
-            modifier = Modifier.background(Color.White)
+            modifier = Modifier
+                .background(Color.White, RoundedCornerShape(12.dp))
+                .border(1.dp, Color(0xFF47C7FF), RoundedCornerShape(12.dp))
+                .heightIn(max = 160.dp)
+
         ) {
-            companies.forEach { company ->
+            uiState.filteredCompanies.forEach { company ->
                 DropdownMenuItem(
-                    text = { Text(company, color = Color.Black) },
-                    onClick = { onSelect(company) }
+                    text = { Text(company) },
+                    modifier = Modifier
+                        .padding(horizontal = 6.dp) // nice spacing
+                        .clip(RoundedCornerShape(10.dp)),
+                    onClick = {
+                        onSelect(company)
+                        onExpandChange(false)
+                    },
+
+                    )
+
+            }
+            if (uiState.filteredCompanies.isEmpty()) {
+                DropdownMenuItem(
+                    text = { Text("No results", color = Color.Gray) },
+                    onClick = {}
                 )
             }
         }
@@ -233,7 +250,7 @@ fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: Focus
     Text(
         text = "Username",
         fontSize = 16.sp,
-        color = Color.White,
+        color = Color.Black,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
@@ -245,7 +262,9 @@ fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: Focus
         onValueChange = onChange,
         placeholder = { Text("Enter your username") },
         singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(1.dp, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
@@ -253,7 +272,7 @@ fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: Focus
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
             focusedBorderColor = Color(0xFF47C7FF),
-            unfocusedBorderColor = Color.White,
+            unfocusedBorderColor = Color(0xFFC0C0C0),
             focusedTextColor = Color.Black,
             unfocusedTextColor = Color.Black,
         )
@@ -261,16 +280,11 @@ fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: Focus
 }
 
 @Composable
-fun PasswordField(
-    value: String,
-    onChange: (String) -> Unit,
-    visible: Boolean,
-    toggle: () -> Unit
-) {
+fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, toggle: () -> Unit) {
     Text(
         text = "Password",
         fontSize = 16.sp,
-        color = Color.White,
+//        color = Color.Black,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
@@ -291,13 +305,16 @@ fun PasswordField(
                 )
             }
         },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(1.dp, RoundedCornerShape(12.dp)),
+
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
             focusedBorderColor = Color(0xFF47C7FF),
-            unfocusedBorderColor = Color.White,
+            unfocusedBorderColor = Color(0xFFC0C0C0),
             focusedTextColor = Color.Black,
             unfocusedTextColor = Color.Black,
         )
