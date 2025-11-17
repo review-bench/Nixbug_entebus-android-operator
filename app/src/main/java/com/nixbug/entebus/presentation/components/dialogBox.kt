@@ -1,5 +1,6 @@
 package com.nixbug.entebus.presentation.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -19,6 +20,11 @@ fun DialogBox(
     confirmText: String = "Open Settings",
     onConfirmClick: () -> Unit,
     dismissible: Boolean = false,
+
+    // NEW optional exit button
+    showExitButton: Boolean = false,
+    exitText: String = "Exit App",
+    onExitClick: (() -> Unit)? = null
 ) {
     Dialog(
         onDismissRequest = {},
@@ -45,7 +51,7 @@ fun DialogBox(
                     text = title,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color(0xFF144698)
                     )
                 )
 
@@ -61,7 +67,7 @@ fun DialogBox(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Button
+                // Confirm Button
                 Button(
                     onClick = onConfirmClick,
                     modifier = Modifier
@@ -76,7 +82,28 @@ fun DialogBox(
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
+
+                // 👇 Conditionally show Exit button
+                if (showExitButton && onExitClick != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = onExitClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = MaterialTheme.shapes.small,
+                        border = BorderStroke(1.dp, Color(0xFF0D6EFD))
+                    ) {
+                        Text(
+                            text = exitText,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color(0xFF0D6EFD)
+                        )
+                    }
+                }
             }
         }
     }
 }
+

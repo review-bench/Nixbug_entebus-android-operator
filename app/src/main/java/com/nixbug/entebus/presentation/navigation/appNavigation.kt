@@ -47,7 +47,10 @@ fun AppNavigation() {
             onConfirmClick = {
                 LocationPermissionHelper.openAppSettings(context)
             },
-            dismissible = false
+            dismissible = false,
+            showExitButton = true,
+            exitText = "Cancel",
+            onExitClick = {}
         )
     }
 

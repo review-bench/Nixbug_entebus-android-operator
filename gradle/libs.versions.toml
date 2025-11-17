@@ -16,6 +16,7 @@ androidSplashScreen = "1.0.1"
 navigation = "2.9.6"
 compose = "1.7.3"
 lifecycleViewmodelCompose = "2.9.4"
+navigationRuntimeKtx = "2.9.6"
 
 
 [libraries]
@@ -49,6 +50,7 @@ gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 
 coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

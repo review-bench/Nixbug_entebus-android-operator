@@ -91,13 +91,16 @@ fun LocationRequest(navController: NavHostController) {
     if (showDialog) {
         DialogBox(
             title = "Permission Required",
-            message = "This app needs location permission. Please enable it in settings.",
+            message = "Location access is required to continue. Please enable location in Settings.",
             confirmText = "Open Settings",
             onConfirmClick = {
                 LocationPermissionHelper.openAppSettings(context)
                 showDialog = false
             },
-            dismissible = false
+            dismissible = false,
+            showExitButton = true,
+            exitText = "Exit App",
+            onExitClick = {activity.finishAffinity()}
         )
     }
 
