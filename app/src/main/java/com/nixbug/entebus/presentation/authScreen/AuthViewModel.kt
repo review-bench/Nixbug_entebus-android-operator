@@ -10,7 +10,7 @@ class AuthViewModel : ViewModel() {
 
     fun onCompanyQueryChange(value: String) {
         _uiState.update { it.copy(companySearchQuery = value, expanded = true) }
-        if (value == "") {
+        if (value.isBlank()) {
             _uiState.update { it.copy(selectedCompany = null) }
         }
     }

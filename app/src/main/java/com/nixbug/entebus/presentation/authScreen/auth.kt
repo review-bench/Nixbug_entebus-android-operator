@@ -225,7 +225,7 @@ fun CompanyDropdown(
                 DropdownMenuItem(
                     text = { Text(company) },
                     modifier = Modifier
-                        .padding(horizontal = 6.dp) // nice spacing
+                        .padding(horizontal = 6.dp)
                         .clip(RoundedCornerShape(10.dp)),
                     onClick = {
                         onSelect(company)
@@ -284,7 +284,7 @@ fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, t
     Text(
         text = "Password",
         fontSize = 16.sp,
-//        color = Color.Black,
+        color = Color.Black,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .fillMaxWidth()
