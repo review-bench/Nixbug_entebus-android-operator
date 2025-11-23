@@ -2,6 +2,7 @@ package com.nixbug.entebus.presentation.screens.locationRequestScreen
 
 import android.Manifest
 import android.app.Activity
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -32,7 +34,10 @@ import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @Composable
-fun LocationRequest(navController: NavHostController) {
+fun LocationRequest(
+    navController: NavHostController,
+    viewModel: LocationRequestViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
     val activity = context as Activity
     var hasPermission by remember {
@@ -43,6 +48,15 @@ fun LocationRequest(navController: NavHostController) {
         )
     }
     var showDialog by remember { mutableStateOf(false) }
+    var showLoader by remember { mutableStateOf(false) }
+    val uiState = viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.value.data?.latitude, uiState.value.data?.longitude) {
+        Log.d(
+            "LocationDebug",
+            "Latitude: ${uiState.value.data?.latitude},Longitude: ${uiState.value.data?.longitude}"
+        )
+    }
 
     // Permission launcher to display the system's default location permission dialog
     val permissionLauncher =
@@ -54,7 +68,7 @@ fun LocationRequest(navController: NavHostController) {
             when {
                 granted -> {
                     Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
-                    navController.navigate("authScreen")
+                    viewModel.fetchLocationIfNeeded(onSuccess = {}, onError = {})
                 }
 
                 LocationPermissionHelper.isPermanentlyDenied(activity) -> {
@@ -72,6 +86,7 @@ fun LocationRequest(navController: NavHostController) {
             }
         }
 
+
     // Automatically navigate to the Auth screen when the user grants location permission
     // after returning from the app settings
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -79,8 +94,19 @@ fun LocationRequest(navController: NavHostController) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 if (LocationPermissionHelper.isPermissionGranted(context)) {
-                    Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
-                    navController.navigate("authScreen")
+                    showLoader = true
+                    viewModel.fetchLocationIfNeeded(
+                        onSuccess = {
+                            showLoader = false
+                            navController.navigate("authScreen") {
+                                popUpTo("locationRequest") { inclusive = true }
+                            }
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+
                 }
             }
         }
@@ -100,7 +126,7 @@ fun LocationRequest(navController: NavHostController) {
             dismissible = false,
             showExitButton = true,
             exitText = "Exit App",
-            onExitClick = {activity.finishAffinity()}
+            onExitClick = { activity.finishAffinity() }
         )
     }
 
@@ -170,23 +196,30 @@ fun LocationRequest(navController: NavHostController) {
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                if (showLoader) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
 
-                Icon(
-                    imageVector = Icons.Outlined.LocationOn,
-                    contentDescription = "Location Icon",
-                    tint = Color.White, // your blue color
-                    modifier = Modifier.size(20.dp)
-                )
+                    Icon(
+                        imageVector = Icons.Outlined.LocationOn,
+                        contentDescription = "Location Icon",
+                        tint = Color.White, // your blue color
+                        modifier = Modifier.size(20.dp)
+                    )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                Text(
-                    text = "Allow Location Access",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-
+                    Text(
+                        text = "Allow Location Access",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
 

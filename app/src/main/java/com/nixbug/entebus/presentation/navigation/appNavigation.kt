@@ -2,11 +2,13 @@ package com.nixbug.entebus.presentation.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -15,15 +17,22 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.screens.locationRequestScreen.LocationRequest
-import com.nixbug.entebus.presentation.screens.locationRequestScreen.authScreen.Auth
+import com.nixbug.entebus.presentation.screens.authScreen.Auth
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(viewModel: AppNavigationViewModel = hiltViewModel()) {
     val navController = rememberNavController()
-    val isLoggedIn=false
-    val context= LocalContext.current
-    var hasPermission by remember { mutableStateOf(LocationPermissionHelper.isPermissionGranted(context)) }
+    val isLoggedIn = false
+    val context = LocalContext.current
+    val locationState = viewModel.locationState.collectAsState()
+    var hasPermission by remember {
+        mutableStateOf(
+            LocationPermissionHelper.isPermissionGranted(
+                context
+            )
+        )
+    }
 
     // Recheck location permission whenever the user returns to the app
     // (e.g., after manually changing permission settings)
@@ -54,16 +63,29 @@ fun AppNavigation() {
         )
     }
 
+    if (locationState.value.isLoading) {
+        return  // Or show a splash screen
+    }
+
+    val locationData = locationState.value.data
+    val hasLocation = locationData?.hasLocation == true
+
+    val startDestination = when {
+        !hasPermission -> "locationRequestScreen"
+        !hasLocation -> "locationRequestScreen"
+        else -> "authScreen"
+    }
+
     NavHost(
         navController = navController,
-        startDestination = if (hasPermission) "authScreen" else "locationRequestScreen"
+        startDestination = startDestination
     )
     {
         composable("authScreen") {
             Auth()
         }
         composable("locationRequestScreen") {
-            LocationRequest(navController=navController)
+            LocationRequest(navController = navController)
         }
     }
 }

@@ -1,6 +1,6 @@
-package com.nixbug.entebus.presentation.screens.locationRequestScreen.authScreen
+package com.nixbug.entebus.presentation.screens.authScreen
 
-import AuthViewModel
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,6 +37,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,15 +57,22 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.nixbug.entebus.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Auth(viewModel: AuthViewModel = viewModel()) {
+fun Auth(viewModel: AuthViewModel=hiltViewModel()) {
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
+
+    val location = viewModel.location.collectAsState()
+
+    LaunchedEffect(location.value.latitude,location.value.longitude) {
+        Log.d("AuthDebug", "Latitude=${location.value.latitude}, Longitude=${location.value.longitude}")
+        Log.d("AuthDebug","hasLocation${location.value.hasLocation}")
+    }
 
     Box(
         modifier = Modifier
