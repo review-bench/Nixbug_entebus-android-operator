@@ -1,7 +1,7 @@
 package com.nixbug.entebus.presentation.authScreen
 
 data class AuthUiState(
-    var selectedCompany: String? = null,
+    val selectedCompany: String? = null,
     val companySearchQuery: String = "",
     val userName: String = "",
     val password: String = "",
