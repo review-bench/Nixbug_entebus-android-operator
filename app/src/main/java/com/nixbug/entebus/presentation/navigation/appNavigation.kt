@@ -21,9 +21,15 @@ import com.nixbug.entebus.utils.LocationPermissionHelper
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val isLoggedIn=false
-    val context= LocalContext.current
-    var hasPermission by remember { mutableStateOf(LocationPermissionHelper.isPermissionGranted(context)) }
+    val isLoggedIn = false
+    val context = LocalContext.current
+    var hasPermission by remember {
+        mutableStateOf(
+            LocationPermissionHelper.isPermissionGranted(
+                context
+            )
+        )
+    }
 
     // Recheck location permission whenever the user returns to the app
     // (e.g., after manually changing permission settings)
@@ -63,7 +69,7 @@ fun AppNavigation() {
             Auth()
         }
         composable("locationRequestScreen") {
-            LocationRequest(navController=navController)
+            LocationRequest(navController = navController)
         }
     }
 }

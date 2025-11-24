@@ -100,7 +100,7 @@ fun LocationRequest(navController: NavHostController) {
             dismissible = false,
             showExitButton = true,
             exitText = "Exit App",
-            onExitClick = {activity.finishAffinity()}
+            onExitClick = { activity.finishAffinity() }
         )
     }
 
