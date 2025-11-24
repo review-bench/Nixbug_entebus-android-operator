@@ -32,9 +32,8 @@ import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @Composable
-fun LocationRequest(navController: NavHostController) {
+fun LocationRequest(navController: NavHostController,activity: Activity) {
     val context = LocalContext.current
-    val activity = context as Activity
     var hasPermission by remember {
         mutableStateOf(
             LocationPermissionHelper.isPermissionGranted(
@@ -78,7 +77,8 @@ fun LocationRequest(navController: NavHostController) {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                if (LocationPermissionHelper.isPermissionGranted(context)) {
+                if (LocationPermissionHelper.isPermissionGranted(context)&&
+                    navController.currentDestination?.route != "authScreen") {
                     Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
                     navController.navigate("authScreen")
                 }

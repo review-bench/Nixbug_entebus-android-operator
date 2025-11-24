@@ -1,5 +1,7 @@
 package com.nixbug.entebus.presentation.navigation
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -18,6 +20,7 @@ import com.nixbug.entebus.presentation.screens.locationRequestScreen.LocationReq
 import com.nixbug.entebus.presentation.screens.locationRequestScreen.authScreen.Auth
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
+@SuppressLint("ContextCastToActivity")
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -69,7 +72,7 @@ fun AppNavigation() {
             Auth()
         }
         composable("locationRequestScreen") {
-            LocationRequest(navController = navController)
+            LocationRequest(navController = navController, activity = LocalContext.current as Activity)
         }
     }
 }

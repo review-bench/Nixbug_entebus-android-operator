@@ -22,6 +22,7 @@ object LocationPermissionHelper {
     }
 
     fun isPermanentlyDenied(activity: Activity): Boolean {
+        if (isPermissionGranted(activity)) return false
         val fineDenied = !ActivityCompat.shouldShowRequestPermissionRationale(
             activity, Manifest.permission.ACCESS_FINE_LOCATION
         )
