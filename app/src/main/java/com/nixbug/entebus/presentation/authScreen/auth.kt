@@ -38,6 +38,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -183,6 +184,14 @@ fun CompanyDropdown(
         onExpandedChange = onExpandChange,
         modifier = Modifier.fillMaxWidth()
     ) {
+        LaunchedEffect(expanded,uiState.selectedCompany) {
+            if (!expanded && uiState.selectedCompany == null) {
+                clearSearchQuery()
+            }
+            if ((uiState.selectedCompany != uiState.companySearchQuery) && !expanded) {
+                clearSelectedCompany()
+            }
+        }
         OutlinedTextField(
             value = if (expanded) uiState.companySearchQuery else (uiState.selectedCompany ?: ""),
             onValueChange = { onQueryChange(it) },
@@ -206,12 +215,6 @@ fun CompanyDropdown(
                 unfocusedTextColor = Color.Black
             )
         )
-        if (!expanded && uiState.selectedCompany == null) {
-            clearSearchQuery()
-        }
-        if ((uiState.selectedCompany != uiState.companySearchQuery) && !expanded) {
-            clearSelectedCompany()
-        }
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { onExpandChange(false) },
