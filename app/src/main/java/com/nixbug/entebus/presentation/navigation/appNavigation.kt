@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.screens.locationRequestScreen.LocationRequest
 import com.nixbug.entebus.presentation.screens.authScreen.Auth
+import com.nixbug.entebus.presentation.screens.mainScreen.MainScreen
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @Composable
@@ -82,10 +83,13 @@ fun AppNavigation(viewModel: AppNavigationViewModel = hiltViewModel()) {
     )
     {
         composable("authScreen") {
-            Auth()
+            Auth(navController = navController)
         }
         composable("locationRequestScreen") {
             LocationRequest(navController = navController)
+        }
+        composable("main") {
+            MainScreen()
         }
     }
 }

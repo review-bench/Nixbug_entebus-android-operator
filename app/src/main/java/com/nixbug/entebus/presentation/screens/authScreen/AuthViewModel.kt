@@ -5,14 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.data.local.dataStore.LocationData
 import com.nixbug.entebus.domain.usecase.GetLocationUseCase
-import com.nixbug.entebus.domain.usecase.SaveLocationUseCase
-import com.nixbug.entebus.presentation.screens.locationRequestScreen.authScreen.AuthUiState
-import com.nixbug.entebus.utils.LocationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch

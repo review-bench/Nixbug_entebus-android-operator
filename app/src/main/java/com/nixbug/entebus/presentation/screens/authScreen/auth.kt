@@ -58,11 +58,12 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.nixbug.entebus.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Auth(viewModel: AuthViewModel=hiltViewModel()) {
+fun Auth(navController: NavHostController,viewModel: AuthViewModel = hiltViewModel() ) {
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
@@ -165,7 +166,7 @@ fun Auth(viewModel: AuthViewModel=hiltViewModel()) {
 
 
             //Sign in Button
-            SignInButton(onClick = { /* TODO: Handle sign-in logic*/  })
+            SignInButton(onClick = { navController.navigate("main")  })
 
             Spacer(modifier = Modifier.height(15.dp))
 

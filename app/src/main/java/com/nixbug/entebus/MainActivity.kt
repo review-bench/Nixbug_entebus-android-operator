@@ -12,18 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen().apply {
-            setOnExitAnimationListener { splashScreenViewProvider ->
-                splashScreenViewProvider.iconView
-                    .animate()
-                    .alpha(0f)
-                    .setDuration(500L)
-                    .withEndAction {
-                        splashScreenViewProvider.remove()
-                    }
-                    .start()
-            }
-        }
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
