@@ -1,6 +1,5 @@
-package com.nixbug.entebus.presentation.screens.locationRequestScreen.authScreen
+package com.nixbug.entebus.presentation.screens.authScreen
 
-import AuthViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

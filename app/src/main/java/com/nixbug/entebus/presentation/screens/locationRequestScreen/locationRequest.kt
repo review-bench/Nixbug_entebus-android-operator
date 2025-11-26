@@ -8,7 +8,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
@@ -32,7 +31,7 @@ import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @Composable
-fun LocationRequest(navController: NavHostController,activity: Activity) {
+fun LocationRequest(navController: NavHostController, activity: Activity) {
     val context = LocalContext.current
     var hasPermission by remember {
         mutableStateOf(
@@ -77,8 +76,9 @@ fun LocationRequest(navController: NavHostController,activity: Activity) {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                if (LocationPermissionHelper.isPermissionGranted(context)&&
-                    navController.currentDestination?.route != "authScreen") {
+                if (LocationPermissionHelper.isPermissionGranted(context) &&
+                    navController.currentDestination?.route != "authScreen"
+                ) {
                     Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
                     navController.navigate("authScreen")
                 }
@@ -174,7 +174,7 @@ fun LocationRequest(navController: NavHostController,activity: Activity) {
                 Icon(
                     imageVector = Icons.Outlined.LocationOn,
                     contentDescription = "Location Icon",
-                    tint = Color.White, // your blue color
+                    tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
 

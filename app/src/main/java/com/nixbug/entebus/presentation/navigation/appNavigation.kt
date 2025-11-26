@@ -17,7 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.screens.locationRequestScreen.LocationRequest
-import com.nixbug.entebus.presentation.screens.locationRequestScreen.authScreen.Auth
+import com.nixbug.entebus.presentation.screens.authScreen.Auth
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @SuppressLint("ContextCastToActivity")
@@ -65,13 +65,13 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = if (hasPermission) "authScreen" else "locationRequestScreen"
+        startDestination = if (hasPermission) AppNavItem.Auth.route else AppNavItem.LocationRequest.route
     )
     {
-        composable("authScreen") {
+        composable(AppNavItem.Auth.route) {
             Auth()
         }
-        composable("locationRequestScreen") {
+        composable(AppNavItem.LocationRequest.route) {
             LocationRequest(navController = navController, activity = LocalContext.current as Activity)
         }
     }
