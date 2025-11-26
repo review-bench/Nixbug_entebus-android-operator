@@ -74,7 +74,7 @@ fun AppNavigation(viewModel: AppNavigationViewModel = hiltViewModel()) {
     val startDestination = when {
         !hasPermission -> "locationRequestScreen"
         !hasLocation -> "locationRequestScreen"
-        else -> "authScreen"
+        else -> "main"
     }
 
     NavHost(
