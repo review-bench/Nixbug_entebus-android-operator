@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.nixbug.entebus.MainActivity
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.screens.locationRequestScreen.LocationRequest
 import com.nixbug.entebus.presentation.screens.authScreen.Auth
@@ -22,7 +23,7 @@ import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @SuppressLint("ContextCastToActivity")
 @Composable
-fun AppNavigation() {
+fun AppNavigation(activity: Activity) {
     val navController = rememberNavController()
     val isLoggedIn = false
     val context = LocalContext.current
@@ -72,7 +73,7 @@ fun AppNavigation() {
             Auth()
         }
         composable(AppNavItem.LocationRequest.route) {
-            LocationRequest(navController = navController, activity = LocalContext.current as Activity)
+            LocationRequest(navController = navController, activity = activity)
         }
     }
 }
