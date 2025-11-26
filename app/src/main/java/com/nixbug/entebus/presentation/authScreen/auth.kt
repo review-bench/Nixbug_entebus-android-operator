@@ -1,6 +1,5 @@
 package com.nixbug.entebus.presentation.authScreen
 
-import AuthViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -184,7 +183,7 @@ fun CompanyDropdown(
         onExpandedChange = onExpandChange,
         modifier = Modifier.fillMaxWidth()
     ) {
-        LaunchedEffect(expanded,uiState.selectedCompany) {
+        LaunchedEffect(expanded, uiState.selectedCompany) {
             if (!expanded && uiState.selectedCompany == null) {
                 clearSearchQuery()
             }
@@ -222,7 +221,6 @@ fun CompanyDropdown(
                 .background(Color.White, RoundedCornerShape(12.dp))
                 .border(1.dp, Color(0xFF47C7FF), RoundedCornerShape(12.dp))
                 .heightIn(max = 160.dp)
-
         ) {
             uiState.filteredCompanies.forEach { company ->
                 DropdownMenuItem(
@@ -233,10 +231,8 @@ fun CompanyDropdown(
                     onClick = {
                         onSelect(company)
                         onExpandChange(false)
-                    },
-
-                    )
-
+                    }
+                )
             }
             if (uiState.filteredCompanies.isEmpty()) {
                 DropdownMenuItem(
@@ -311,7 +307,6 @@ fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, t
         modifier = Modifier
             .fillMaxWidth()
             .shadow(1.dp, RoundedCornerShape(12.dp)),
-
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = Color.White,
