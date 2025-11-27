@@ -1,4 +1,4 @@
-package com.nixbug.entebus.presentation.authScreen
+package com.nixbug.entebus.presentation.screens.authScreen
 
 data class AuthUiState(
     val selectedCompany: String? = null,

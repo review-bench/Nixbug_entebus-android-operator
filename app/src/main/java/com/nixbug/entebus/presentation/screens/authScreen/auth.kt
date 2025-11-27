@@ -1,4 +1,4 @@
-package com.nixbug.entebus.presentation.authScreen
+package com.nixbug.entebus.presentation.screens.authScreen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -56,11 +56,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nixbug.entebus.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Auth(viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun Auth(viewModel: AuthViewModel = viewModel()) {
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value

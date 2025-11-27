@@ -1,4 +1,4 @@
-package com.nixbug.entebus.presentation.authScreen
+package com.nixbug.entebus.presentation.screens.authScreen
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

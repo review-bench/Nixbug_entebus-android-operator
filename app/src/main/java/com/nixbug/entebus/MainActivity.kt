@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.nixbug.entebus.presentation.authScreen.Auth
+import com.nixbug.entebus.presentation.navigation.AppNavigation
 import com.nixbug.entebus.ui.theme.EntebusandroidoperatorTheme
 
 class MainActivity : ComponentActivity() {
@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             EntebusandroidoperatorTheme {
-                    Auth()
+                AppNavigation(activity = this)
             }
         }
     }
