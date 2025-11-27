@@ -21,7 +21,6 @@ fun DialogBox(
     onConfirmClick: () -> Unit,
     dismissible: Boolean = false,
 
-    // NEW optional exit button
     showExitButton: Boolean = false,
     exitText: String = "Exit App",
     onExitClick: (() -> Unit)? = null
@@ -83,7 +82,6 @@ fun DialogBox(
                     )
                 }
 
-                // 👇 Conditionally show Exit button
                 if (showExitButton && onExitClick != null) {
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -106,4 +104,3 @@ fun DialogBox(
         }
     }
 }
-
