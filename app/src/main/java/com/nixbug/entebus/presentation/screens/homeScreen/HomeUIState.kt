@@ -1,9 +1,7 @@
 package com.nixbug.entebus.presentation.screens.homeScreen
 
 data class HomeUIState(
-    var currentServiceList: List<HomeUiModel> = listOf(
-        HomeUiModel(1,"KOLLAM -> KAYAMKULAM", "28/10/2025, 08:10 AM", "KL02BT9268")
-    ),
+    val currentService: HomeUiModel? = null,
 
     val assignedServiceList: List<HomeUiModel> = listOf(
         HomeUiModel(2,"KOLLAM -> SASHTHAMKOTTA", "28/10/2025, 08:10 AM", "KL02BT9268"),

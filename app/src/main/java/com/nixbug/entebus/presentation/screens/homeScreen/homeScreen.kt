@@ -31,7 +31,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -52,20 +51,26 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
     val state = viewModel.uiState.collectAsState().value
     var selectedService by remember { mutableStateOf<HomeUiModel?>(null) }
+    val context= LocalContext.current
     Box {
         Column(modifier = Modifier.fillMaxSize()) {
             TopBar()
             ServiceList(
                 services = state.serviceList,
                 assignedServices = state.assignedServiceList,
-                currentService = state.currentServiceList,
+                currentService = state.currentService,
                 selectedService = selectedService,
                 onServiceClick = { service ->
-                    selectedService = if (selectedService == service) null else service
+                    if (viewModel.canSelectService()) {
+                        selectedService = if (selectedService == service) null else service
+                    } else {
+                        Toast.makeText(context, "You are already in a service", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 modifier = Modifier.weight(1f)
             )
-            ServiceStartButton()
+
+            ServiceStartButton(selectedService, viewModel)
         }
     }
 }
@@ -120,7 +125,7 @@ fun TopBar() {
 fun ServiceList(
     services: List<HomeUiModel>,
     assignedServices: List<HomeUiModel>,
-    currentService: List<HomeUiModel>,
+    currentService: HomeUiModel?,
     selectedService: HomeUiModel?,
     onServiceClick: (HomeUiModel) -> Unit,
     modifier: Modifier
@@ -132,7 +137,7 @@ fun ServiceList(
     ) {
         item { Spacer(Modifier.height(12.dp)) }
 
-        if (currentService.isNotEmpty()) {
+        if (currentService!=null) {
             item {
                 Text(
                     text = "Current Service",
@@ -140,12 +145,9 @@ fun ServiceList(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
                 )
-            }
-
-            items(currentService) { service ->
                 ServiceCard(
-                    service = service,
-                    isSelected = selectedService == service,
+                    service = currentService,
+                    isSelected = selectedService == currentService,
                     onClick = onServiceClick
                 )
                 Spacer(Modifier.height(12.dp))
@@ -312,7 +314,8 @@ fun ServiceCard(service: HomeUiModel, onClick: (HomeUiModel) -> Unit, isSelected
 
 
 @Composable
-fun ServiceStartButton() {
+fun ServiceStartButton(selectedService: HomeUiModel?, viewModel: HomeScreenViewModel) {
+    val context = LocalContext.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -320,7 +323,14 @@ fun ServiceStartButton() {
         contentAlignment = Alignment.Center
     ) {
         Button(
-            onClick = { },
+            onClick = {
+                val started = viewModel.startService(selectedService)
+                if (started) {
+                    Toast.makeText(context, "Service Started", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Please select a service", Toast.LENGTH_SHORT).show()
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
