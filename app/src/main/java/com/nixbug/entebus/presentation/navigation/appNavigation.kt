@@ -24,11 +24,10 @@ import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @SuppressLint("ContextCastToActivity")
 @Composable
-fun AppNavigation(viewModel: AppNavigationViewModel = hiltViewModel()) {
+fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     val isLoggedIn = false
     val context = LocalContext.current
-    val locationState = viewModel.locationState.collectAsState()
     var hasPermission by remember {
         mutableStateOf(
             LocationPermissionHelper.isPermissionGranted(
@@ -36,6 +35,10 @@ fun AppNavigation(viewModel: AppNavigationViewModel = hiltViewModel()) {
             )
         )
     }
+
+
+    val locationState = viewModel.locationState.collectAsState()
+
 
     // Recheck location permission whenever the user returns to the app
     // (e.g., after manually changing permission settings)
@@ -67,16 +70,16 @@ fun AppNavigation(viewModel: AppNavigationViewModel = hiltViewModel()) {
     }
 
     if (locationState.value.isLoading) {
-        return  // Or show a splash screen
+        return
     }
 
     val locationData = locationState.value.data
     val hasLocation = locationData?.hasLocation == true
 
     val startDestination = when {
-        !hasPermission -> "locationRequestScreen"
-        !hasLocation -> "locationRequestScreen"
-        else -> "authScreen"
+        !hasPermission -> AppNavItem.LocationRequest.route
+        !hasLocation -> AppNavItem.LocationRequest.route
+        else -> AppNavItem.Auth.route
     }
 
     NavHost(
@@ -84,11 +87,11 @@ fun AppNavigation(viewModel: AppNavigationViewModel = hiltViewModel()) {
         startDestination = startDestination
     )
     {
-        composable("authScreen") {
+        composable(AppNavItem.Auth.route) {
             Auth()
         }
-        composable("locationRequestScreen") {
-            LocationRequest(navController = navController)
+        composable(AppNavItem.LocationRequest.route) {
+            LocationRequest(navController = navController,activity=activity)
         }
     }
 }

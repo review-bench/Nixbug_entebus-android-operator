@@ -36,10 +36,10 @@ import com.nixbug.entebus.utils.LocationPermissionHelper
 @Composable
 fun LocationRequest(
     navController: NavHostController,
+    activity: Activity,
     viewModel: LocationRequestViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val activity = context as Activity
     var hasPermission by remember {
         mutableStateOf(
             LocationPermissionHelper.isPermissionGranted(
@@ -68,8 +68,6 @@ fun LocationRequest(
             when {
                 granted -> {
                     Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
-                    navController.navigate("authScreen")
-                    viewModel.fetchLocationIfNeeded(onSuccess = {}, onError = {})
                 }
 
                 LocationPermissionHelper.isPermanentlyDenied(activity) -> {
@@ -90,10 +88,13 @@ fun LocationRequest(
     // Automatically navigate to the Auth screen when the user grants location permission
     // after returning from the app settings
     val lifecycleOwner = LocalLifecycleOwner.current
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                if (LocationPermissionHelper.isPermissionGranted(context)) {
+                if (LocationPermissionHelper.isPermissionGranted(context) &&
+                    navController.currentDestination?.route != "authScreen"
+                ) {
                     showLoader = true
                     viewModel.fetchLocationIfNeeded(
                         onSuccess = {
@@ -106,17 +107,16 @@ fun LocationRequest(
                             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                         }
                     )
-
-                if (LocationPermissionHelper.isPermissionGranted(context) &&
-                    navController.currentDestination?.route != "authScreen"
-                ) {
-                    Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
-                    navController.navigate("authScreen")
                 }
             }
         }
+
+        // attach observer correctly
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     if (showDialog) {
@@ -209,26 +209,25 @@ fun LocationRequest(
                     )
                 } else {
 
-                Icon(
-                    imageVector = Icons.Outlined.LocationOn,
-                    contentDescription = "Location Icon",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
+                    Icon(
+                        imageVector = Icons.Outlined.LocationOn,
+                        contentDescription = "Location Icon",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                Text(
-                    text = "Allow Location Access",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-
+                    Text(
+                        text = "Allow Location Access",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
+            Spacer(modifier = Modifier.height(8.dp))
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
     }
 }
+
