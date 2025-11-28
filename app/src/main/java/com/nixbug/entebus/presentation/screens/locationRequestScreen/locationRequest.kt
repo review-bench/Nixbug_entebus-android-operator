@@ -68,6 +68,7 @@ fun LocationRequest(
             when {
                 granted -> {
                     Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
+                    navController.navigate("authScreen")
                     viewModel.fetchLocationIfNeeded(onSuccess = {}, onError = {})
                 }
 
@@ -85,7 +86,6 @@ fun LocationRequest(
                 }
             }
         }
-
 
     // Automatically navigate to the Auth screen when the user grants location permission
     // after returning from the app settings
@@ -107,6 +107,11 @@ fun LocationRequest(
                         }
                     )
 
+                if (LocationPermissionHelper.isPermissionGranted(context) &&
+                    navController.currentDestination?.route != "authScreen"
+                ) {
+                    Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
+                    navController.navigate("authScreen")
                 }
             }
         }
@@ -204,22 +209,22 @@ fun LocationRequest(
                     )
                 } else {
 
-                    Icon(
-                        imageVector = Icons.Outlined.LocationOn,
-                        contentDescription = "Location Icon",
-                        tint = Color.White, // your blue color
-                        modifier = Modifier.size(20.dp)
-                    )
+                Icon(
+                    imageVector = Icons.Outlined.LocationOn,
+                    contentDescription = "Location Icon",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-                    Text(
-                        text = "Allow Location Access",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                Text(
+                    text = "Allow Location Access",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+
             }
         }
 

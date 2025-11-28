@@ -25,6 +25,13 @@ class AuthViewModel @Inject constructor( getLocationUseCase: GetLocationUseCase)
 
     val location = getLocationUseCase()
         .stateIn(viewModelScope, SharingStarted.Eagerly, LocationData(null, null,false))
+    fun onCompanyQueryChange(value: String) {
+        _uiState.update { it.copy(companySearchQuery = value, expanded = true) }
+        if (value.isBlank()) {
+            _uiState.update { it.copy(selectedCompany = null) }
+        }
+    }
+
     fun onCompanySelected(company: String) {
         _uiState.update { it.copy(
             selectedCompany = company,
@@ -39,6 +46,12 @@ class AuthViewModel @Inject constructor( getLocationUseCase: GetLocationUseCase)
                 Log.d("AuthDebug_VM", "Latitude=${loc.latitude}, Longitude=${loc.longitude}")
                 Log.d("AuthDebug_VM","hasLocation${loc.hasLocation}")
             }
+        _uiState.update {
+            it.copy(
+                selectedCompany = company,
+                companySearchQuery = company,
+                expanded = false
+            )
         }
     }
 
@@ -58,4 +71,11 @@ class AuthViewModel @Inject constructor( getLocationUseCase: GetLocationUseCase)
         _uiState.update { it.copy(expanded = value) }
     }
 
+    fun clearSearchQuery() {
+        _uiState.update { it.copy(companySearchQuery = "") }
+    }
+
+    fun clearSelectedCompany() {
+        _uiState.update { it.copy(selectedCompany = null) }
+    }
 }
