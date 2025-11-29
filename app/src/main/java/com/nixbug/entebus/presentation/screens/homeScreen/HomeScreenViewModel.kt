@@ -9,16 +9,20 @@ class HomeScreenViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUIState())
     val uiState: MutableStateFlow<HomeUIState> = _uiState
 
-    // Only check if allowed to select, do NOT update currentService
+    var selectedService: HomeUiModel? = null
+        private set
+
+    fun toggleServiceSelection(service: HomeUiModel) {
+        selectedService = if (selectedService == service) null else service
+    }
+
     fun canSelectService(): Boolean {
         return _uiState.value.currentService == null
     }
 
-    // Start service → set currentService
     fun startService(selectedService: HomeUiModel?): Boolean {
         selectedService ?: return false
 
-        // Only allow starting if no current service
         if (_uiState.value.currentService != null) return false
 
         _uiState.update { state ->
@@ -31,7 +35,11 @@ class HomeScreenViewModel : ViewModel() {
                 serviceList = newOther
             )
         }
+
+        // After starting a service, clear selection
+        this.selectedService = null
         return true
     }
 }
+
 

@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.ArrowOutward
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -51,7 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
     val state = viewModel.uiState.collectAsState().value
     var selectedService by remember { mutableStateOf<HomeUiModel?>(null) }
-    val context= LocalContext.current
+    val context = LocalContext.current
     Box {
         Column(modifier = Modifier.fillMaxSize()) {
             TopBar()
@@ -64,7 +66,8 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
                     if (viewModel.canSelectService()) {
                         selectedService = if (selectedService == service) null else service
                     } else {
-                        Toast.makeText(context, "You are already in a service", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "You are already in a service", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 },
                 modifier = Modifier.weight(1f)
@@ -88,10 +91,12 @@ fun TopBar() {
         tabs.forEachIndexed { index, title ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) { selectedTab = index }
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { selectedTab = index }
             ) {
                 Text(
                     text = title,
@@ -103,13 +108,7 @@ fun TopBar() {
                 if (selectedTab == index) {
                     Box(
                         Modifier
-                            .width(
-                                if (selectedTab == 0) {
-                                    120.dp
-                                } else {
-                                    45.dp
-                                }
-                            )
+                            .fillMaxWidth(.9f)
                             .height(4.dp)
                             .background(Color(0xFF8BC34A), shape = RoundedCornerShape(50))
                     )
@@ -137,10 +136,10 @@ fun ServiceList(
     ) {
         item { Spacer(Modifier.height(12.dp)) }
 
-        if (currentService!=null) {
+        if (currentService != null) {
             item {
                 Text(
-                    text = "Current Service",
+                    text = "Ongoing Service",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
@@ -214,13 +213,10 @@ fun ServiceList(
 
 @Composable
 fun ServiceCard(service: HomeUiModel, onClick: (HomeUiModel) -> Unit, isSelected: Boolean) {
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                onClick(service)
-            },
+            .clickable { onClick(service) },
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) Color(0xFFDFF6DD) else Color.White
         ),
@@ -231,85 +227,101 @@ fun ServiceCard(service: HomeUiModel, onClick: (HomeUiModel) -> Unit, isSelected
             focusedElevation = 8.dp
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .padding(15.dp)
-                .background(if (isSelected) Color(0xFFDFF6DD) else Color.White),
-            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                Modifier.weight(1f)
+
+            // -------------------------------------------------------------
+            // TOP ROW → Route (left) + Arrow (right)
+            // -------------------------------------------------------------
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
 
                 Text(
                     text = service.route,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.
+                    padding(start = 3.dp)
                 )
 
-                Spacer(Modifier.height(7.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            Color(0x328BC34A),
+                            shape = RoundedCornerShape(50.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
-                        imageVector = Icons.Filled.AccessTime,
+                        imageVector = Icons.Filled.ArrowOutward,
                         contentDescription = null,
-                        tint = Color(0xFF8BC34A)
+                        tint = Color(0xFF8BC34A),
+                        modifier = Modifier.size(25.dp)
                     )
-                    Spacer(Modifier.width(5.dp))
-                    Text(
-                        "Starting At",
-                        modifier = Modifier.width(75.dp),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        ": ${service.startTime}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                }
-
-                Spacer(Modifier.height(7.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.DirectionsBus,
-                        contentDescription = null,
-                        tint = Color(0xFF8BC34A)
-                    )
-                    Spacer(Modifier.width(5.dp))
-                    Text(
-                        "Reg No",
-                        modifier = Modifier.width(75.dp),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(": ${service.regNo}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(
-                        Color(0xFF8BC34A),
-                        shape = RoundedCornerShape(50.dp)
-                    ),
-                contentAlignment = Alignment.Center
+//            Spacer(Modifier.height(5.dp))
 
-            ) {
+            // -------------------------------------------------------------
+            // DATE + TIME ROW
+            // -------------------------------------------------------------
+            Row(verticalAlignment = Alignment.CenterVertically) {
+
                 Icon(
-                    imageVector = Icons.Filled.ArrowOutward,
+                    imageVector = Icons.Filled.CalendarMonth,
                     contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(40.dp)
+                    tint = Color(0xFF8BC34A)
+                )
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    service.startDate,
+                    fontSize = 15.sp,
+                    color = Color.DarkGray
+                )
 
+                Spacer(Modifier.width(10.dp))
+
+                Icon(
+                    imageVector = Icons.Filled.AccessTime,
+                    contentDescription = null,
+                    tint = Color(0xFF8BC34A)
+                )
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    service.startTime,
+                    fontSize = 15.sp,
+                    color = Color.DarkGray
+                )
+            }
+
+            Spacer(Modifier.height(7.dp))
+
+            // -------------------------------------------------------------
+            // REG NO ROW
+            // -------------------------------------------------------------
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.DirectionsBus,
+                    contentDescription = null,
+                    tint = Color(0xFF8BC34A)
+                )
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    service.regNo,
+                    fontSize = 14.sp,
+                    color = Color.DarkGray
                 )
             }
         }
     }
+
 }
 
 
