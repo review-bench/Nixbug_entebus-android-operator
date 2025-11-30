@@ -23,13 +23,17 @@ class AuthViewModel @Inject constructor(getLocationUseCase: GetLocationUseCase) 
         .stateIn(viewModelScope, SharingStarted.Eagerly, LocationData(null, null, false))
 
     init {
-        // Collect the location flow and log changes
         viewModelScope.launch {
-            location.collect { loc ->
-                Log.d("AuthDebug_VM", "Latitude=${loc.latitude}, Longitude=${loc.longitude}")
-                Log.d("AuthDebug_VM", "hasLocation${loc.hasLocation}")
-            }
+            Log.d(
+                "AuthDebug_VM",
+                "Initial => ${location.value.latitude}, ${location.value.longitude}"
+            )
 
+            viewModelScope.launch {
+                location.collect { loc ->
+                    Log.d("AuthDebug_VM", "Updated => ${loc.latitude}, ${loc.longitude}")
+                }
+            }
         }
     }
 

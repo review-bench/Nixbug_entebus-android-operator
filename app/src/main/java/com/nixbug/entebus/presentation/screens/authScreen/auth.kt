@@ -1,6 +1,5 @@
 package com.nixbug.entebus.presentation.screens.authScreen
 
-
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -63,16 +62,18 @@ import com.nixbug.entebus.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Auth(viewModel: AuthViewModel=hiltViewModel()) {
+fun Auth(viewModel: AuthViewModel = hiltViewModel()) {
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
 
     val location = viewModel.location.collectAsState()
 
-    LaunchedEffect(location.value.latitude,location.value.longitude) {
-        Log.d("AuthDebug", "Latitude=${location.value.latitude}, Longitude=${location.value.longitude}")
-        Log.d("AuthDebug","hasLocation${location.value.hasLocation}")
+    LaunchedEffect(location.value) {
+        Log.d(
+            "AuthDebug",
+            "Latitude=${location.value.latitude}, Longitude=${location.value.longitude}"
+        )
     }
 
     Box(

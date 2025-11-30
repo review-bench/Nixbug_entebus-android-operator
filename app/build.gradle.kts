@@ -102,4 +102,3 @@ tasks.register<Exec>("generateApiClient") {
         "--global-property", "apiTests=false,modelTests=false"
     )
 }
-

@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.R
 import com.nixbug.entebus.presentation.components.DialogBox
+import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @Composable
@@ -50,6 +51,9 @@ fun LocationRequest(
     var showDialog by remember { mutableStateOf(false) }
     var showLoader by remember { mutableStateOf(false) }
     val uiState = viewModel.uiState.collectAsState()
+    var openedSettings by remember { mutableStateOf(false) }
+
+
 
     LaunchedEffect(uiState.value.data?.latitude, uiState.value.data?.longitude) {
         Log.d(
@@ -67,7 +71,13 @@ fun LocationRequest(
             hasPermission = granted
             when {
                 granted -> {
-                    Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
+                    showLoader = true
+                    viewModel.fetchLocationIfNeeded(
+                        onSuccess = {},
+                        onError = { error ->
+                            showLoader = false
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        })
                 }
 
                 LocationPermissionHelper.isPermanentlyDenied(activity) -> {
@@ -79,8 +89,7 @@ fun LocationRequest(
                         context,
                         "Please enable the location access!",
                         Toast.LENGTH_SHORT
-                    )
-                        .show()
+                    ).show()
                 }
             }
         }
@@ -88,22 +97,18 @@ fun LocationRequest(
     // Automatically navigate to the Auth screen when the user grants location permission
     // after returning from the app settings
     val lifecycleOwner = LocalLifecycleOwner.current
-
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
+            if (event == Lifecycle.Event.ON_RESUME && openedSettings) {
+                openedSettings = false
                 if (LocationPermissionHelper.isPermissionGranted(context) &&
-                    navController.currentDestination?.route != "authScreen"
+                    navController.currentDestination?.route != AppNavItem.Auth.route
                 ) {
                     showLoader = true
                     viewModel.fetchLocationIfNeeded(
-                        onSuccess = {
-                            showLoader = false
-                            navController.navigate("authScreen") {
-                                popUpTo("locationRequest") { inclusive = true }
-                            }
-                        },
+                        onSuccess = {},
                         onError = { error ->
+                            showLoader = false
                             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                         }
                     )
@@ -111,7 +116,6 @@ fun LocationRequest(
             }
         }
 
-        // attach observer correctly
         lifecycleOwner.lifecycle.addObserver(observer)
 
         onDispose {
@@ -126,6 +130,7 @@ fun LocationRequest(
             confirmText = "Open Settings",
             onConfirmClick = {
                 LocationPermissionHelper.openAppSettings(context)
+                openedSettings = true
                 showDialog = false
             },
             dismissible = false,
@@ -230,4 +235,3 @@ fun LocationRequest(
         }
     }
 }
-

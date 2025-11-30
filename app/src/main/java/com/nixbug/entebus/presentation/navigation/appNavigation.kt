@@ -35,10 +35,7 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
             )
         )
     }
-
-
     val locationState = viewModel.locationState.collectAsState()
-
 
     // Recheck location permission whenever the user returns to the app
     // (e.g., after manually changing permission settings)
@@ -91,7 +88,7 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
             Auth()
         }
         composable(AppNavItem.LocationRequest.route) {
-            LocationRequest(navController = navController,activity=activity)
+            LocationRequest(navController = navController, activity = activity)
         }
     }
 }

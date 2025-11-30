@@ -33,8 +33,6 @@ class LocationRequestViewModel @Inject constructor(
             UIState()
         )
 
-    private var hasFetchedOnce = false
-
     fun fetchLocationIfNeeded(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
@@ -43,9 +41,6 @@ class LocationRequestViewModel @Inject constructor(
 
         if (state.isLoading) return
         if (state.data?.hasLocation == true) return
-        if (hasFetchedOnce) return
-
-        hasFetchedOnce = true
 
         locationHelper.fetchCurrentLocation(
             onSuccess = { loc ->
