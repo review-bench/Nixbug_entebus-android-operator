@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -231,10 +230,6 @@ fun ServiceCard(service: HomeUiModel, onClick: (HomeUiModel) -> Unit, isSelected
             modifier = Modifier
                 .padding(15.dp)
         ) {
-
-            // -------------------------------------------------------------
-            // TOP ROW → Route (left) + Arrow (right)
-            // -------------------------------------------------------------
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -245,8 +240,7 @@ fun ServiceCard(service: HomeUiModel, onClick: (HomeUiModel) -> Unit, isSelected
                     text = service.route,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp,
-                    modifier = Modifier.
-                    padding(start = 3.dp)
+                    modifier = Modifier.padding(start = 3.dp)
                 )
 
                 Box(
@@ -267,11 +261,6 @@ fun ServiceCard(service: HomeUiModel, onClick: (HomeUiModel) -> Unit, isSelected
                 }
             }
 
-//            Spacer(Modifier.height(5.dp))
-
-            // -------------------------------------------------------------
-            // DATE + TIME ROW
-            // -------------------------------------------------------------
             Row(verticalAlignment = Alignment.CenterVertically) {
 
                 Icon(
@@ -303,9 +292,6 @@ fun ServiceCard(service: HomeUiModel, onClick: (HomeUiModel) -> Unit, isSelected
 
             Spacer(Modifier.height(7.dp))
 
-            // -------------------------------------------------------------
-            // REG NO ROW
-            // -------------------------------------------------------------
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Filled.DirectionsBus,
@@ -321,9 +307,7 @@ fun ServiceCard(service: HomeUiModel, onClick: (HomeUiModel) -> Unit, isSelected
             }
         }
     }
-
 }
-
 
 @Composable
 fun ServiceStartButton(selectedService: HomeUiModel?, viewModel: HomeScreenViewModel) {

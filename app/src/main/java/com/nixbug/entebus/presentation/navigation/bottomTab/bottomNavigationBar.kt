@@ -38,13 +38,19 @@ fun BottomNavigationBar(navController: NavHostController) {
                         restoreState = true
                     }
                 },
-                icon = { Icon(item.icon, contentDescription = item.label,modifier = Modifier.size(22.dp)) },
-                label = { Text(item.label,fontSize = 12.sp) },
+                icon = {
+                    Icon(
+                        item.icon,
+                        contentDescription = item.label,
+                        modifier = Modifier.size(22.dp)
+                    )
+                },
+                label = { Text(item.label, fontSize = 12.sp) },
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = Color(0xFF8BC34A),
                     selectedIconColor = Color.White,
                     unselectedIconColor = Color.Black,
-                    selectedTextColor =  Color(0xFF8BC34A),
+                    selectedTextColor = Color(0xFF8BC34A),
                     unselectedTextColor = Color.Black
                 )
             )

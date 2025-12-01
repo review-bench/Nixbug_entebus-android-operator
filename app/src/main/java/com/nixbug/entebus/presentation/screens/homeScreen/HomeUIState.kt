@@ -16,4 +16,3 @@ data class HomeUIState(
         HomeUiModel(8,"KOLLAM -> KARUNAGAPPALLY", "28/10/2025", "04:30 PM", "KL02BT9268")
     )
 )
-

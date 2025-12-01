@@ -12,10 +12,6 @@ class HomeScreenViewModel : ViewModel() {
     var selectedService: HomeUiModel? = null
         private set
 
-    fun toggleServiceSelection(service: HomeUiModel) {
-        selectedService = if (selectedService == service) null else service
-    }
-
     fun canSelectService(): Boolean {
         return _uiState.value.currentService == null
     }
@@ -36,10 +32,7 @@ class HomeScreenViewModel : ViewModel() {
             )
         }
 
-        // After starting a service, clear selection
         this.selectedService = null
         return true
     }
 }
-
-

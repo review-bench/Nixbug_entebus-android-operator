@@ -86,7 +86,6 @@ fun LocationRequest(
             }
         }
 
-
     // Automatically navigate to the Auth screen when the user grants location permission
     // after returning from the app settings
     val lifecycleOwner = LocalLifecycleOwner.current
