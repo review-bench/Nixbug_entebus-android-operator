@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.android.splashScreen)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
@@ -102,4 +103,3 @@ tasks.register<Exec>("generateApiClient") {
         "--global-property", "apiTests=false,modelTests=false"
     )
 }
-

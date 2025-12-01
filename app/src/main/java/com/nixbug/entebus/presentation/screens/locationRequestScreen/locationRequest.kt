@@ -34,12 +34,8 @@ import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @Composable
-fun LocationRequest(
-    navController: NavHostController,
-    viewModel: LocationRequestViewModel = hiltViewModel()
-) {
+fun LocationRequest(navController: NavHostController, activity: Activity,    viewModel: LocationRequestViewModel = hiltViewModel()) {
     val context = LocalContext.current
-    val activity = context as Activity
     var hasPermission by remember {
         mutableStateOf(
             LocationPermissionHelper.isPermissionGranted(
@@ -92,20 +88,11 @@ fun LocationRequest(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                if (LocationPermissionHelper.isPermissionGranted(context)) {
-                    showLoader = true
-                    viewModel.fetchLocationIfNeeded(
-                        onSuccess = {
-                            showLoader = false
-                            navController.navigate("authScreen") {
-                                popUpTo("locationRequest") { inclusive = true }
-                            }
-                        },
-                        onError = { error ->
-                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                        }
-                    )
-
+                if (LocationPermissionHelper.isPermissionGranted(context) &&
+                    navController.currentDestination?.route != "authScreen"
+                ) {
+                    Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
+                    navController.navigate("authScreen")
                 }
             }
         }
@@ -203,14 +190,14 @@ fun LocationRequest(
                     )
                 } else {
 
-                    Icon(
-                        imageVector = Icons.Outlined.LocationOn,
-                        contentDescription = "Location Icon",
-                        tint = Color.White, // your blue color
-                        modifier = Modifier.size(20.dp)
-                    )
+                Icon(
+                    imageVector = Icons.Outlined.LocationOn,
+                    contentDescription = "Location Icon",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
                         text = "Allow Location Access",

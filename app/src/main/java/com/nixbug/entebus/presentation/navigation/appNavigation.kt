@@ -1,5 +1,7 @@
 package com.nixbug.entebus.presentation.navigation
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -21,8 +23,9 @@ import com.nixbug.entebus.presentation.screens.authScreen.Auth
 import com.nixbug.entebus.presentation.screens.mainScreen.MainScreen
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
+@SuppressLint("ContextCastToActivity")
 @Composable
-fun AppNavigation(viewModel: AppNavigationViewModel = hiltViewModel()) {
+fun AppNavigation(activity: Activity,viewModel: AppNavigationViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     val isLoggedIn = false
     val context = LocalContext.current
