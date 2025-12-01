@@ -91,8 +91,7 @@ fun LocationRequest(navController: NavHostController, activity: Activity,    vie
                 if (LocationPermissionHelper.isPermissionGranted(context) &&
                     navController.currentDestination?.route != "authScreen"
                 ) {
-                    Toast.makeText(context, "Permission granted!", Toast.LENGTH_SHORT).show()
-                    navController.navigate("authScreen")
+                    viewModel.fetchLocationIfNeeded(onSuccess = {}, onError = {})
                 }
             }
         }

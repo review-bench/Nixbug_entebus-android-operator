@@ -36,8 +36,8 @@ class AuthViewModel @Inject constructor( getLocationUseCase: GetLocationUseCase)
                 companySearchQuery = company,
                 expanded = false
             )
-    }
         }
+    }
 
     init {
         // Collect the location flow and log changes

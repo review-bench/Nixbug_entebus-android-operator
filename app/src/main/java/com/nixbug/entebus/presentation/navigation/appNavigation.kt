@@ -68,7 +68,7 @@ fun AppNavigation(activity: Activity,viewModel: AppNavigationViewModel = hiltVie
     }
 
     if (locationState.value.isLoading) {
-        return  // Or show a splash screen
+        return
     }
 
     val locationData = locationState.value.data
@@ -89,7 +89,7 @@ fun AppNavigation(activity: Activity,viewModel: AppNavigationViewModel = hiltVie
             Auth(navController = navController)
         }
         composable("locationRequestScreen") {
-            LocationRequest(navController = navController)
+            LocationRequest(navController = navController,activity=activity)
         }
         composable("main") {
             MainScreen()
