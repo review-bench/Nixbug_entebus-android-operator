@@ -129,12 +129,12 @@ fun LocationRequest(navController: NavHostController, activity: Activity) {
 
             Text(
                 text = "Enable Location Access",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineSmall,
                 color = Color(0xFF1E1E1E),
                 modifier = Modifier.padding(top = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(15.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = "We use your location to show nearby companies and track buses in real time. Your data stays private and secure.",
