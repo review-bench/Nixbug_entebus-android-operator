@@ -7,8 +7,52 @@ import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 
+/**
+ * Utility class for fetching the device's current location using the Fused Location Provider.
+ *
+ * This class provides a simple interface to request the current location with high accuracy.
+ * It handles permission checks externally and returns the result via callbacks.
+ *
+ * @param context The context used to initialize the FusedLocationProviderClient. Typically, this should be an Activity or Application context.
+ *
+ * Usage example:
+ * ```
+ * val locationHelper = LocationHelper(context)
+ * locationHelper.fetchCurrentLocation(
+ *     onSuccess = { location ->
+ *         // Use the location object
+ *     },
+ *     onError = { errorMsg ->
+ *         // Handle the error
+ *     }
+ * )
+ * ```
+ */
+
 class LocationHelper(context: Context) {
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+    /**
+     * Fetches the device's current location using the Fused Location Provider.
+     *
+     * This method requests a single high-accuracy location update. It expects that
+     * location permissions (`ACCESS_FINE_LOCATION` and/or `ACCESS_COARSE_LOCATION`)
+     * have already been granted by the caller.
+     *
+     * The `@SuppressLint("MissingPermission")` annotation is used because this method
+     * does not perform permission checks internally—it relies on the caller to handle
+     * permission validation before invoking this function.
+     *
+     * @param onSuccess Callback invoked with a valid [Location] object when the
+     *                  current location is successfully obtained.
+     * @param onError Callback invoked with an error message if the location request
+     *                fails or returns `null` (e.g., when GPS is turned off).
+     *
+     * Behavior:
+     * - Requests a high-accuracy location using [CurrentLocationRequest].
+     * - Has a timeout duration of 5 seconds.
+     * - If no location is retrieved, it triggers `onError`.
+     */
 
     @SuppressLint("MissingPermission")
     fun fetchCurrentLocation(
@@ -26,7 +70,7 @@ class LocationHelper(context: Context) {
                 if (loc != null) {
                     onSuccess(loc)
                 } else {
-                    onError("Please Enable GPS.")
+                    onError("Unable to get current location. Please ensure location services are enabled.")
                 }
             }
             .addOnFailureListener {

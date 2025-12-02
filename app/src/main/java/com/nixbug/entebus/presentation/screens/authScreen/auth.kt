@@ -67,15 +67,6 @@ fun Auth(viewModel: AuthViewModel = hiltViewModel()) {
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
 
-    val location = viewModel.location.collectAsState()
-
-    LaunchedEffect(location.value) {
-        Log.d(
-            "AuthDebug",
-            "Latitude=${location.value.latitude}, Longitude=${location.value.longitude}"
-        )
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()

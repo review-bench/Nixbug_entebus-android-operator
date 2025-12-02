@@ -9,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
@@ -53,15 +52,6 @@ fun LocationRequest(
     val uiState = viewModel.uiState.collectAsState()
     var openedSettings by remember { mutableStateOf(false) }
 
-
-
-    LaunchedEffect(uiState.value.data?.latitude, uiState.value.data?.longitude) {
-        Log.d(
-            "LocationDebug",
-            "Latitude: ${uiState.value.data?.latitude},Longitude: ${uiState.value.data?.longitude}"
-        )
-    }
-
     // Permission launcher to display the system's default location permission dialog
     val permissionLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestMultiplePermissions())
@@ -73,7 +63,7 @@ fun LocationRequest(
                 granted -> {
                     showLoader = true
                     viewModel.fetchLocationIfNeeded(
-                        onSuccess = {},
+                        onSuccess = { showLoader = false },
                         onError = { error ->
                             showLoader = false
                             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
@@ -106,7 +96,7 @@ fun LocationRequest(
                 ) {
                     showLoader = true
                     viewModel.fetchLocationIfNeeded(
-                        onSuccess = {},
+                        onSuccess = { showLoader = false },
                         onError = { error ->
                             showLoader = false
                             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()

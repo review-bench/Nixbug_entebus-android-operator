@@ -29,7 +29,7 @@ class LocationRequestViewModel @Inject constructor(
         .map { UIState(it, false) }
         .stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(),
+            SharingStarted.WhileSubscribed(5000),
             UIState()
         )
 
@@ -46,8 +46,8 @@ class LocationRequestViewModel @Inject constructor(
             onSuccess = { loc ->
                 viewModelScope.launch {
                     saveLocationUseCase(loc.latitude, loc.longitude)
+                    onSuccess()
                 }
-                onSuccess()
             },
             onError = { err ->
                 onError(err)

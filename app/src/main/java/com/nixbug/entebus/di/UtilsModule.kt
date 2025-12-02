@@ -15,5 +15,6 @@ object UtilsModule {
 
     @Provides
     @Singleton
-    fun provideUtils(@ApplicationContext context: Context): LocationHelper = LocationHelper(context)
+    fun provideLocationHelper(@ApplicationContext context: Context): LocationHelper =
+        LocationHelper(context)
 }

@@ -22,21 +22,6 @@ class AuthViewModel @Inject constructor(getLocationUseCase: GetLocationUseCase) 
     val location = getLocationUseCase()
         .stateIn(viewModelScope, SharingStarted.Eagerly, LocationData(null, null, false))
 
-    init {
-        viewModelScope.launch {
-            Log.d(
-                "AuthDebug_VM",
-                "Initial => ${location.value.latitude}, ${location.value.longitude}"
-            )
-
-            viewModelScope.launch {
-                location.collect { loc ->
-                    Log.d("AuthDebug_VM", "Updated => ${loc.latitude}, ${loc.longitude}")
-                }
-            }
-        }
-    }
-
     fun onCompanyQueryChange(value: String) {
         _uiState.update { it.copy(companySearchQuery = value, expanded = true) }
         if (value.isBlank()) {

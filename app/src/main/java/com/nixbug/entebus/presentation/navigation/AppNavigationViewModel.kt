@@ -19,10 +19,10 @@ class AppNavigationViewModel @Inject constructor(
 ) : ViewModel() {
 
     val locationState = getLocationUseCase()
-        .map { LocationState(it, false) } // loaded
+        .map { LocationState(it, false) }
         .stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(),
+            SharingStarted.WhileSubscribed(5000),
             LocationState() // initial: loading = true
         )
 }
