@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
+import com.nixbug.entebus.data.local.dataStore.model.LocationDataEntity
 import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore("location_prefs")
@@ -28,12 +29,6 @@ class LocationPreferences(private val context: Context) {
         val lat = prefs[LATITUDE]
         val lon = prefs[LONGITUDE]
         val hasLocation = prefs[HAS_LOCATION] ?: false
-        LocationData(lat, lon, hasLocation)
+        LocationDataEntity(lat, lon, hasLocation)
     }
 }
-
-data class LocationData(
-    val latitude: Double?,
-    val longitude: Double?,
-    val hasLocation: Boolean
-)
