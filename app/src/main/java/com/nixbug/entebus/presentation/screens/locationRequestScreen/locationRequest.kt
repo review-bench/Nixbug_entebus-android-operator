@@ -2,7 +2,6 @@ package com.nixbug.entebus.presentation.screens.locationRequestScreen
 
 import android.Manifest
 import android.app.Activity
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,7 +48,6 @@ fun LocationRequest(
     }
     var showDialog by remember { mutableStateOf(false) }
     var showLoader by remember { mutableStateOf(false) }
-    val uiState = viewModel.uiState.collectAsState()
     var openedSettings by remember { mutableStateOf(false) }
 
     // Permission launcher to display the system's default location permission dialog
@@ -188,6 +186,7 @@ fun LocationRequest(
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(12.dp),
+            enabled = !showLoader,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D6EFD))
         ) {
 
@@ -221,7 +220,6 @@ fun LocationRequest(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

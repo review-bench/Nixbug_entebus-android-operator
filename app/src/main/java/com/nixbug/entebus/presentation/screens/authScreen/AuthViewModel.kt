@@ -1,6 +1,5 @@
 package com.nixbug.entebus.presentation.screens.authScreen
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.data.local.dataStore.LocationData
@@ -11,7 +10,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,6 +17,7 @@ class AuthViewModel @Inject constructor(getLocationUseCase: GetLocationUseCase) 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
+    // TODO: Use the `location` StateFlow in AuthScreen when location-based logic is implemented.
     val location = getLocationUseCase()
         .stateIn(viewModelScope, SharingStarted.Eagerly, LocationData(null, null, false))
 
