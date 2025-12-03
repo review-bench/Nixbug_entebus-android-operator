@@ -21,8 +21,12 @@ class LocationRequestViewModel @Inject constructor(
         locationHelper.fetchCurrentLocation(
             onSuccess = { loc ->
                 viewModelScope.launch {
-                    saveLocationUseCase(loc.latitude, loc.longitude)
-                    onSuccess()
+                    try {
+                        saveLocationUseCase(loc.latitude, loc.longitude)
+                        onSuccess()
+                    } catch (e: Exception) {
+                        onError(e.message ?: "Failed to save location")
+                    }
                 }
             },
             onError = { err ->
