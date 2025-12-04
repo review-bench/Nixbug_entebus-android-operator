@@ -52,6 +52,13 @@ class LocationHelper(context: Context) {
      * - Requests a high-accuracy location using [CurrentLocationRequest].
      * - Has a timeout duration of 5 seconds.
      * - If no location is retrieved, it triggers `onError`.
+     *
+     * Possible failure scenarios:
+     * - Location services are disabled on the device
+     * - Request times out after 5 seconds
+     * - Location provider encounters an error
+     *
+     * @throws SecurityException if permissions are not granted (suppressed via annotation)
      */
 
     @SuppressLint("MissingPermission")
@@ -62,7 +69,7 @@ class LocationHelper(context: Context) {
         val request = CurrentLocationRequest.Builder()
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .setMaxUpdateAgeMillis(0)
-            .setDurationMillis(5000)
+            .setDurationMillis(10000)
             .build()
 
         fusedLocationClient.getCurrentLocation(request, null)

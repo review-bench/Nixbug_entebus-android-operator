@@ -1,7 +1,6 @@
 package com.nixbug.entebus.data.local.dataStore
 
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
@@ -14,14 +13,12 @@ class LocationPreferences(private val context: Context) {
     companion object {
         val LATITUDE = doublePreferencesKey("latitude")
         val LONGITUDE = doublePreferencesKey("longitude")
-        val HAS_LOCATION = booleanPreferencesKey("has_location")
     }
 
     suspend fun saveLocation(lat: Double, lon: Double) {
         context.dataStore.edit { prefs ->
             prefs[LATITUDE] = lat
             prefs[LONGITUDE] = lon
-            prefs[HAS_LOCATION] = true
         }
     }
 

@@ -19,7 +19,7 @@ class AuthViewModel @Inject constructor(getLocationUseCase: GetLocationUseCase) 
 
     // TODO: Use the `location` StateFlow in AuthScreen when location-based logic is implemented.
     val location = getLocationUseCase()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, LocationData(null, null))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LocationData(null, null))
 
     fun onCompanyQueryChange(value: String) {
         _uiState.update { it.copy(companySearchQuery = value, expanded = true) }

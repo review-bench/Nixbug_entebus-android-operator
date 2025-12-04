@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,15 +74,19 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
     val locationData = locationState.value.data
     val hasLocation = locationData?.hasLocation == true
 
-    val startDestination = when {
-        !hasPermission -> AppNavItem.LocationRequest.route
-        !hasLocation -> AppNavItem.LocationRequest.route
-        else -> AppNavItem.Auth.route
+    LaunchedEffect(hasPermission, hasLocation) {
+        val currentRoute = navController.currentBackStackEntry?.destination?.route
+        if (hasPermission && hasLocation && currentRoute == AppNavItem.LocationRequest.route) {
+            navController.navigate(AppNavItem.Auth.route) {
+                popUpTo(AppNavItem.LocationRequest.route) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
     }
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = AppNavItem.LocationRequest.route
     )
     {
         composable(AppNavItem.Auth.route) {
