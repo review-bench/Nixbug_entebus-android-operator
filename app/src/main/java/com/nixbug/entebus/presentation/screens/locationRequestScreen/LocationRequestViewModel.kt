@@ -14,10 +14,15 @@ class LocationRequestViewModel @Inject constructor(
     private val locationHelper: LocationHelper
 ) : ViewModel() {
 
+    private var isFetching = false
+
     fun fetchLocationIfNeeded(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        if (isFetching) return
+        isFetching = true
+
         locationHelper.fetchCurrentLocation(
             onSuccess = { loc ->
                 viewModelScope.launch {
@@ -26,11 +31,14 @@ class LocationRequestViewModel @Inject constructor(
                         onSuccess()
                     } catch (e: Exception) {
                         onError(e.message ?: "Failed to save location")
+                    } finally {
+                        isFetching = false
                     }
                 }
             },
             onError = { err ->
                 onError(err)
+                isFetching = false
             }
         )
     }

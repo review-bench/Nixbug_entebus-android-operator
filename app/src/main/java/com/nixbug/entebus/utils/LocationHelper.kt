@@ -62,7 +62,7 @@ class LocationHelper(context: Context) {
         val request = CurrentLocationRequest.Builder()
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .setMaxUpdateAgeMillis(0)
-            .setDurationMillis(5000) // timeout
+            .setDurationMillis(5000)
             .build()
 
         fusedLocationClient.getCurrentLocation(request, null)

@@ -18,7 +18,6 @@ class LocationRepositoryImpl @Inject constructor(private val prefs: LocationPref
             LocationData(
                 latitude = entity.latitude,
                 longitude = entity.longitude,
-                hasLocation = entity.hasLocation
             )
         }
     }

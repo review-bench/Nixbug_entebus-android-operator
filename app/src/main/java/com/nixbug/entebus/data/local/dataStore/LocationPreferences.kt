@@ -28,7 +28,6 @@ class LocationPreferences(private val context: Context) {
     fun getLocation() = context.dataStore.data.map { prefs ->
         val lat = prefs[LATITUDE]
         val lon = prefs[LONGITUDE]
-        val hasLocation = prefs[HAS_LOCATION] ?: false
-        LocationDataEntity(lat, lon, hasLocation)
+        LocationDataEntity(lat, lon)
     }
 }
