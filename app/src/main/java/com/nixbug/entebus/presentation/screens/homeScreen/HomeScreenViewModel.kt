@@ -4,8 +4,11 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -16,18 +19,23 @@ class HomeScreenViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUIState())
     val uiState: MutableStateFlow<HomeUIState> = _uiState
 
-    fun onResumeService(service: HomeUiModel){
+    private val _events = MutableSharedFlow<HomeUiEvent>()
+    val events = _events
+
+
+    fun onResumeService(service: HomeUiModel) {
         Log.d("HomeViewModel", "Navigate to Ticket Screen")
     }
 
-    fun onStartAssigned(service: HomeUiModel){
+    fun onStartAssigned(service: HomeUiModel) {
         if (_uiState.value.ongoingService != null) {
-            Log.d("HomeViewModel", "Service already running")
+            viewModelScope.launch {
+                _events.emit(HomeUiEvent.ServiceAlreadyRunning)
+            }
             return
         }
         _uiState.update { state ->
             val newAssigned = state.assignedServiceList.filter { it.id != service.id }
-
             state.copy(
                 ongoingService = service,
                 assignedServiceList = newAssigned,
@@ -35,9 +43,11 @@ class HomeScreenViewModel : ViewModel() {
         }
     }
 
-    fun onStartDownloaded(service: HomeUiModel){
+    fun onStartDownloaded(service: HomeUiModel) {
         if (_uiState.value.ongoingService != null) {
-            Log.d("HomeViewModel", "Service already running")
+            viewModelScope.launch {
+                _events.emit(HomeUiEvent.ServiceAlreadyRunning)
+            }
             return
         }
         _uiState.update { state ->
@@ -50,7 +60,7 @@ class HomeScreenViewModel : ViewModel() {
         }
     }
 
-    fun onDownloadService(service: HomeUiModel){
+    fun onDownloadService(service: HomeUiModel) {
         _uiState.update { state ->
             val newOtherServices = state.otherServiceList.filter { it.id != service.id }
             state.copy(
@@ -61,16 +71,12 @@ class HomeScreenViewModel : ViewModel() {
     }
 
     fun extractRouteName(fullName: String): String {
-        // Remove prefix date + time
         val noDateTime = fullName.replace(
-            Regex("""^\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}\s*(AM|PM)\s*"""),
-            ""
+            Regex("""^\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}\s*(AM|PM)\s*"""), ""
         )
 
-        // Remove last bracket (reg no)
         val noReg = noDateTime.replace(
-            Regex("""\s*\([^)]*\)\s*$"""),
-            ""
+            Regex("""\s*\([^)]*\)\s*$"""), ""
         )
 
         return noReg.trim()
@@ -83,8 +89,7 @@ class HomeScreenViewModel : ViewModel() {
         val dateTime = instant.atZone(istZone)
 
         val date = dateTime.toLocalDate()
-        val time = dateTime.toLocalTime()
-            .format(DateTimeFormatter.ofPattern("hh:mm a"))
+        val time = dateTime.toLocalTime().format(DateTimeFormatter.ofPattern("hh:mm a"))
 
         val today = LocalDate.now(istZone)
         val yesterday = today.minusDays(1)
@@ -97,6 +102,24 @@ class HomeScreenViewModel : ViewModel() {
             else -> date.format(DateTimeFormatter.ofPattern("MMM dd yyyy"))
         }
         return Pair(dateLabel, time)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun canStartService(startingAtUtc: String): Boolean {
+        val instant = Instant.parse(startingAtUtc)
+
+        // Convert service time to IST
+        val istZone = ZoneId.of("Asia/Kolkata")
+        val serviceTimeIst = instant.atZone(istZone)
+
+        // Now time in IST
+        val nowIst = Instant.now().atZone(istZone)
+
+        // Difference in minutes
+        val diffMinutes = java.time.Duration.between(nowIst, serviceTimeIst).toMinutes()
+
+        // Service should be allowed only if starting time is within next 60 minutes
+        return diffMinutes <= 60
     }
 
 

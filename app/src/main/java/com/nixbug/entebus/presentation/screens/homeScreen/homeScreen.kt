@@ -1,6 +1,7 @@
 package com.nixbug.entebus.presentation.screens.homeScreen
 
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -61,6 +63,16 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
         it.regNo.contains(searchQuery, ignoreCase = true)
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                HomeUiEvent.ServiceAlreadyRunning -> {
+                    Toast.makeText(context, "A service is already running", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        }
+    }
 
 
     Box {
@@ -210,7 +222,7 @@ fun ServiceList(
                     SectionHeader("Other Services")
                     SearchBar(query = searchQuery, onChange = onSearchChange)
                 }
-                Spacer(modifier= Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(15.dp))
             }
             items(otherServices) { service ->
                 ServiceCard(
@@ -253,6 +265,13 @@ fun ServiceCard(
     viewModel: HomeScreenViewModel
 ) {
     val (date, time) = viewModel.convertUtcToIst(service.starting_at)
+    val isEnabled =
+        when (cardType) {
+            CardType.ASSIGNED, CardType.DOWNLOADED ->
+                viewModel.canStartService(service.starting_at)
+
+            else -> true
+        }
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -342,7 +361,7 @@ fun ServiceCard(
                     //-------------- START/DOWNLOAD BUTTON ----------------------//
                     if (cardType != CardType.ONGOING) {
                         Spacer(Modifier.height(10.dp))
-                        SmallCardButton(cardType, onActionClick)
+                        SmallCardButton(cardType, onActionClick, enabled = isEnabled)
                     }
                 }
 
@@ -359,7 +378,7 @@ fun ServiceCard(
 }
 
 @Composable
-fun SmallCardButton(cardType: CardType, onClick: () -> Unit) {
+fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
 
     val text = when (cardType) {
         CardType.ASSIGNED -> "Start"
@@ -370,10 +389,14 @@ fun SmallCardButton(cardType: CardType, onClick: () -> Unit) {
 
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = Modifier
             .height(35.dp)
             .width(95.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8BC34A)),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF8BC34A),
+            disabledContainerColor = Color(0x5B9BDA54)
+        ),
         shape = RoundedCornerShape(10.dp),
         contentPadding = PaddingValues(0.dp)
     ) {
@@ -400,9 +423,10 @@ fun SearchBar(query: String, onChange: (String) -> Unit) {
     OutlinedTextField(
         value = query,
         onValueChange = onChange,
-        label = { Text("Search Reg Number", fontSize =12.sp) },
+        label = { Text("Search Reg Number", fontSize = 12.sp) },
         singleLine = true,
-        modifier = Modifier.width(200.dp)
+        modifier = Modifier
+            .width(200.dp)
             .height(60.dp),
         shape = RoundedCornerShape(12.dp)
     )

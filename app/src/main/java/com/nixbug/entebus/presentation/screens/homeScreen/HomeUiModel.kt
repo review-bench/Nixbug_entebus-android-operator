@@ -72,3 +72,7 @@ data class TicketType(
 enum class CardType {
     ONGOING, ASSIGNED, DOWNLOADED, OTHER
 }
+
+sealed class HomeUiEvent {
+    data object ServiceAlreadyRunning : HomeUiEvent()
+}
