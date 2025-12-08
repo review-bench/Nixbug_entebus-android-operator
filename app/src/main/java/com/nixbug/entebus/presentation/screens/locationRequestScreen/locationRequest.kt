@@ -175,6 +175,16 @@ fun LocationRequest(
 
         Button(
             onClick = {
+                if (hasPermission) {
+                    showLoader = true
+                    viewModel.fetchLocationIfNeeded(
+                        onSuccess = { showLoader = false },
+                        onError = { error ->
+                            showLoader = false
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        })
+                    return@Button
+                }
                 permissionLauncher.launch(
                     arrayOf(
                         Manifest.permission.ACCESS_FINE_LOCATION,

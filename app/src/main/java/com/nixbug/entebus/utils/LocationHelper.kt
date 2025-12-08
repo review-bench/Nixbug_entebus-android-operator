@@ -50,7 +50,7 @@ class LocationHelper(context: Context) {
      *
      * Behavior:
      * - Requests a high-accuracy location using [CurrentLocationRequest].
-     * - Has a timeout duration of 5 seconds.
+     * - Has a timeout duration of 10 seconds.
      * - If no location is retrieved, it triggers `onError`.
      *
      * Possible failure scenarios:
