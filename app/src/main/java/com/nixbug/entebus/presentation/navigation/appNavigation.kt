@@ -4,11 +4,14 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -22,7 +25,7 @@ import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @SuppressLint("ContextCastToActivity")
 @Composable
-fun AppNavigation(activity: Activity) {
+fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     val isLoggedIn = false
     val context = LocalContext.current
@@ -33,6 +36,7 @@ fun AppNavigation(activity: Activity) {
             )
         )
     }
+    val locationState = viewModel.locationState.collectAsState()
 
     // Recheck location permission whenever the user returns to the app
     // (e.g., after manually changing permission settings)
@@ -63,9 +67,27 @@ fun AppNavigation(activity: Activity) {
         )
     }
 
+    if (locationState.value.isLoading) {
+        return
+    }
+
+    val locationData = locationState.value.data
+    val hasLocation = locationData?.hasLocation == true
+
+    LaunchedEffect(hasPermission, hasLocation) {
+        val currentRoute = navController.currentBackStackEntry?.destination?.route
+        if (currentRoute != AppNavItem.LocationRequest.route) return@LaunchedEffect
+        if (hasPermission && hasLocation) {
+            navController.navigate(AppNavItem.Auth.route) {
+                popUpTo(AppNavItem.LocationRequest.route) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
-        startDestination = if (hasPermission) AppNavItem.Auth.route else AppNavItem.LocationRequest.route
+        startDestination = if (hasPermission && hasLocation) AppNavItem.Auth.route else AppNavItem.LocationRequest.route
     )
     {
         composable(AppNavItem.Auth.route) {

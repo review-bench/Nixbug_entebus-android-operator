@@ -1,13 +1,25 @@
 package com.nixbug.entebus.presentation.screens.authScreen
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.LocationData
+import com.nixbug.entebus.domain.usecase.GetLocationUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import javax.inject.Inject
 
-class AuthViewModel : ViewModel() {
+@HiltViewModel
+class AuthViewModel @Inject constructor(getLocationUseCase: GetLocationUseCase) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
+
+    // TODO: Use the `location` StateFlow in AuthScreen when location-based logic is implemented.
+    val location = getLocationUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LocationData(null, null))
 
     fun onCompanyQueryChange(value: String) {
         _uiState.update { it.copy(companySearchQuery = value, expanded = true) }
