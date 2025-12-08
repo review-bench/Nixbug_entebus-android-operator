@@ -76,6 +76,7 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
 
     LaunchedEffect(hasPermission, hasLocation) {
         val currentRoute = navController.currentBackStackEntry?.destination?.route
+        if (currentRoute != AppNavItem.LocationRequest.route) return@LaunchedEffect
         if (hasPermission && hasLocation && currentRoute == AppNavItem.LocationRequest.route) {
             navController.navigate(AppNavItem.Auth.route) {
                 popUpTo(AppNavItem.LocationRequest.route) { inclusive = true }
@@ -86,7 +87,7 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
 
     NavHost(
         navController = navController,
-        startDestination = AppNavItem.LocationRequest.route
+        startDestination = if (hasPermission && hasLocation) AppNavItem.Auth.route else AppNavItem.LocationRequest.route
     )
     {
         composable(AppNavItem.Auth.route) {

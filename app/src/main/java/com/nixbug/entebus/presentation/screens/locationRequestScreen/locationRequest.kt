@@ -213,7 +213,7 @@ fun LocationRequest(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
-                        text = "Allow Location Access",
+                        text = if (hasPermission) "Fetch location" else "Allow Location Access",
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium

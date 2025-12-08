@@ -55,7 +55,7 @@ class LocationHelper(context: Context) {
      *
      * Possible failure scenarios:
      * - Location services are disabled on the device
-     * - Request times out after 5 seconds
+     * - Request times out after 10 seconds
      * - Location provider encounters an error
      *
      * @throws SecurityException if permissions are not granted (suppressed via annotation)
