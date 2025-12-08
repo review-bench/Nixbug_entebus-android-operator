@@ -77,7 +77,7 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
     LaunchedEffect(hasPermission, hasLocation) {
         val currentRoute = navController.currentBackStackEntry?.destination?.route
         if (currentRoute != AppNavItem.LocationRequest.route) return@LaunchedEffect
-        if (hasPermission && hasLocation && currentRoute == AppNavItem.LocationRequest.route) {
+        if (hasPermission && hasLocation) {
             navController.navigate(AppNavItem.Auth.route) {
                 popUpTo(AppNavItem.LocationRequest.route) { inclusive = true }
                 launchSingleTop = true
