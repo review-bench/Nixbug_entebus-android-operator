@@ -56,12 +56,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.nixbug.entebus.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Auth(viewModel: AuthViewModel = viewModel()) {
+fun Auth(viewModel: AuthViewModel = hiltViewModel()) {
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
