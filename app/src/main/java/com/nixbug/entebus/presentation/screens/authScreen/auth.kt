@@ -111,7 +111,6 @@ fun Auth(viewModel: AuthViewModel = hiltViewModel()) {
 
             Text(
                 text = "Sign in to your account",
-                fontSize = 18.sp,
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.Black.copy(alpha = 0.8f)
             )
@@ -303,7 +302,13 @@ fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, t
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        placeholder = { Text("Enter your password", style = MaterialTheme.typography.labelMedium,color = Color.Gray) },
+        placeholder = {
+            Text(
+                "Enter your password",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.Gray
+            )
+        },
         singleLine = true,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {

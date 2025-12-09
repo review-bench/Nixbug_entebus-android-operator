@@ -81,7 +81,6 @@ fun DialogBox(
 
                 if (showExitButton && onExitClick != null) {
                     Spacer(modifier = Modifier.height(12.dp))
-
                     OutlinedButton(
                         onClick = onExitClick,
                         modifier = Modifier
