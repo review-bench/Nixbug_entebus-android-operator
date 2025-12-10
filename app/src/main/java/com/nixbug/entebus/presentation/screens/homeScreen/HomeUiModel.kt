@@ -1,23 +1,51 @@
 package com.nixbug.entebus.presentation.screens.homeScreen
 
+import com.google.gson.annotations.SerializedName
+
 data class HomeUiModel(
     val id: Int,
-    val company_id: Int,
+
+    @SerializedName("company_id")
+    val companyId: Int,
+
     val name: String,
     val route: Route,
     val fare: Fare,
-    val bus_id: Int,
-    val ticket_mode: Int,
+
+    @SerializedName("bus_id")
+    val busId: Int,
+
+    @SerializedName("ticket_mode")
+    val ticketMode: Int,
+
     val status: Int,
-    val starting_at: String,
-    val ending_at: String,
+
+    @SerializedName("starting_at")
+    val startingAt: String,
+
+    @SerializedName("ending_at")
+    val endingAt: String,
+
     val remark: String?,
-    val started_on: String?,
-    val finished_on: String?,
-    val updated_on: String?,
-    val created_on: String,
-    val schedule_id: Int,
-    val public_key: String,
+
+    @SerializedName("started_on")
+    val startedOn: String?,
+
+    @SerializedName("finished_on")
+    val finishedOn: String?,
+
+    @SerializedName("updated_on")
+    val updatedOn: String?,
+
+    @SerializedName("created_on")
+    val createdOn: String,
+
+    @SerializedName("schedule_id")
+    val scheduleId: Int,
+
+    @SerializedName("public_key")
+    val publicKey: String,
+
     val regNo: String
 )
 
@@ -25,23 +53,48 @@ data class Route(
     val id: Int,
     val name: String,
     val status: Int,
+
     val landmark: List<RouteLandmark>,
-    val company_id: Int,
-    val created_on: String,
-    val start_time: String,
-    val updated_on: String?
+
+    @SerializedName("company_id")
+    val companyId: Int,
+
+    @SerializedName("created_on")
+    val createdOn: String,
+
+    @SerializedName("start_time")
+    val startTime: String,
+
+    @SerializedName("updated_on")
+    val updatedOn: String?
 )
 
 data class RouteLandmark(
     val id: Int,
-    val route_id: Int,
-    val company_id: Int,
-    val created_on: String,
-    val updated_on: String?,
-    val landmark_id: Int,
-    val arrival_delta: Int,
-    val departure_delta: Int,
-    val distance_from_start: Int
+
+    @SerializedName("route_id")
+    val routeId: Int,
+
+    @SerializedName("company_id")
+    val companyId: Int,
+
+    @SerializedName("created_on")
+    val createdOn: String,
+
+    @SerializedName("updated_on")
+    val updatedOn: String?,
+
+    @SerializedName("landmark_id")
+    val landmarkId: Int,
+
+    @SerializedName("arrival_delta")
+    val arrivalDelta: Int,
+
+    @SerializedName("departure_delta")
+    val departureDelta: Int,
+
+    @SerializedName("distance_from_start")
+    val distanceFromStart: Int
 )
 
 data class Fare(
@@ -50,18 +103,33 @@ data class Fare(
     val scope: Int,
     val version: Int,
     val function: String,
+
     val attributes: FareAttributes,
-    val company_id: Int,
-    val created_on: String,
-    val updated_on: String?
+
+    @SerializedName("company_id")
+    val companyId: Int,
+
+    @SerializedName("created_on")
+    val createdOn: String,
+
+    @SerializedName("updated_on")
+    val updatedOn: String?
 )
 
 data class FareAttributes(
     val extra: Map<String, Any>,
-    val df_version: Int,
-    val ticket_types: List<TicketType>,
-    val currency_type: String,
-    val distance_unit: String
+
+    @SerializedName("df_version")
+    val dfVersion: Int,
+
+    @SerializedName("ticket_types")
+    val ticketTypes: List<TicketType>,
+
+    @SerializedName("currency_type")
+    val currencyType: String,
+
+    @SerializedName("distance_unit")
+    val distanceUnit: String
 )
 
 data class TicketType(

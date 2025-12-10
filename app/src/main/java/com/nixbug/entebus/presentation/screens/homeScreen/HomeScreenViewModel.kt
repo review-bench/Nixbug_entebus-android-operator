@@ -1,7 +1,6 @@
 package com.nixbug.entebus.presentation.screens.homeScreen
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,9 +21,8 @@ class HomeScreenViewModel : ViewModel() {
     private val _events = MutableSharedFlow<HomeUiEvent>()
     val events = _events
 
-
     fun onResumeService(service: HomeUiModel) {
-        Log.d("HomeViewModel", "Navigate to Ticket Screen")
+        /* TODO: Handle Logic To Navigate To Ticket Page*/
     }
 
     fun onStartAssigned(service: HomeUiModel) {
@@ -108,19 +106,13 @@ class HomeScreenViewModel : ViewModel() {
     fun canStartService(startingAtUtc: String): Boolean {
         val instant = Instant.parse(startingAtUtc)
 
-        // Convert service time to IST
         val istZone = ZoneId.of("Asia/Kolkata")
         val serviceTimeIst = instant.atZone(istZone)
 
-        // Now time in IST
         val nowIst = Instant.now().atZone(istZone)
 
-        // Difference in minutes
         val diffMinutes = java.time.Duration.between(nowIst, serviceTimeIst).toMinutes()
 
-        // Service should be allowed only if starting time is within next 60 minutes
         return diffMinutes <= 60
     }
-
-
 }

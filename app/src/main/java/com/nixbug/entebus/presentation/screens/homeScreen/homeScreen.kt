@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -45,7 +48,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,9 +60,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
     val state = viewModel.uiState.collectAsState().value
-    var selectedService by remember { mutableStateOf<HomeUiModel?>(null) }
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
 
     val filteredOtherServices = state.otherServiceList.filter {
         it.regNo.contains(searchQuery, ignoreCase = true)
@@ -74,8 +79,15 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
         }
     }
 
-
-    Box {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                focusManager.clearFocus()
+            }) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopBar()
             ServiceList(
@@ -90,7 +102,9 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
                 searchQuery = searchQuery,
                 onSearchChange = { searchQuery = it },
                 viewModel = viewModel,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color.Transparent)
             )
         }
     }
@@ -157,7 +171,8 @@ fun ServiceList(
     LazyColumn(
         modifier = modifier
             .fillMaxHeight()
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 12.dp),
+        contentPadding = WindowInsets.ime.asPaddingValues()
     ) {
         item { Spacer(Modifier.height(12.dp)) }
 
@@ -210,20 +225,20 @@ fun ServiceList(
         }
 
         // ------------------ OTHER SERVICES ----------------------------------
-        if (otherServices.isNotEmpty()) {
-            item {
-                Row(
-                    Modifier
-                        .fillMaxWidth(),
-//                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    SectionHeader("Other Services")
-                    SearchBar(query = searchQuery, onChange = onSearchChange)
-                }
-                Spacer(modifier = Modifier.height(15.dp))
+        item(key = "search_bar") {
+            Row(
+                Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SectionHeader("Other Services")
+                SearchBar(query = searchQuery, onChange = onSearchChange)
             }
+            Spacer(modifier = Modifier.height(15.dp))
+        }
+
+        if (otherServices.isNotEmpty()) {
             items(otherServices) { service ->
                 ServiceCard(
                     service = service,
@@ -232,28 +247,23 @@ fun ServiceList(
                     viewModel = viewModel
                 )
             }
+        } else {
+            item {
+                Text(
+                    text = "No services available!",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    textAlign = TextAlign.Center
+
+                )
+            }
         }
 
         item { Spacer(Modifier.height(12.dp)) }
     }
-}
-
-
-@Composable
-fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
-    )
-}
-
-@Composable
-fun SectionDivider() {
-    Spacer(Modifier.height(12.dp))
-    HorizontalDivider(thickness = Dp.Hairline, color = Color.Black)
-    Spacer(Modifier.height(12.dp))
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -264,11 +274,11 @@ fun ServiceCard(
     onActionClick: () -> Unit,
     viewModel: HomeScreenViewModel
 ) {
-    val (date, time) = viewModel.convertUtcToIst(service.starting_at)
+    val (date, time) = viewModel.convertUtcToIst(service.startingAt)
     val isEnabled =
         when (cardType) {
             CardType.ASSIGNED, CardType.DOWNLOADED ->
-                viewModel.canStartService(service.starting_at)
+                viewModel.canStartService(service.startingAt)
 
             else -> true
         }
@@ -378,6 +388,20 @@ fun ServiceCard(
 }
 
 @Composable
+fun SearchBar(query: String, onChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onChange,
+        label = { Text("Search Reg Number", fontSize = 12.sp) },
+        singleLine = true,
+        modifier = Modifier
+            .width(200.dp)
+            .height(60.dp),
+        shape = RoundedCornerShape(12.dp)
+    )
+}
+
+@Composable
 fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
 
     val text = when (cardType) {
@@ -419,15 +443,18 @@ fun FullWidthActionButton(text: String, onClick: () -> Unit) {
 }
 
 @Composable
-fun SearchBar(query: String, onChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onChange,
-        label = { Text("Search Reg Number", fontSize = 12.sp) },
-        singleLine = true,
-        modifier = Modifier
-            .width(200.dp)
-            .height(60.dp),
-        shape = RoundedCornerShape(12.dp)
+fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
     )
+}
+
+@Composable
+fun SectionDivider() {
+    Spacer(Modifier.height(12.dp))
+    HorizontalDivider(thickness = Dp.Hairline, color = Color.Black)
+    Spacer(Modifier.height(12.dp))
 }
