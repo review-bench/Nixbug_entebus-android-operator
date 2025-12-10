@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -35,6 +36,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,6 +84,7 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(color = Color.White)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -279,14 +282,15 @@ fun ServiceCard(
         when (cardType) {
             CardType.ASSIGNED, CardType.DOWNLOADED ->
                 viewModel.canStartService(service.startingAt)
-
             else -> true
         }
     Card(
         modifier = Modifier
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (cardType == CardType.ONGOING) Color(0xFFDFF6DD) else Color.White
+            containerColor = if (cardType == CardType.ONGOING) Color(0xFFDFF6DD) else Color(
+                0xFFFAFAFA
+            )
         ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
@@ -384,7 +388,7 @@ fun ServiceCard(
             }
         }
     }
-    Spacer(modifier = Modifier.height(10.dp))
+    Spacer(modifier = Modifier.height(15.dp))
 }
 
 @Composable
@@ -392,12 +396,20 @@ fun SearchBar(query: String, onChange: (String) -> Unit) {
     OutlinedTextField(
         value = query,
         onValueChange = onChange,
-        label = { Text("Search Reg Number", fontSize = 12.sp) },
+        label = { Text("Search Reg Number", fontSize = 12.sp, color = Color.Gray) },
         singleLine = true,
         modifier = Modifier
             .width(200.dp)
-            .height(60.dp),
-        shape = RoundedCornerShape(12.dp)
+            .height(65.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black
+        ),
+        trailingIcon = {
+            Icon(imageVector = Icons.Filled.Search,contentDescription = "Show password")
+
+        }
     )
 }
 
@@ -448,7 +460,8 @@ fun SectionHeader(title: String) {
         text = title,
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
+        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+        color = Color.Black
     )
 }
 

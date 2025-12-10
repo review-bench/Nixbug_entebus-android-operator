@@ -174,7 +174,7 @@ data class HomeUIState(
             route = sampleHomeUiModel.route.copy(
                 name = "04:30 PM Kollam to Karunagappally"
             )
-        )
+        ),
     )
 )
 
