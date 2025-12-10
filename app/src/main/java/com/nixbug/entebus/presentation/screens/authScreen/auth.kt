@@ -106,12 +106,12 @@ fun Auth(viewModel: AuthViewModel = hiltViewModel()) {
             Text(
                 text = "Entebus Conductor",
                 color = Color.Black,
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
             )
 
             Text(
                 text = "Sign in to your account",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = Color.Black.copy(alpha = 0.8f)
             )
 
@@ -172,7 +172,7 @@ fun CompanyDropdown(
     Text(
         text = "Company",
         color = Color.Black,
-        style = MaterialTheme.typography.titleSmall,
+        style = MaterialTheme.typography.titleMedium,
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 5.dp)
@@ -198,7 +198,7 @@ fun CompanyDropdown(
             placeholder = {
                 Text(
                     if (expanded) "Search your company" else "Select your company",
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray
                 )
             },
@@ -254,7 +254,7 @@ fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: Focus
     Text(
         text = "Username",
         color = Color.Black,
-        style = MaterialTheme.typography.titleSmall,
+        style = MaterialTheme.typography.titleMedium,
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 5.dp)
@@ -266,7 +266,7 @@ fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: Focus
         placeholder = {
             Text(
                 "Enter your username",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelLarge,
                 color = Color.Gray
             )
         },
@@ -293,7 +293,7 @@ fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, t
     Text(
         text = "Password",
         color = Color.Black,
-        style = MaterialTheme.typography.titleSmall,
+        style = MaterialTheme.typography.titleMedium,
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 5.dp)
@@ -305,7 +305,7 @@ fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, t
         placeholder = {
             Text(
                 "Enter your password",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelLarge,
                 color = Color.Gray
             )
         },

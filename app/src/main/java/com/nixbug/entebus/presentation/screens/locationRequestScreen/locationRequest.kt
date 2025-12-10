@@ -151,7 +151,7 @@ fun LocationRequest(
 
             Text(
                 text = "Enable Location Access",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 color = Color(0xFF1E1E1E),
                 modifier = Modifier.padding(top = 16.dp)
             )
