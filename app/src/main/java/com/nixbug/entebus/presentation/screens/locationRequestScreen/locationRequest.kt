@@ -18,10 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -153,19 +151,18 @@ fun LocationRequest(
 
             Text(
                 text = "Enable Location Access",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
                 color = Color(0xFF1E1E1E),
                 modifier = Modifier.padding(top = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(15.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = "We use your location to show nearby companies and track buses in real time. Your data stays private and secure.",
                 textAlign = TextAlign.Center,
                 color = Color.Gray,
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
             )
 
@@ -225,8 +222,7 @@ fun LocationRequest(
                     Text(
                         text = if (hasPermission) "Fetch location" else "Allow Location Access",
                         color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        style = MaterialTheme.typography.titleSmall,
                     )
                 }
             }

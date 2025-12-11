@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -20,7 +19,6 @@ fun DialogBox(
     confirmText: String = "Open Settings",
     onConfirmClick: () -> Unit,
     dismissible: Boolean = false,
-
     showExitButton: Boolean = false,
     exitText: String = "Exit App",
     onExitClick: (() -> Unit)? = null
@@ -48,10 +46,8 @@ fun DialogBox(
                 // Title
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF144698)
-                    )
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color(0xFF144698)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -59,7 +55,8 @@ fun DialogBox(
                 // Message
                 Text(
                     text = message,
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.Gray,
                     modifier = Modifier.padding(horizontal = 8.dp),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
@@ -84,7 +81,6 @@ fun DialogBox(
 
                 if (showExitButton && onExitClick != null) {
                     Spacer(modifier = Modifier.height(12.dp))
-
                     OutlinedButton(
                         onClick = onExitClick,
                         modifier = Modifier
