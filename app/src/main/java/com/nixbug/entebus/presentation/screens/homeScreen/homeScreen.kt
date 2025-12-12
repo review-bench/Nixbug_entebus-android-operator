@@ -197,7 +197,7 @@ fun ServiceList(
 
         // ------------------ ASSIGNED SERVICES -------------------------------
         if (assignedServices.isNotEmpty()) {
-            item { SectionHeader("Assigned Service") }
+            item { SectionHeader("Assigned Services") }
             items(assignedServices) { service ->
                 ServiceCard(
                     service = service,
