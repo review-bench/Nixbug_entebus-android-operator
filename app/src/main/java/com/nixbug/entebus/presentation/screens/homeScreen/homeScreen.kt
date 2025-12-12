@@ -35,6 +35,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -61,11 +62,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
+
     val state = viewModel.uiState.collectAsState().value
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
-
     val filteredOtherServices = state.otherServiceList.filter {
         it.regNo.contains(searchQuery, ignoreCase = true)
     }
@@ -135,8 +136,7 @@ fun TopBar() {
             ) {
                 Text(
                     text = title,
-                    fontSize = 20.sp,
-                    fontWeight = if (selectedTab == index) FontWeight.ExtraBold else FontWeight.Bold,
+                    style = MaterialTheme.typography.titleLarge,
                     color = if (selectedTab == index) Color.Black else Color.Gray
                 )
                 Spacer(modifier = Modifier.height(3.dp))
@@ -254,7 +254,7 @@ fun ServiceList(
             item {
                 Text(
                     text = "No services available!",
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -282,6 +282,7 @@ fun ServiceCard(
         when (cardType) {
             CardType.ASSIGNED, CardType.DOWNLOADED ->
                 viewModel.canStartService(service.startingAt)
+
             else -> true
         }
     Card(
@@ -307,8 +308,7 @@ fun ServiceCard(
             //-------------- ROUTE NAME ----------------------//
             Text(
                 text = viewModel.extractRouteName(service.name),
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 3.dp),
                 color = Color.Black
             )
@@ -329,7 +329,7 @@ fun ServiceCard(
                         Spacer(Modifier.width(5.dp))
                         Text(
                             date,
-                            fontSize = 15.sp,
+                            style = MaterialTheme.typography.labelLarge,
                             color = Color.DarkGray
                         )
                     }
@@ -347,7 +347,7 @@ fun ServiceCard(
                             Spacer(Modifier.width(5.dp))
                             Text(
                                 service.regNo,
-                                fontSize = 14.sp,
+                                style = MaterialTheme.typography.labelLarge,
                                 color = Color.DarkGray
                             )
                         }
@@ -367,7 +367,7 @@ fun ServiceCard(
                         Spacer(Modifier.width(5.dp))
                         Text(
                             time,
-                            fontSize = 15.sp,
+                            style = MaterialTheme.typography.labelLarge,
                             color = Color.DarkGray
                         )
                     }
@@ -396,7 +396,13 @@ fun SearchBar(query: String, onChange: (String) -> Unit) {
     OutlinedTextField(
         value = query,
         onValueChange = onChange,
-        label = { Text("Search Reg Number", fontSize = 12.sp, color = Color.Gray) },
+        label = {
+            Text(
+                "Search...",
+                style = MaterialTheme.typography.labelLarge,
+                color = Color.Gray
+            )
+        },
         singleLine = true,
         modifier = Modifier
             .width(200.dp)
@@ -407,8 +413,7 @@ fun SearchBar(query: String, onChange: (String) -> Unit) {
             unfocusedTextColor = Color.Black
         ),
         trailingIcon = {
-            Icon(imageVector = Icons.Filled.Search,contentDescription = "Show password")
-
+            Icon(imageVector = Icons.Filled.Search, contentDescription = "Show password")
         }
     )
 }
@@ -436,7 +441,11 @@ fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
         shape = RoundedCornerShape(10.dp),
         contentPadding = PaddingValues(0.dp)
     ) {
-        Text(text, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(
+            text,
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White
+        )
     }
 }
 
@@ -450,7 +459,7 @@ fun FullWidthActionButton(text: String, onClick: () -> Unit) {
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8BC34A)),
         shape = RoundedCornerShape(10.dp)
     ) {
-        Text(text, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(text, style = MaterialTheme.typography.titleMedium, color = Color.White)
     }
 }
 
@@ -458,9 +467,10 @@ fun FullWidthActionButton(text: String, onClick: () -> Unit) {
 fun SectionHeader(title: String) {
     Text(
         text = title,
+        style = MaterialTheme.typography.titleMedium,
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+        modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
         color = Color.Black
     )
 }

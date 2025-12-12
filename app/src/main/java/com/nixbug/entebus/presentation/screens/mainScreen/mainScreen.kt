@@ -1,7 +1,8 @@
 package com.nixbug.entebus.presentation.screens.mainScreen
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -10,16 +11,19 @@ import androidx.navigation.compose.rememberNavController
 import com.nixbug.entebus.presentation.navigation.bottomTab.BottomNavGraph
 import com.nixbug.entebus.presentation.navigation.bottomTab.BottomNavigationBar
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MainScreen(){
-    val navController= rememberNavController()
-    Scaffold (
+fun MainScreen() {
+    val navController = rememberNavController()
+    Scaffold(
         bottomBar = {
             BottomNavigationBar(navController)
         }
-    ){
-        Box(modifier = Modifier
-            .padding(it)){
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(it)
+        ) {
             BottomNavGraph(navController)
         }
     }

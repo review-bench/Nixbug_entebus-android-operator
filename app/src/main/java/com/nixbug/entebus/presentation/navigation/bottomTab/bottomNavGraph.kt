@@ -1,5 +1,7 @@
 package com.nixbug.entebus.presentation.navigation.bottomTab
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -8,6 +10,7 @@ import com.nixbug.entebus.presentation.screens.historyScreen.HistoryScreen
 import com.nixbug.entebus.presentation.screens.homeScreen.HomeScreen
 import com.nixbug.entebus.presentation.screens.profileScreen.ProfileScreen
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BottomNavGraph(navController: NavHostController) {
     NavHost(

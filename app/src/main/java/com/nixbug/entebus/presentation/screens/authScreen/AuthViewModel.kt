@@ -11,8 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
-import kotlinx.coroutines.launch
-
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(getLocationUseCase: GetLocationUseCase) : ViewModel() {

@@ -55,14 +55,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.R
+import com.nixbug.entebus.presentation.navigation.AppNavItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Auth(navController: NavHostController,viewModel: AuthViewModel = hiltViewModel() ) {
+fun Auth(navController: NavHostController, viewModel: AuthViewModel = hiltViewModel()) {
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
@@ -151,7 +151,12 @@ fun Auth(navController: NavHostController,viewModel: AuthViewModel = hiltViewMod
             Spacer(modifier = Modifier.height(25.dp))
 
             //Sign in Button
-            SignInButton(onClick = { navController.navigate("main")  })
+            SignInButton(onClick = {
+                navController.navigate(AppNavItem.MainScreen.route) {
+                    popUpTo(AppNavItem.Auth.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            })
 
             Spacer(modifier = Modifier.height(15.dp))
 

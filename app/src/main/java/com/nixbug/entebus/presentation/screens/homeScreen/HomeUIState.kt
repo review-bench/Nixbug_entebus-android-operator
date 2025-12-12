@@ -15,11 +15,12 @@ val sampleHomeUiModel = HomeUiModel(
                 companyId = 2,
                 createdOn = "2025-10-25T05:20:40.586826+00:00",
                 updatedOn = null,
-                landmarkId  = 1,
+                landmarkId = 1,
                 arrivalDelta = 1800,
                 departureDelta = 1800,
                 distanceFromStart = 10000
-            ), RouteLandmark(
+            ),
+            RouteLandmark(
                 id = 4,
                 routeId = 1,
                 companyId = 2,
@@ -29,7 +30,8 @@ val sampleHomeUiModel = HomeUiModel(
                 arrivalDelta = 1500,
                 departureDelta = 1500,
                 distanceFromStart = 7500
-            ), RouteLandmark(
+            ),
+            RouteLandmark(
                 id = 2,
                 routeId = 1,
                 companyId = 2,
@@ -39,7 +41,8 @@ val sampleHomeUiModel = HomeUiModel(
                 arrivalDelta = 1200,
                 departureDelta = 1200,
                 distanceFromStart = 5000
-            ), RouteLandmark(
+            ),
+            RouteLandmark(
                 id = 1,
                 routeId = 1,
                 companyId = 2,
@@ -49,7 +52,8 @@ val sampleHomeUiModel = HomeUiModel(
                 arrivalDelta = 480,
                 departureDelta = 480,
                 distanceFromStart = 2500
-            ), RouteLandmark(
+            ),
+            RouteLandmark(
                 id = 3,
                 routeId = 1,
                 companyId = 2,
@@ -177,4 +181,3 @@ data class HomeUIState(
         ),
     )
 )
-

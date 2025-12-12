@@ -2,6 +2,8 @@ package com.nixbug.entebus.presentation.navigation
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +26,7 @@ import com.nixbug.entebus.presentation.screens.authScreen.Auth
 import com.nixbug.entebus.presentation.screens.mainScreen.MainScreen
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("ContextCastToActivity")
 @Composable
 fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltViewModel()) {
@@ -97,7 +100,7 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
         composable(AppNavItem.LocationRequest.route) {
             LocationRequest(navController = navController, activity = activity)
         }
-        composable("main") {
+        composable(AppNavItem.MainScreen.route) {
             MainScreen()
         }
     }
