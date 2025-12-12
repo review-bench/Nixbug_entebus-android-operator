@@ -2,60 +2,42 @@ package com.nixbug.entebus.presentation.screens.locationRequestScreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nixbug.entebus.data.local.dataStore.LocationData
-import com.nixbug.entebus.domain.usecase.GetLocationUseCase
 import com.nixbug.entebus.domain.usecase.SaveLocationUseCase
 import com.nixbug.entebus.utils.LocationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class LocationRequestViewModel @Inject constructor(
     private val saveLocationUseCase: SaveLocationUseCase,
-    getLocationUseCase: GetLocationUseCase,
     private val locationHelper: LocationHelper
 ) : ViewModel() {
 
-    data class UIState(
-        val data: LocationData? = null,
-        val isLoading: Boolean = true
-    )
-
-    val uiState = getLocationUseCase()
-        .map { UIState(it, false) }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(),
-            UIState()
-        )
-
-    private var hasFetchedOnce = false
+    private var isFetching = false
 
     fun fetchLocationIfNeeded(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val state = uiState.value
-
-        if (state.isLoading) return
-        if (state.data?.hasLocation == true) return
-        if (hasFetchedOnce) return
-
-        hasFetchedOnce = true
+        if (isFetching) return
+        isFetching = true
 
         locationHelper.fetchCurrentLocation(
             onSuccess = { loc ->
-                viewModelScope.launch {
-                    saveLocationUseCase(loc.latitude, loc.longitude)
+                val job = viewModelScope.launch {
+                    try {
+                        saveLocationUseCase(loc.latitude, loc.longitude)
+                        onSuccess()
+                    } catch (e: Exception) {
+                        onError(e.message ?: "Failed to save location")
+                    }
                 }
-                onSuccess()
+                job.invokeOnCompletion { isFetching = false }
             },
             onError = { err ->
                 onError(err)
+                isFetching = false
             }
         )
     }

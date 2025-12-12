@@ -1,6 +1,6 @@
 package com.nixbug.entebus.domain.repository
 
-import com.nixbug.entebus.data.local.dataStore.LocationData
+import com.nixbug.entebus.domain.model.LocationData
 import kotlinx.coroutines.flow.Flow
 
 interface LocationRepository {

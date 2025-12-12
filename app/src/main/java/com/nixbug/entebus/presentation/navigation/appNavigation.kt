@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,7 +26,7 @@ import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @SuppressLint("ContextCastToActivity")
 @Composable
-fun AppNavigation(activity: Activity,viewModel: AppNavigationViewModel = hiltViewModel()) {
+fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     val isLoggedIn = false
     val context = LocalContext.current
@@ -74,22 +75,27 @@ fun AppNavigation(activity: Activity,viewModel: AppNavigationViewModel = hiltVie
     val locationData = locationState.value.data
     val hasLocation = locationData?.hasLocation == true
 
-    val startDestination = when {
-        !hasPermission -> "locationRequestScreen"
-        !hasLocation -> "locationRequestScreen"
-        else -> "authScreen"
+    LaunchedEffect(hasPermission, hasLocation) {
+        val currentRoute = navController.currentBackStackEntry?.destination?.route
+        if (currentRoute != AppNavItem.LocationRequest.route) return@LaunchedEffect
+        if (hasPermission && hasLocation) {
+            navController.navigate(AppNavItem.Auth.route) {
+                popUpTo(AppNavItem.LocationRequest.route) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
     }
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = if (hasPermission && hasLocation) AppNavItem.Auth.route else AppNavItem.LocationRequest.route
     )
     {
-        composable("authScreen") {
+        composable(AppNavItem.Auth.route) {
             Auth(navController = navController)
         }
-        composable("locationRequestScreen") {
-            LocationRequest(navController = navController,activity=activity)
+        composable(AppNavItem.LocationRequest.route) {
+            LocationRequest(navController = navController, activity = activity)
         }
         composable("main") {
             MainScreen()

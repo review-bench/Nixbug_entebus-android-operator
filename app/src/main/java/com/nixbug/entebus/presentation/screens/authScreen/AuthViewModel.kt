@@ -1,9 +1,8 @@
 package com.nixbug.entebus.presentation.screens.authScreen
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nixbug.entebus.data.local.dataStore.LocationData
+import com.nixbug.entebus.domain.model.LocationData
 import com.nixbug.entebus.domain.usecase.GetLocationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,16 +10,18 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
+
 
 @HiltViewModel
-class AuthViewModel @Inject constructor( getLocationUseCase: GetLocationUseCase): ViewModel(){
+class AuthViewModel @Inject constructor(getLocationUseCase: GetLocationUseCase) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
+    // TODO: Use the `location` StateFlow in AuthScreen when location-based logic is implemented.
     val location = getLocationUseCase()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, LocationData(null, null,false))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LocationData(null, null))
 
     fun onCompanyQueryChange(value: String) {
         _uiState.update { it.copy(companySearchQuery = value, expanded = true) }
@@ -36,16 +37,6 @@ class AuthViewModel @Inject constructor( getLocationUseCase: GetLocationUseCase)
                 companySearchQuery = company,
                 expanded = false
             )
-        }
-    }
-
-    init {
-        // Collect the location flow and log changes
-        viewModelScope.launch {
-            location.collect { loc ->
-                Log.d("AuthDebug_VM", "Latitude=${loc.latitude}, Longitude=${loc.longitude}")
-                Log.d("AuthDebug_VM","hasLocation${loc.hasLocation}")
-            }
         }
     }
 
