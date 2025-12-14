@@ -1,8 +1,6 @@
 package com.nixbug.entebus.presentation.screens.homeScreen
 
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -59,7 +57,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
 
@@ -70,6 +67,7 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
     val filteredOtherServices = state.otherServiceList.filter {
         it.regNo.contains(searchQuery, ignoreCase = true)
     }
+    var selectedTab by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -93,30 +91,38 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
                 focusManager.clearFocus()
             }) {
         Column(modifier = Modifier.fillMaxSize()) {
-            TopBar()
-            ServiceList(
-                ongoingService = state.ongoingService,
-                assignedServices = state.assignedServiceList,
-                downloadedServices = state.downloadedServiceList,
-                otherServices = filteredOtherServices,
-                onResume = { viewModel.onResumeService(it) },
-                onStartAssigned = { viewModel.onStartAssigned(it) },
-                onStartDownloaded = { viewModel.onStartDownloaded(it) },
-                onDownload = { viewModel.onDownloadService(it) },
-                searchQuery = searchQuery,
-                onSearchChange = { searchQuery = it },
-                viewModel = viewModel,
-                modifier = Modifier
-                    .weight(1f)
-                    .background(Color.Transparent)
-            )
+            TopBar(selectedTab = selectedTab, onTabChange = { selectedTab = it })
+            when (selectedTab) {
+                0 -> {
+                    ServiceList(
+                        ongoingService = state.ongoingService,
+                        assignedServices = state.assignedServiceList,
+                        downloadedServices = state.downloadedServiceList,
+                        otherServices = filteredOtherServices,
+                        onResume = { viewModel.onResumeService(it) },
+                        onStartAssigned = { viewModel.onStartAssigned(it) },
+                        onStartDownloaded = { viewModel.onStartDownloaded(it) },
+                        onDownload = { viewModel.onDownloadService(it) },
+                        searchQuery = searchQuery,
+                        onSearchChange = { searchQuery = it },
+                        viewModel = viewModel,
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(Color.Transparent)
+                    )
+                }
+
+                1 -> {
+                    DutyScreen()
+                }
+            }
         }
     }
 }
 
 @Composable
-fun TopBar() {
-    var selectedTab by remember { mutableIntStateOf(0) }
+fun TopBar(selectedTab: Int, onTabChange: (Int) -> Unit) {
+
     val tabs = listOf("All Services", "Duty")
     Row(
         Modifier
@@ -132,7 +138,7 @@ fun TopBar() {
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) { selectedTab = index }
+                    ) { onTabChange(index) }
             ) {
                 Text(
                     text = title,
@@ -145,7 +151,10 @@ fun TopBar() {
                         Modifier
                             .fillMaxWidth(.9f)
                             .height(4.dp)
-                            .background(Color(0xFF8BC34A), shape = RoundedCornerShape(50))
+                            .background(
+                                MaterialTheme.colorScheme.primary,
+                                shape = RoundedCornerShape(50)
+                            )
                     )
                 } else {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -155,7 +164,6 @@ fun TopBar() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ServiceList(
     ongoingService: HomeUiModel?,
@@ -264,12 +272,10 @@ fun ServiceList(
                 )
             }
         }
-
         item { Spacer(Modifier.height(12.dp)) }
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ServiceCard(
     service: HomeUiModel,
@@ -289,9 +295,8 @@ fun ServiceCard(
         modifier = Modifier
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (cardType == CardType.ONGOING) Color(0xFFDFF6DD) else Color(
-                0xFFFAFAFA
-            )
+            containerColor = if (cardType == CardType.ONGOING) Color(0xFFDFF6DD) else
+                MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
@@ -323,8 +328,8 @@ fun ServiceCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Filled.CalendarMonth,
-                            null,
-                            tint = Color(0xFF8BC34A)
+                            "Calendar",
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(Modifier.width(5.dp))
                         Text(
@@ -341,8 +346,8 @@ fun ServiceCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 Icons.Filled.DirectionsBus,
-                                null,
-                                tint = Color(0xFF8BC34A)
+                                "Vehicle registration",
+                                tint = MaterialTheme.colorScheme.primary
                             )
                             Spacer(Modifier.width(5.dp))
                             Text(
@@ -361,8 +366,8 @@ fun ServiceCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Filled.AccessTime,
-                            contentDescription = null,
-                            tint = Color(0xFF8BC34A)
+                            contentDescription = "Service time",
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(Modifier.width(5.dp))
                         Text(
@@ -413,7 +418,7 @@ fun SearchBar(query: String, onChange: (String) -> Unit) {
             unfocusedTextColor = Color.Black
         ),
         trailingIcon = {
-            Icon(imageVector = Icons.Filled.Search, contentDescription = "Show password")
+            Icon(imageVector = Icons.Filled.Search, contentDescription = "Search icon")
         }
     )
 }
@@ -435,7 +440,7 @@ fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
             .height(35.dp)
             .width(95.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF8BC34A),
+            containerColor = MaterialTheme.colorScheme.primary,
             disabledContainerColor = Color(0x5B9BDA54)
         ),
         shape = RoundedCornerShape(10.dp),
@@ -456,7 +461,7 @@ fun FullWidthActionButton(text: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(35.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8BC34A)),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
         shape = RoundedCornerShape(10.dp)
     ) {
         Text(text, style = MaterialTheme.typography.titleMedium, color = Color.White)
@@ -480,4 +485,17 @@ fun SectionDivider() {
     Spacer(Modifier.height(12.dp))
     HorizontalDivider(thickness = Dp.Hairline, color = Color.Black)
     Spacer(Modifier.height(12.dp))
+}
+
+@Composable
+fun DutyScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Duty Page",
+            style = MaterialTheme.typography.titleLarge
+        )
+    }
 }

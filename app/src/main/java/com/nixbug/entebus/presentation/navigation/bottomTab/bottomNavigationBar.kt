@@ -1,8 +1,11 @@
 package com.nixbug.entebus.presentation.navigation.bottomTab
 
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -24,7 +27,11 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavItem.Profile
     )
 
-    NavigationBar(modifier = Modifier.height(110.dp), containerColor = Color(0xFFFAF8FF)) {
+    NavigationBar(
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.navigationBars),
+        containerColor = Color(0xFFFAF8FF)
+    ) {
         val currentBackStack by navController.currentBackStackEntryAsState()
         val currentDestination = currentBackStack?.destination
 
@@ -42,15 +49,15 @@ fun BottomNavigationBar(navController: NavHostController) {
                     Icon(
                         item.icon,
                         contentDescription = item.label,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 },
                 label = { Text(item.label, fontSize = 12.sp) },
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = Color(0xFF8BC34A),
+                    indicatorColor = MaterialTheme.colorScheme.primary,
                     selectedIconColor = Color.White,
                     unselectedIconColor = Color.Black,
-                    selectedTextColor = Color(0xFF8BC34A),
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
                     unselectedTextColor = Color.Black
                 )
             )

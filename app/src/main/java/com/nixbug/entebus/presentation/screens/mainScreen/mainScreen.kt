@@ -1,7 +1,5 @@
 package com.nixbug.entebus.presentation.screens.mainScreen
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -11,7 +9,6 @@ import androidx.navigation.compose.rememberNavController
 import com.nixbug.entebus.presentation.navigation.bottomTab.BottomNavGraph
 import com.nixbug.entebus.presentation.navigation.bottomTab.BottomNavigationBar
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()

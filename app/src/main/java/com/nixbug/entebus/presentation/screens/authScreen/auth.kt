@@ -152,6 +152,9 @@ fun Auth(navController: NavHostController, viewModel: AuthViewModel = hiltViewMo
 
             //Sign in Button
             SignInButton(onClick = {
+                // TODO(AUTH-SECURITY): Temporary bypass of authentication for testing only.
+                // This directly navigates to MainScreen without validating credentials.
+                // MUST be replaced with proper authentication validation before production.
                 navController.navigate(AppNavItem.MainScreen.route) {
                     popUpTo(AppNavItem.Auth.route) { inclusive = true }
                     launchSingleTop = true

@@ -1,7 +1,5 @@
 package com.nixbug.entebus.presentation.screens.homeScreen
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,8 +13,8 @@ import java.time.format.DateTimeFormatter
 
 class HomeScreenViewModel : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUIState())
-    val uiState: MutableStateFlow<HomeUIState> = _uiState
+    private val _uiState = MutableStateFlow(HomeUiState())
+    val uiState: MutableStateFlow<HomeUiState> = _uiState
 
     private val _events = MutableSharedFlow<HomeUiEvent>()
     val events = _events
@@ -80,7 +78,6 @@ class HomeScreenViewModel : ViewModel() {
         return noReg.trim()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun convertUtcToIst(utcTimestamp: String): Pair<String, String> {
         val instant = Instant.parse(utcTimestamp)
         val istZone = ZoneId.of("Asia/Kolkata")
@@ -102,7 +99,6 @@ class HomeScreenViewModel : ViewModel() {
         return Pair(dateLabel, time)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun canStartService(startingAtUtc: String): Boolean {
         val instant = Instant.parse(startingAtUtc)
 
