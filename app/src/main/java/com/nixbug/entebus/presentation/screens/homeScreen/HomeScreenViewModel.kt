@@ -26,13 +26,20 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         /* TODO: Handle Logic To Navigate To Ticket Page*/
     }
 
-    fun onStartAssigned(service: HomeUiModel) {
-        if (_uiState.value.ongoingService != null) {
+    private fun checkAndEmitIfServiceAlreadyRunning(): Boolean {
+        return if (_uiState.value.ongoingService != null) {
             viewModelScope.launch {
                 _events.emit(HomeUiEvent.ServiceAlreadyRunning)
             }
-            return
+            true
+        } else {
+            false
         }
+    }
+
+    fun onStartAssigned(service: HomeUiModel) {
+        if (checkAndEmitIfServiceAlreadyRunning()) return
+
         _uiState.update { state ->
             val newAssigned = state.assignedServiceList.filter { it.id != service.id }
             state.copy(
@@ -43,12 +50,8 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
     }
 
     fun onStartDownloaded(service: HomeUiModel) {
-        if (_uiState.value.ongoingService != null) {
-            viewModelScope.launch {
-                _events.emit(HomeUiEvent.ServiceAlreadyRunning)
-            }
-            return
-        }
+        if (checkAndEmitIfServiceAlreadyRunning()) return
+
         _uiState.update { state ->
             val newDownload = state.downloadedServiceList.filter { it.id != service.id }
 
