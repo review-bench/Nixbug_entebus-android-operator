@@ -69,6 +69,21 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    /**
+     * Extracts a clean route name from a service name string.
+     *
+     * This function removes:
+     * 1. A leading date and time prefix in the format:
+     *    `yyyy-MM-dd hh:mm AM/PM`
+     * 2. Any trailing registration or metadata enclosed in parentheses.
+     *
+     * Example:
+     * Input:  "2024-12-10 08:30 AM City Center -> Airport (KL-01-AB-1234)"
+     * Output: "City Center -> Airport"
+     *
+     * @param fullName The full service name received from the backend.
+     * @return A trimmed, user-friendly route name.
+     */
     fun extractRouteName(fullName: String): String {
         val noDateTime = fullName.replace(
             Regex("""^\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}\s*(AM|PM)\s*"""), ""
@@ -80,6 +95,25 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
 
         return noReg.trim()
     }
+
+    /**
+     * Converts a UTC timestamp into IST (Asia/Kolkata) date and time.
+     *
+     * The date is mapped to a user-friendly label when applicable:
+     * - "Today" if the date matches the current IST date
+     * - "Yesterday" if it is one day before today
+     * - "Tomorrow" if it is one day after today
+     * - Otherwise, the date is formatted as "MMM dd yyyy"
+     *
+     * The time is always formatted in 12-hour format (hh:mm a).
+     *
+     * Example:
+     * Input:  "2024-12-10T03:00:00Z"
+     * Output: ("Today", "08:30 AM")
+     *
+     * @param utcTimestamp ISO-8601 formatted UTC timestamp.
+     * @return A Pair containing the date label and formatted time.
+     */
 
     fun convertUtcToIst(utcTimestamp: String): Pair<String, String> {
         val instant = Instant.parse(utcTimestamp)
@@ -101,6 +135,18 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         }
         return Pair(dateLabel, time)
     }
+
+    /**
+     * Determines whether a service can be started based on its scheduled start time.
+     *
+     * A service is eligible to start if its IST start time is within
+     * 60 minutes (or less) from the current IST time.
+     *
+     * This logic ensures that services cannot be started too early.
+     *
+     * @param startingAtUtc ISO-8601 formatted UTC start time of the service.
+     * @return `true` if the service can be started, `false` otherwise.
+     */
 
     fun canStartService(startingAtUtc: String): Boolean {
         val instant = Instant.parse(startingAtUtc)

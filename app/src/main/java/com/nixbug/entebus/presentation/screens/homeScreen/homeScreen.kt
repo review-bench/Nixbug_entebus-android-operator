@@ -56,6 +56,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.nixbug.entebus.ui.theme.DisabledButtonColor
+import com.nixbug.entebus.ui.theme.SelectedServiceColor
 
 @Composable
 fun HomeScreen(viewModel: HomeScreenViewModel = hiltViewModel()) {
@@ -232,7 +234,7 @@ fun ServiceList(
 
         // ------------------ DOWNLOADED SERVICES -----------------------------
         if (downloadedServices.isNotEmpty()) {
-            item { SectionHeader("Downloaded Service") }
+            item { SectionHeader("Downloaded Services") }
             items(downloadedServices) { service ->
                 val (date, time) = viewModel.convertUtcToIst(service.startingAt)
                 val routeName = viewModel.extractRouteName(service.name)
@@ -270,7 +272,7 @@ fun ServiceList(
             items(otherServices) { service ->
                 val (date, time) = viewModel.convertUtcToIst(service.startingAt)
                 val routeName = viewModel.extractRouteName(service.name)
-                val isEnabled = viewModel.canStartService(service.startingAt)
+                val isEnabled = true
                 ServiceCard(
                     service = service,
                     cardType = CardType.OTHER,
@@ -314,7 +316,7 @@ fun ServiceCard(
         modifier = Modifier
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (cardType == CardType.ONGOING) Color(0xFFDFF6DD) else
+            containerColor = if (cardType == CardType.ONGOING) SelectedServiceColor else
                 MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(16.dp),
@@ -448,8 +450,8 @@ fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
     val text = when (cardType) {
         CardType.ASSIGNED -> "Start"
         CardType.DOWNLOADED -> "Start"
-        CardType.OTHER -> "Download"
-        else -> ""
+        else -> "Download"
+
     }
 
     Button(
@@ -460,7 +462,7 @@ fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
             .width(95.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
-            disabledContainerColor = Color(0x5B9BDA54)
+            disabledContainerColor = DisabledButtonColor
         ),
         shape = RoundedCornerShape(10.dp),
         contentPadding = PaddingValues(0.dp)

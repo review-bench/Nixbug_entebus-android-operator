@@ -30,7 +30,7 @@ fun BottomNavigationBar(navController: NavHostController) {
     NavigationBar(
         modifier = Modifier
             .windowInsetsPadding(WindowInsets.navigationBars),
-        containerColor = Color(0xFFFAF8FF)
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         val currentBackStack by navController.currentBackStackEntryAsState()
         val currentDestination = currentBackStack?.destination

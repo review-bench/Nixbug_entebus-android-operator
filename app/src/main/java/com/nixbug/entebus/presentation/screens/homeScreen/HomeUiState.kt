@@ -8,7 +8,7 @@ data class HomeUiState(
         sampleHomeUiModel.copy(
             id = 101,
             name = "2025-12-06 7:00 AM Mayyanad -> Kollam (KL02BT9268)",
-            startingAt = "2025-12-06T18:30:00Z",
+            startingAt = "2025-12-20T18:30:00Z",
             endingAt = "2025-12-06T02:00:00Z",
             regNo = "KL02BT9268"
         ),
@@ -27,7 +27,7 @@ data class HomeUiState(
         sampleHomeUiModel.copy(
             id = 201,
             name = "2025-12-06 06:30 AM Kollam -> Paravur (KL02BT1111)",
-            startingAt = "2025-12-05T16:30:00Z",
+            startingAt = "2025-12-20T16:30:00Z",
             endingAt = "2025-12-06T01:40:00Z",
             regNo = "KL02BT1111",
             route = sampleHomeUiModel.route.copy(

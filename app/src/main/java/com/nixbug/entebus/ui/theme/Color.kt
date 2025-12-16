@@ -11,3 +11,6 @@ val Pink40 = Color(0xFF7D5260)
 
 val AppSurface = Color(0xFFFAFAFA)
 val PrimaryColor = Color(0xFF8BC34A)
+val SelectedServiceColor = Color(0xFFDFF6DD)
+val DisabledButtonColor = Color(0x5B9BDA54)
+
