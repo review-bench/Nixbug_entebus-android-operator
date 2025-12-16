@@ -55,10 +55,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
+fun HomeScreen(viewModel: HomeScreenViewModel = hiltViewModel()) {
 
     val state = viewModel.uiState.collectAsState().value
     val context = LocalContext.current
@@ -189,13 +189,18 @@ fun ServiceList(
 
         // ------------------------ ONGOING SERVICE----------------------------
         if (ongoingService != null) {
+            val (date, time) = viewModel.convertUtcToIst(ongoingService.startingAt)
+            val routeName = viewModel.extractRouteName(ongoingService.name)
             item { SectionHeader("Ongoing Service") }
             item {
                 ServiceCard(
                     service = ongoingService,
                     cardType = CardType.ONGOING,
                     onActionClick = { onResume(ongoingService) },
-                    viewModel = viewModel
+                    date = date,
+                    time = time,
+                    routeName = routeName,
+                    isEnabled = true,
                 )
             }
             if (assignedServices.isNotEmpty() || downloadedServices.isNotEmpty() || otherServices.isNotEmpty()) {
@@ -207,11 +212,17 @@ fun ServiceList(
         if (assignedServices.isNotEmpty()) {
             item { SectionHeader("Assigned Services") }
             items(assignedServices) { service ->
+                val (date, time) = viewModel.convertUtcToIst(service.startingAt)
+                val routeName = viewModel.extractRouteName(service.name)
+                val isEnabled = viewModel.canStartService(service.startingAt)
                 ServiceCard(
                     service = service,
                     cardType = CardType.ASSIGNED,
                     onActionClick = { onStartAssigned(service) },
-                    viewModel = viewModel
+                    date = date,
+                    time = time,
+                    routeName = routeName,
+                    isEnabled = isEnabled
                 )
             }
             if (downloadedServices.isNotEmpty() || otherServices.isNotEmpty()) {
@@ -223,11 +234,17 @@ fun ServiceList(
         if (downloadedServices.isNotEmpty()) {
             item { SectionHeader("Downloaded Service") }
             items(downloadedServices) { service ->
+                val (date, time) = viewModel.convertUtcToIst(service.startingAt)
+                val routeName = viewModel.extractRouteName(service.name)
+                val isEnabled = viewModel.canStartService(service.startingAt)
                 ServiceCard(
                     service = service,
                     cardType = CardType.DOWNLOADED,
                     onActionClick = { onStartDownloaded(service) },
-                    viewModel = viewModel
+                    date = date,
+                    time = time,
+                    routeName = routeName,
+                    isEnabled = isEnabled
                 )
             }
             if (otherServices.isNotEmpty()) {
@@ -244,18 +261,24 @@ fun ServiceList(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SectionHeader("Other Services")
-                SearchBar(query = searchQuery, onChange = onSearchChange)
+                ServiceSearchBar(query = searchQuery, onChange = onSearchChange)
             }
             Spacer(modifier = Modifier.height(15.dp))
         }
 
         if (otherServices.isNotEmpty()) {
             items(otherServices) { service ->
+                val (date, time) = viewModel.convertUtcToIst(service.startingAt)
+                val routeName = viewModel.extractRouteName(service.name)
+                val isEnabled = viewModel.canStartService(service.startingAt)
                 ServiceCard(
                     service = service,
                     cardType = CardType.OTHER,
                     onActionClick = { onDownload(service) },
-                    viewModel = viewModel
+                    date = date,
+                    time = time,
+                    routeName = routeName,
+                    isEnabled = isEnabled
                 )
             }
         } else {
@@ -281,16 +304,12 @@ fun ServiceCard(
     service: HomeUiModel,
     cardType: CardType,
     onActionClick: () -> Unit,
-    viewModel: HomeScreenViewModel
+    date: String,
+    time: String,
+    routeName: String,
+    isEnabled: Boolean
 ) {
-    val (date, time) = viewModel.convertUtcToIst(service.startingAt)
-    val isEnabled =
-        when (cardType) {
-            CardType.ASSIGNED, CardType.DOWNLOADED ->
-                viewModel.canStartService(service.startingAt)
 
-            else -> true
-        }
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -312,7 +331,7 @@ fun ServiceCard(
 
             //-------------- ROUTE NAME ----------------------//
             Text(
-                text = viewModel.extractRouteName(service.name),
+                text = routeName,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 3.dp),
                 color = Color.Black
@@ -397,7 +416,7 @@ fun ServiceCard(
 }
 
 @Composable
-fun SearchBar(query: String, onChange: (String) -> Unit) {
+fun ServiceSearchBar(query: String, onChange: (String) -> Unit) {
     OutlinedTextField(
         value = query,
         onValueChange = onChange,
