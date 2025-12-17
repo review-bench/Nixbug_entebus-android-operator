@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.screens.locationRequestScreen.LocationRequest
 import com.nixbug.entebus.presentation.screens.authScreen.Auth
+import com.nixbug.entebus.presentation.screens.mainScreen.MainScreen
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @SuppressLint("ContextCastToActivity")
@@ -29,6 +30,7 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
     val navController = rememberNavController()
     val isLoggedIn = false
     val context = LocalContext.current
+    val locationState = viewModel.locationState.collectAsState()
     var hasPermission by remember {
         mutableStateOf(
             LocationPermissionHelper.isPermissionGranted(
@@ -36,7 +38,6 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
             )
         )
     }
-    val locationState = viewModel.locationState.collectAsState()
 
     // Recheck location permission whenever the user returns to the app
     // (e.g., after manually changing permission settings)
@@ -91,10 +92,13 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
     )
     {
         composable(AppNavItem.Auth.route) {
-            Auth()
+            Auth(navController = navController)
         }
         composable(AppNavItem.LocationRequest.route) {
             LocationRequest(navController = navController, activity = activity)
+        }
+        composable(AppNavItem.MainScreen.route) {
+            MainScreen()
         }
     }
 }
