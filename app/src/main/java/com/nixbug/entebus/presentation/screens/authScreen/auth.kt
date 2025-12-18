@@ -32,6 +32,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -50,18 +51,18 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.nixbug.entebus.R
+import com.nixbug.entebus.presentation.navigation.AppNavItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Auth(viewModel: AuthViewModel = hiltViewModel()) {
+fun Auth(navController: NavHostController, viewModel: AuthViewModel = hiltViewModel()) {
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
@@ -101,18 +102,17 @@ fun Auth(viewModel: AuthViewModel = hiltViewModel()) {
                 contentScale = ContentScale.Fit
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = "Entebus Conductor",
-                fontWeight = FontWeight.Bold,
-                fontSize = 28.sp,
-                color = Color.Black
+                color = Color.Black,
+                style = MaterialTheme.typography.headlineSmall,
             )
 
             Text(
                 text = "Sign in to your account",
-                fontSize = 18.sp,
+                style = MaterialTheme.typography.titleMedium,
                 color = Color.Black.copy(alpha = 0.8f)
             )
 
@@ -148,10 +148,18 @@ fun Auth(viewModel: AuthViewModel = hiltViewModel()) {
                 toggle = viewModel::onTogglePasswordVisibility
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(25.dp))
 
             //Sign in Button
-            SignInButton(onClick = { /* TODO: Handle sign-in logic*/ })
+            SignInButton(onClick = {
+                // TODO(AUTH-SECURITY): Temporary bypass of authentication for testing only.
+                // This directly navigates to MainScreen without validating credentials.
+                // MUST be replaced with proper authentication validation before production.
+                navController.navigate(AppNavItem.MainScreen.route) {
+                    popUpTo(AppNavItem.Auth.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            })
 
             Spacer(modifier = Modifier.height(15.dp))
 
@@ -172,9 +180,8 @@ fun CompanyDropdown(
 ) {
     Text(
         text = "Company",
-        fontSize = 16.sp,
         color = Color.Black,
-        fontWeight = FontWeight.SemiBold,
+        style = MaterialTheme.typography.titleMedium,
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 5.dp)
@@ -197,7 +204,13 @@ fun CompanyDropdown(
             onValueChange = { onQueryChange(it) },
             singleLine = true,
             readOnly = !expanded,
-            placeholder = { Text(if (expanded) "Search your company" else "Select your company") },
+            placeholder = {
+                Text(
+                    if (expanded) "Search your company" else "Select your company",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.Gray
+                )
+            },
             modifier = Modifier
                 .menuAnchor(MenuAnchorType.PrimaryEditable)
                 .fillMaxWidth()
@@ -249,9 +262,8 @@ fun CompanyDropdown(
 fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: FocusManager) {
     Text(
         text = "Username",
-        fontSize = 16.sp,
         color = Color.Black,
-        fontWeight = FontWeight.SemiBold,
+        style = MaterialTheme.typography.titleMedium,
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 5.dp)
@@ -260,7 +272,13 @@ fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: Focus
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        placeholder = { Text("Enter your username") },
+        placeholder = {
+            Text(
+                "Enter your username",
+                style = MaterialTheme.typography.labelLarge,
+                color = Color.Gray
+            )
+        },
         singleLine = true,
         modifier = Modifier
             .fillMaxWidth()
@@ -283,9 +301,8 @@ fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: Focus
 fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, toggle: () -> Unit) {
     Text(
         text = "Password",
-        fontSize = 16.sp,
         color = Color.Black,
-        fontWeight = FontWeight.SemiBold,
+        style = MaterialTheme.typography.titleMedium,
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 5.dp)
@@ -294,7 +311,13 @@ fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, t
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        placeholder = { Text("Enter your password") },
+        placeholder = {
+            Text(
+                "Enter your password",
+                style = MaterialTheme.typography.labelLarge,
+                color = Color.Gray
+            )
+        },
         singleLine = true,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
@@ -335,6 +358,6 @@ fun SignInButton(onClick: () -> Unit) {
             focusedElevation = 8.dp
         )
     ) {
-        Text("Sign in", color = Color.White, fontSize = 16.sp)
+        Text("Sign in", color = Color.White, style = MaterialTheme.typography.titleMedium)
     }
 }
