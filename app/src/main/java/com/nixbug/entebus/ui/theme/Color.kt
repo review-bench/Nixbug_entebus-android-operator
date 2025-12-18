@@ -11,3 +11,4 @@ val Pink40 = Color(0xFF7D5260)
 
 val AppSurface= Color(0xFFFAFAFA)
 val PrimaryColor=Color(0xFF8BC34A)
+val Background = Color.White

@@ -39,13 +39,13 @@ fun AppHeader(
     onSecondaryActionClick: () -> Unit = {},
 ) {
     Surface(
-        shadowElevation = 4.dp,
+//        shadowElevation = 4.dp,
         color = Color.White
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding( vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -69,36 +69,31 @@ fun AppHeader(
 
             // 🔘 Conditional Action Buttons
             if (showTopBarActions) {
-
-                if (secondaryActionIcon != null) {
-                    TextButton(onClick = onSecondaryActionClick) {
-                        secondaryActionIcon?.let {
-                            Icon(
-                                imageVector = it,
-                                contentDescription = secondaryActionText,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = secondaryActionText)
-                    }
-                }
-
                 if (primaryActionIcon != null) {
                     Button(
                         onClick = onPrimaryActionClick,
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        primaryActionIcon?.let {
-                            Icon(
-                                imageVector = it,
-                                contentDescription = primaryActionText,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = primaryActionIcon,
+                            contentDescription = primaryActionText,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(text = primaryActionText)
+                    }
+                }
+
+                if (secondaryActionIcon != null) {
+                    TextButton(onClick = onSecondaryActionClick) {
+                        Icon(
+                            imageVector = secondaryActionIcon,
+                            contentDescription = secondaryActionText,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = secondaryActionText)
                     }
                 }
             }

@@ -94,7 +94,7 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = if (hasPermission && hasLocation) AppNavItem.Auth.route else AppNavItem.LocationRequest.route
+        startDestination = if (hasPermission && hasLocation) AppNavItem.TicketScreen.route else AppNavItem.LocationRequest.route
     )
     {
         composable(AppNavItem.Auth.route) {
