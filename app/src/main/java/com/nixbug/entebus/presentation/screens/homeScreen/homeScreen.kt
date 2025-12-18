@@ -56,9 +56,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.nixbug.entebus.presentation.navigation.AppNavItem
 
 @Composable
-fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
+fun HomeScreen(rootNavController: NavHostController, viewModel: HomeScreenViewModel = viewModel()) {
 
     val state = viewModel.uiState.collectAsState().value
     val context = LocalContext.current
@@ -99,7 +101,7 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
                         assignedServices = state.assignedServiceList,
                         downloadedServices = state.downloadedServiceList,
                         otherServices = filteredOtherServices,
-                        onResume = { viewModel.onResumeService(it) },
+                        onResume = { rootNavController.navigate(AppNavItem.TicketScreen.route) },
                         onStartAssigned = { viewModel.onStartAssigned(it) },
                         onStartDownloaded = { viewModel.onStartDownloaded(it) },
                         onDownload = { viewModel.onDownloadService(it) },
@@ -172,7 +174,7 @@ fun ServiceList(
     otherServices: List<HomeUiModel>,
     searchQuery: String,
     onSearchChange: (String) -> Unit,
-    onResume: (HomeUiModel) -> Unit,
+    onResume: () -> Unit,
     onStartAssigned: (HomeUiModel) -> Unit,
     onStartDownloaded: (HomeUiModel) -> Unit,
     onDownload: (HomeUiModel) -> Unit,
@@ -194,7 +196,7 @@ fun ServiceList(
                 ServiceCard(
                     service = ongoingService,
                     cardType = CardType.ONGOING,
-                    onActionClick = { onResume(ongoingService) },
+                    onActionClick = { onResume() },
                     viewModel = viewModel
                 )
             }

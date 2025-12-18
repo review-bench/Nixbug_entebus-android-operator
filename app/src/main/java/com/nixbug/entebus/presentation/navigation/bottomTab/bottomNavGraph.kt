@@ -9,12 +9,12 @@ import com.nixbug.entebus.presentation.screens.homeScreen.HomeScreen
 import com.nixbug.entebus.presentation.screens.profileScreen.ProfileScreen
 
 @Composable
-fun BottomNavGraph(navController: NavHostController) {
+fun BottomNavGraph(navController: NavHostController, rootNavController: NavHostController) {
     NavHost(
         navController = navController,
         startDestination = BottomNavItem.Home.route
     ) {
-        composable(BottomNavItem.Home.route) { HomeScreen() }
+        composable(BottomNavItem.Home.route) { HomeScreen(rootNavController=rootNavController) }
         composable(BottomNavItem.History.route) { HistoryScreen() }
         composable(BottomNavItem.Profile.route) { ProfileScreen() }
     }
