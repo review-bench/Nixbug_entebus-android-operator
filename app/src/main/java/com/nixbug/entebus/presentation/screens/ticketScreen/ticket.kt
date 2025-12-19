@@ -1,6 +1,7 @@
 package com.nixbug.entebus.presentation.screens.ticketScreen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,7 +26,7 @@ import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
 
 @Composable
-fun TicketScreen(navController: NavHostController,viewModel: TicketViewModel= hiltViewModel()) {
+fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
 
     Column(
@@ -76,7 +77,7 @@ fun TicketScreen(navController: NavHostController,viewModel: TicketViewModel= hi
                         .weight(0.45f)
                         .fillMaxSize()
                 ) {
-                    PassengerCountList()
+                    PassengerCountList(passengers = state.passengers)
                 }
             }
 
@@ -103,7 +104,6 @@ fun LandmarkList(landmarks: List<Landmark>) {
             items(landmarks) { landmark ->
                 Text(
                     text = landmark.name,
-                    modifier = Modifier.padding(vertical = 8.dp),
                     color = Color.Black
                 )
             }
@@ -113,8 +113,29 @@ fun LandmarkList(landmarks: List<Landmark>) {
 
 
 @Composable
-fun PassengerCountList() {
-    Text("Passenger Count List")
+fun PassengerCountList(passengers: List<Passenger>) {
+    Column {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(horizontal = 12.dp),
+        ) {
+            items(passengers) { passenger ->
+//                Text(
+//                    text = passenger.name,
+//                    modifier = Modifier.padding(vertical = 8.dp),
+//                    color = Color.Black
+//                )
+                Box(modifier = Modifier.clickable(onClick = {})) {
+                    Text(
+                        text = passenger.name,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color.Black
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
