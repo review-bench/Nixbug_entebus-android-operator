@@ -18,50 +18,35 @@ private val LightColorScheme = lightColorScheme(
     tertiary = Pink40,
     background = Background,
     surface = AppSurface
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
 )
 
 @Composable
 fun EntebusandroidoperatorTheme(
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
+    dynamicColor: Boolean = false, content: @Composable () -> Unit
 ) {
+
+    val context = LocalContext.current
+    val view = LocalView.current
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
             dynamicLightColorScheme(context)
         }
 
         else -> LightColorScheme
     }
 
-    val view = LocalView.current
-    val context = LocalContext.current
-
     if (!view.isInEditMode) {
         SideEffect {
             val activity = context as? Activity
             activity?.window?.let { window ->
                 window.statusBarColor = colorScheme.background.toArgb()
-                WindowCompat
-                    .getInsetsController(window, view)
-                    .isAppearanceLightStatusBars = true
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
             }
         }
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
+        colorScheme = colorScheme, typography = Typography, content = content
     )
 }
