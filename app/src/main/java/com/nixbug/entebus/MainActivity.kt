@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.nixbug.entebus.presentation.navigation.AppNavigation
 import com.nixbug.entebus.presentation.navigation.AppNavigationViewModel
@@ -16,6 +17,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: AppNavigationViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         super.onCreate(savedInstanceState)
         splashScreen.setKeepOnScreenCondition {
             viewModel.locationState.value.isLoading
