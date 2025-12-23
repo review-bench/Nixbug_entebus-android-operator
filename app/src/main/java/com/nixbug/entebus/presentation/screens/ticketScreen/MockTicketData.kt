@@ -2,7 +2,7 @@ package com.nixbug.entebus.presentation.screens.ticketScreen
 
 val SampleLandmarks = listOf(
     Landmark(1, "Technopark Phase 1", 4200),
-    Landmark(2, "Chinnakada Clock Tower", 850),
+    Landmark(2, "Chinnakada Clock Tower", 0),
     Landmark(3, "Kovalam Beach", 13200),
     Landmark(4, "Asramam Maidan", 2100),
     Landmark(5, "Varkala Cliff", 9800),
@@ -20,11 +20,11 @@ val SampleLandmarks = listOf(
     Landmark(17, "Munroe Island", 15400),
     Landmark(18, "Kilimanoor Palace", 11800),
     Landmark(19, "Paravur Lake", 3600),
-    Landmark(20, "Vizhinjam Port", 10100)
+    Landmark(20, "Vizhinjam Port", 10100),
 )
 
 val samplePassenger = listOf(
-    Passenger(1, "Adult"),
-    Passenger(2, "Children"),
-    Passenger(3, "Student")
+    Passenger(1, "Adult",0),
+    Passenger(2, "Children",0),
+    Passenger(3, "Student",0)
 )

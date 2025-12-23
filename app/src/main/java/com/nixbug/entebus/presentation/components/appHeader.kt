@@ -1,5 +1,6 @@
 package com.nixbug.entebus.presentation.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,13 +11,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,26 +40,25 @@ fun AppHeader(
     onSecondaryActionClick: () -> Unit = {},
 ) {
     Surface(
-//        shadowElevation = 4.dp,
         color = Color.White
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding( vertical = 8.dp),
+                .padding(vertical = 8.dp, horizontal = 5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // 🔙 Back Button
+            // Back button
             IconButton(onClick = onBackClick) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
                     tint = Color.Black
                 )
             }
 
-            // 📌 Title
+            // Title (takes remaining space)
             Text(
                 text = title,
                 modifier = Modifier.weight(1f),
@@ -67,36 +67,25 @@ fun AppHeader(
                 color = Color.Black
             )
 
-            // 🔘 Conditional Action Buttons
+            // ✅ Right-side actions
             if (showTopBarActions) {
                 if (primaryActionIcon != null) {
                     Button(
                         onClick = onPrimaryActionClick,
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
                     ) {
                         Icon(
                             imageVector = primaryActionIcon,
                             contentDescription = primaryActionText,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(text = primaryActionText)
                     }
                 }
-
-                if (secondaryActionIcon != null) {
-                    TextButton(onClick = onSecondaryActionClick) {
-                        Icon(
-                            imageVector = secondaryActionIcon,
-                            contentDescription = secondaryActionText,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = secondaryActionText)
-                    }
-                }
             }
         }
+
     }
 }
