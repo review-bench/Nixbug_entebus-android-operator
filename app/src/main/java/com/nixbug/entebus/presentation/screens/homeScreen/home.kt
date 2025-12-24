@@ -56,11 +56,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
+import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.ui.theme.SelectedServiceColor
 
 @Composable
-fun HomeScreen(viewModel: HomeScreenViewModel = hiltViewModel()) {
+fun HomeScreen(rootNavController: NavHostController,viewModel: HomeScreenViewModel = hiltViewModel()) {
 
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -112,7 +114,7 @@ fun HomeScreen(viewModel: HomeScreenViewModel = hiltViewModel()) {
                         otherServices = filteredOtherServices,
                         searchQuery = searchQuery,
                         onSearchChange = { searchQuery = it },
-                        onResume = viewModel::onResumeService,
+                        onResume = {rootNavController.navigate(AppNavItem.TicketScreen.route)},
                         onStartAssigned = viewModel::onStartAssigned,
                         onStartDownloaded = viewModel::onStartDownloaded,
                         onDownload = viewModel::onDownloadService,
@@ -181,7 +183,7 @@ fun ServiceList(
     otherServices: List<HomeUiModel>,
     searchQuery: String,
     onSearchChange: (String) -> Unit,
-    onResume: (HomeUiModel) -> Unit,
+    onResume: () -> Unit,
     onStartAssigned: (HomeUiModel) -> Unit,
     onStartDownloaded: (HomeUiModel) -> Unit,
     onDownload: (HomeUiModel) -> Unit,
@@ -212,7 +214,7 @@ fun ServiceList(
                     time = time,
                     routeName = extractRouteName(service.name),
                     isEnabled = true,
-                    onActionClick = { onResume(service) }
+                    onActionClick = { onResume() }
                 )
             }
             item { SectionDivider() }
