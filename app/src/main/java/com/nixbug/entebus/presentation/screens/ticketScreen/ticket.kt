@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -41,11 +41,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -62,6 +68,7 @@ import com.nixbug.entebus.presentation.components.AppHeader
 fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -81,8 +88,13 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
             .navigationBarsPadding()
             .fillMaxSize()
             .background(Color.White)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            }
     ) {
-        // ------------------------ HEADER ----------------------------
+        // HEADER
         AppHeader(
             title = "Ticket",
             onBackClick = { navController.popBackStack() },
@@ -100,7 +112,8 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                     .weight(0.75f)
                     .fillMaxWidth()
             ) {
-                // ------------------------ LANDMARK LIST ----------------------------
+
+                // LANDMARK LIST
                 Box(
                     modifier = Modifier
                         .weight(0.65f)
@@ -116,7 +129,8 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                         endingLandmark = state.endingLandmark
                     )
                 }
-                // ------------------------ PASSENGER COUNT LIST----------------------------
+
+                // PASSENGER COUNT LIST
                 Box(
                     modifier = Modifier
                         .weight(0.45f)
@@ -130,7 +144,7 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                     )
                 }
             }
-            // ------------------------ BOTTOM SUMMARY ----------------------------
+            // BOTTOM SUMMARY
             Box(
                 modifier = Modifier
                     .weight(0.25f)
@@ -179,6 +193,7 @@ fun LandmarkList(
                         }
                     )
                     .clickable { handleLandmarkSelection(landmark, index) }
+
             )
             {
                 Row(
@@ -307,6 +322,8 @@ fun PassengerCountList(passengers: List<Passenger>, onCountChange: (Passenger, I
 
 @Composable
 fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> Unit) {
+    val textValue = if (passenger.count == 0) "" else passenger.count.toString()
+    var isFocused by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -332,10 +349,14 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                 modifier = Modifier.fillMaxWidth()
             ) {
 
-                CounterButton(text = "−", onClick = { /* decrement */ })
+                CounterButton(text = "−", onClick = {
+                    if (passenger.count > 0) {
+                        onCountChange(passenger, passenger.count - 1)
+                    }
+                })
 
                 BasicTextField(
-                    value = passenger.count.toString(),
+                    value = textValue,
                     onValueChange = { input ->
                         if (input.isDigitsOnly()) {
                             onCountChange(
@@ -351,29 +372,45 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                         textAlign = TextAlign.Center,
                         color = Color.Black
                     ),
+                    decorationBox = { innerTextField ->
+                        Box(
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Placeholder "0"
+                            if (!isFocused &&  textValue.isEmpty()) {
+                                Text(
+                                    text = "0",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.Black
+                                )
+                            }
+                            innerTextField()
+                        }
+                    },
+
                     modifier = Modifier
                         .width(48.dp)
+                        .height(40.dp)
                         .border(
                             width = 1.dp,
                             color = Color.LightGray,
                             shape = RoundedCornerShape(6.dp)
                         )
                         .background(Color(0xFFF9F9F9))
-                        .padding(vertical = 6.dp),
+//                        .padding(vertical = 6.dp)
+                        .onFocusChanged {
+                            isFocused = it.isFocused
+                        },
+
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number
-                    )
+                    ),
                 )
 
-
-//                Text(
-//                    text = "0",
-//                    fontSize = 16.sp,
-//                    fontWeight = FontWeight.SemiBold,
-//                    modifier = Modifier.padding(horizontal = 16.dp)
-//                )
-
-                CounterButton(text = "+", onClick = { /* increment */ })
+                CounterButton(
+                    text = "+",
+                    onClick = { onCountChange(passenger, passenger.count + 1) })
             }
         }
     }
