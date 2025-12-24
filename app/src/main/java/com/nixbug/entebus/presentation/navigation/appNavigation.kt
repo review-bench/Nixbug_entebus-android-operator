@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -30,7 +29,6 @@ import com.nixbug.entebus.utils.LocationPermissionHelper
 @Composable
 fun AppNavigation(
     activity: Activity,
-    modifier: Modifier = Modifier,
     viewModel: AppNavigationViewModel = hiltViewModel(),
 ) {
     val navController = rememberNavController()
@@ -94,7 +92,7 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = if (hasPermission && hasLocation) AppNavItem.TicketScreen.route else AppNavItem.LocationRequest.route
+        startDestination = if (hasPermission && hasLocation) AppNavItem.Auth.route else AppNavItem.LocationRequest.route
     )
     {
         composable(AppNavItem.Auth.route) {

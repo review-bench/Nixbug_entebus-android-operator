@@ -4,5 +4,5 @@ sealed class AppNavItem(val route: String) {
     data object Auth : AppNavItem("authScreen")
     data object LocationRequest : AppNavItem("locationRequestScreen")
     data object MainScreen : AppNavItem("mainScreen")
-    object TicketScreen : AppNavItem("ticketScreen")
+    data object TicketScreen : AppNavItem("ticketScreen")
 }

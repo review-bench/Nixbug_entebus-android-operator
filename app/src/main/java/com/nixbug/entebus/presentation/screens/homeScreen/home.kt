@@ -62,7 +62,10 @@ import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.ui.theme.SelectedServiceColor
 
 @Composable
-fun HomeScreen(rootNavController: NavHostController,viewModel: HomeScreenViewModel = hiltViewModel()) {
+fun HomeScreen(
+    rootNavController: NavHostController,
+    viewModel: HomeScreenViewModel = hiltViewModel()
+) {
 
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -79,15 +82,22 @@ fun HomeScreen(rootNavController: NavHostController,viewModel: HomeScreenViewMod
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            if (event is HomeUiEvent.ServiceAlreadyRunning) {
-                Toast.makeText(
-                    context,
-                    "A service is already running",
-                    Toast.LENGTH_SHORT
-                ).show()
+            when (event) {
+                is HomeUiEvent.ServiceAlreadyRunning -> {
+                    Toast.makeText(
+                        context,
+                        "A service is already running",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
+                is HomeUiEvent.NavigateToTicketScreen -> {
+                    rootNavController.navigate(AppNavItem.TicketScreen.route)
+                }
             }
         }
     }
+
 
     Box(
         modifier = Modifier
@@ -114,8 +124,8 @@ fun HomeScreen(rootNavController: NavHostController,viewModel: HomeScreenViewMod
                         otherServices = filteredOtherServices,
                         searchQuery = searchQuery,
                         onSearchChange = { searchQuery = it },
-                        onResume = {rootNavController.navigate(AppNavItem.TicketScreen.route)},
-                        onStartAssigned = viewModel::onStartAssigned,
+                        onResume = { rootNavController.navigate(AppNavItem.TicketScreen.route) },
+                        onStartAssigned = viewModel::onStartAssigned ,
                         onStartDownloaded = viewModel::onStartDownloaded,
                         onDownload = viewModel::onDownloadService,
                         convertUtcToIst = viewModel::convertUtcToIst,

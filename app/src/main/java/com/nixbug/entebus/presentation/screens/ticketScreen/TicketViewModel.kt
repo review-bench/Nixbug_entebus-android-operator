@@ -83,7 +83,7 @@ class TicketViewModel @Inject constructor() : ViewModel() {
             state.copy(
                 endingLandmark = newEnd,
                 endingLandmarkIndex = index,
-                totalDistanceKm = calculateDistanceKm(state.startingLandmark,newEnd)
+                totalDistanceKm = calculateDistanceKm(state.startingLandmark, newEnd)
             )
         }
     }

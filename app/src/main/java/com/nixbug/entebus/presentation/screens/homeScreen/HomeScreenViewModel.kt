@@ -51,6 +51,9 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
                 assignedServiceList = newAssigned,
             )
         }
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.NavigateToTicketScreen)
+        }
     }
 
     fun onStartDownloaded(service: HomeUiModel) {
@@ -63,6 +66,9 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
                 ongoingService = service,
                 downloadedServiceList = newDownload,
             )
+        }
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.NavigateToTicketScreen)
         }
     }
 

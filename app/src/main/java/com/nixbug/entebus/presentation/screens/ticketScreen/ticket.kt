@@ -37,6 +37,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -128,7 +130,9 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                             viewModel.handleLandmarkSelection(landmark, index)
                         },
                         startingLandmark = state.startingLandmark,
-                        endingLandmark = state.endingLandmark
+                        endingLandmark = state.endingLandmark,
+                        startingLandmarkIndex = state.startingLandmarkIndex,
+                        endingLandmarkIndex = state.endingLandmarkIndex
                     )
                 }
 
@@ -147,15 +151,15 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                 }
             }
             // BOTTOM SUMMARY
-            Box(
+            Surface(
                 modifier = Modifier
                     .weight(0.25f)
                     .padding(10.dp)
-                    .background(
-                        color = (Color(0xFFF2F5F2)),
-                        shape = RoundedCornerShape(22.dp)
-                    )
-                    .fillMaxSize()
+                    .fillMaxSize(),
+                shape = RoundedCornerShape(22.dp),
+                tonalElevation = 6.dp,
+                shadowElevation = 6.dp,
+                color = Color(0xFFEEF6EE)
             ) {
                 BottomSummaryCard(
                     startingLandmark = state.startingLandmark,
@@ -172,7 +176,9 @@ fun LandmarkList(
     landmarks: List<Landmark>,
     handleLandmarkSelection: (Landmark, Int) -> Unit,
     startingLandmark: Landmark?,
-    endingLandmark: Landmark?
+    endingLandmark: Landmark?,
+    startingLandmarkIndex: Int?,
+    endingLandmarkIndex: Int?
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxHeight(),
@@ -180,13 +186,24 @@ fun LandmarkList(
         itemsIndexed(landmarks) { index, landmark ->
             val isFirst = index == 0
             val isLast = index == landmarks.lastIndex
+            val isAdjacent = startingLandmarkIndex != null &&
+                    endingLandmarkIndex != null &&
+                    index == startingLandmarkIndex &&
+                    endingLandmarkIndex - startingLandmarkIndex == 1
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(
+                        bottom = if (isAdjacent) {
+                            1.dp
+                        } else {
+                            0.dp
+                        }
+                    )
                     .clip(RoundedCornerShape(8.dp))
                     .background(
                         if (startingLandmark?.id == landmark.id) {
-                            DisabledButtonColor
+                            Color(0xB59BDA54)
                         } else if (endingLandmark?.id == landmark.id) {
                             DisabledButtonColor
                         } else {
@@ -337,12 +354,20 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(12.dp),
+                clip = false
+            )
             .background(
                 color = Color.White, shape = RoundedCornerShape(12.dp)
             )
-            .padding(5.dp, 12.dp)
+            .padding(5.dp, 20.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
 
             // Passenger name
             Text(
@@ -354,7 +379,7 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
             // Counter row
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
 
@@ -363,7 +388,7 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                         onCountChange(passenger, passenger.count - 1)
                     }
                 })
-
+                Spacer(modifier = Modifier.width(6.dp))
                 BasicTextField(
                     value = textValue,
                     onValueChange = { input ->
@@ -398,7 +423,7 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
 
                     modifier = Modifier
                         .width(48.dp)
-                        .height(40.dp)
+                        .height(38.dp)
                         .border(
                             width = 1.dp,
                             color = Color.LightGray,
@@ -413,7 +438,7 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                         keyboardType = KeyboardType.Number
                     ),
                 )
-
+                Spacer(modifier = Modifier.width(6.dp))
                 CounterButton(
                     text = "+",
                     onClick = { onCountChange(passenger, passenger.count + 1) })
@@ -522,6 +547,5 @@ fun BottomSummaryCard(
             }
             Spacer(Modifier.height(5.dp))
         }
-
     }
 }

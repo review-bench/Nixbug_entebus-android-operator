@@ -24,7 +24,7 @@ val SampleLandmarks = listOf(
 )
 
 val samplePassenger = listOf(
-    Passenger(1, "Adult",1),
-    Passenger(2, "Children",0),
-    Passenger(3, "Student",0)
+    Passenger(1, "Adult", 1),
+    Passenger(2, "Children", 0),
+    Passenger(3, "Student", 0),
 )
