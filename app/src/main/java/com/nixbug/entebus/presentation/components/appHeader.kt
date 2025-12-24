@@ -35,9 +35,6 @@ fun AppHeader(
     primaryActionText: String = "",
     primaryActionIcon: ImageVector? = null,
     onPrimaryActionClick: () -> Unit = {},
-    secondaryActionText: String = "",
-    secondaryActionIcon: ImageVector? = null,
-    onSecondaryActionClick: () -> Unit = {},
 ) {
     Surface(
         color = Color.White
@@ -54,7 +51,8 @@ fun AppHeader(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = Color.Black
+                    tint = Color.Black,
+                    modifier = Modifier.size(30.dp)
                 )
             }
 
@@ -62,8 +60,8 @@ fun AppHeader(
             Text(
                 text = title,
                 modifier = Modifier.weight(1f),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
 
@@ -81,7 +79,7 @@ fun AppHeader(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = primaryActionText)
+                        Text(text = primaryActionText,style = MaterialTheme.typography.titleMedium, color = Color.White)
                     }
                 }
             }

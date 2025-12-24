@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,6 +64,7 @@ import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
+import com.nixbug.entebus.ui.theme.DisabledButtonColor
 
 @Composable
 fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = hiltViewModel()) {
@@ -101,7 +103,7 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
             showTopBarActions = true,
             primaryActionText = "QR",
             primaryActionIcon = Icons.Default.QrCode,
-            onPrimaryActionClick = { /* Print ticket */ })
+            onPrimaryActionClick = {  /* TODO: Handle Logic To Show QR Code Scanner*/ })
 
         Column(
             modifier = Modifier.fillMaxSize()
@@ -150,9 +152,8 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                     .weight(0.25f)
                     .padding(10.dp)
                     .background(
-                        color = (Color(0xFFF2F5F2)), shape = RoundedCornerShape(
-                            topStart = 22.dp, topEnd = 22.dp, bottomStart = 22.dp, bottomEnd = 22.dp
-                        )
+                        color = (Color(0xFFF2F5F2)),
+                        shape = RoundedCornerShape(22.dp)
                     )
                     .fillMaxSize()
             ) {
@@ -185,15 +186,14 @@ fun LandmarkList(
                     .clip(RoundedCornerShape(8.dp))
                     .background(
                         if (startingLandmark?.id == landmark.id) {
-                            Color(0x5B9BDA54)
+                            DisabledButtonColor
                         } else if (endingLandmark?.id == landmark.id) {
-                            Color(0x5B9BDA54)
+                            DisabledButtonColor
                         } else {
                             Color.Transparent
                         }
                     )
                     .clickable { handleLandmarkSelection(landmark, index) }
-
             )
             {
                 Row(
@@ -203,20 +203,30 @@ fun LandmarkList(
                         LandmarksTimelineIcons(isFirst, isLast)
                     }
 
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Column {
                         Text(
                             text = landmark.name,
                             color = Color.Black,
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         if (startingLandmark?.id == landmark.id) {
-                            Text(text = "From", color = Color.Gray, fontSize = 12.sp)
+                            Text(
+                                text = "From",
+                                color = Color.Gray,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.padding(top = 3.dp)
+                            )
                         }
                         if (endingLandmark?.id == landmark.id) {
-                            Text(text = "To", color = Color.Gray, fontSize = 12.sp)
+                            Text(
+                                text = "To",
+                                color = Color.Gray,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.padding(top = 3.dp)
+                            )
                         }
                     }
                     Spacer(modifier = Modifier.width(10.dp))
@@ -248,7 +258,7 @@ fun LandmarksTimelineIcons(isFirst: Boolean, isLast: Boolean) {
             Icon(
                 imageVector = Icons.Default.MyLocation,
                 contentDescription = "Start",
-                tint = Color(0xFF8BC34A),
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -258,7 +268,7 @@ fun LandmarksTimelineIcons(isFirst: Boolean, isLast: Boolean) {
             Icon(
                 imageVector = Icons.Default.LocationOn,
                 contentDescription = "End",
-                tint = Color(0xFF8BC34A),
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
             Box(
@@ -273,14 +283,14 @@ fun LandmarksTimelineIcons(isFirst: Boolean, isLast: Boolean) {
             modifier = Modifier
                 .size(20.dp)
                 .background(
-                    color = Color(0x5B9BDA54), shape = CircleShape
+                    color = DisabledButtonColor, shape = CircleShape
                 ), contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
                     .size(10.dp)
                     .background(
-                        color = Color(0xFF8BC34A), shape = CircleShape
+                        MaterialTheme.colorScheme.primary, shape = CircleShape
                     )
             )
         }
@@ -337,9 +347,8 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
             // Passenger name
             Text(
                 text = passenger.name,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.Black
+                color = Color.Black,
+                style = MaterialTheme.typography.titleMedium,
             )
 
             // Counter row
@@ -376,12 +385,10 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                         Box(
                             contentAlignment = Alignment.Center
                         ) {
-                            // Placeholder "0"
-                            if (!isFocused &&  textValue.isEmpty()) {
+                            if (!isFocused && textValue.isEmpty()) {
                                 Text(
                                     text = "0",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.SemiBold,
+                                    style = MaterialTheme.typography.titleMedium,
                                     color = Color.Black
                                 )
                             }
@@ -398,7 +405,6 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                             shape = RoundedCornerShape(6.dp)
                         )
                         .background(Color(0xFFF9F9F9))
-//                        .padding(vertical = 6.dp)
                         .onFocusChanged {
                             isFocused = it.isFocused
                         },
@@ -424,12 +430,13 @@ fun CounterButton(
         modifier = Modifier
             .size(34.dp)
             .background(
-                color = Color(0xFF8BC34A), shape = RoundedCornerShape(8.dp)
+                color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(8.dp)
             )
             .clickable { onClick() }, contentAlignment = Alignment.Center
     ) {
+
         Text(
-            text = text, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White
+            text = text, color = Color.White, style = MaterialTheme.typography.titleLarge
         )
     }
 }
@@ -455,12 +462,11 @@ fun BottomSummaryCard(
                     Icon(
                         imageVector = Icons.Default.LocationOn,
                         contentDescription = "Back",
-                        tint = Color(0xFF8BC34A)
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         " ${startingLandmark.name} ->  ${endingLandmark?.name ?: ""}",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -477,20 +483,25 @@ fun BottomSummaryCard(
             ) {
                 Column {
                     Text(
-                        "Total Distance", fontSize = 12.sp, fontWeight = FontWeight.Medium
+                        "Total Distance",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
                         String.format("%.2f km", totalDistanceKm),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleLarge,
+                        fontSize = 20.sp
                     )
                 }
                 Column {
                     Text(
-                        "Total Fare", fontSize = 12.sp, fontWeight = FontWeight.Medium
+                        "Total Fare",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        "0 RS", fontSize = 18.sp, fontWeight = FontWeight.Bold
+                        "0 RS", style = MaterialTheme.typography.titleLarge,
+                        fontSize = 20.sp
                     )
                 }
             }
@@ -498,14 +509,14 @@ fun BottomSummaryCard(
             Button(
                 onClick = {}, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(13.dp)
             ) {
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Print,
                         contentDescription = "Back",
                         tint = Color.White
                     )
                     Text(
-                        " Print Ticket", fontSize = 15.sp, fontWeight = FontWeight.SemiBold
+                        " Print Ticket", style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
