@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 private const val MAX_PASSENGER_COUNT = 99
+private const val METERS_PER_KILOMETER = 1000f
 
 @HiltViewModel
 class TicketViewModel @Inject constructor() : ViewModel() {
@@ -92,7 +93,7 @@ class TicketViewModel @Inject constructor() : ViewModel() {
 
     private fun calculateDistanceKm(start: Landmark?, end: Landmark?): Float {
         return if (start != null && end != null) {
-            kotlin.math.abs(end.distanceFromStart - start.distanceFromStart) / 1000f
+            kotlin.math.abs(end.distanceFromStart - start.distanceFromStart) / METERS_PER_KILOMETER
         } else {
             0f
         }

@@ -2,7 +2,7 @@ package com.nixbug.entebus.presentation.screens.ticketScreen
 
 data class TicketUiState(
     val landmarks: List<Landmark> = SampleLandmarks,
-    val passengers: List<Passenger> = samplePassenger,
+    val passengers: List<Passenger> = samplePassengers,
 
     val startingLandmark: Landmark? = null,
     val endingLandmark: Landmark? = null,

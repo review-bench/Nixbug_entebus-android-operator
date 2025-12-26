@@ -23,7 +23,7 @@ val SampleLandmarks = listOf(
     Landmark(20, "Vizhinjam Port", 10100),
 )
 
-val samplePassenger = listOf(
+val samplePassengers = listOf(
     Passenger(1, "Adult", 1),
     Passenger(2, "Children", 0),
     Passenger(3, "Student", 0),

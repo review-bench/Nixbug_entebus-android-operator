@@ -29,11 +29,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +68,7 @@ import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
+import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 
 @Composable
@@ -164,7 +167,8 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                 BottomSummaryCard(
                     startingLandmark = state.startingLandmark,
                     endingLandmark = state.endingLandmark,
-                    totalDistanceKm = state.totalDistanceKm
+                    totalDistanceKm = state.totalDistanceKm,
+                    passengers = state.passengers
                 )
             }
         }
@@ -194,6 +198,15 @@ fun LandmarkList(
                     endingLandmarkIndex != null &&
                     index == startingLandmarkIndex &&
                     endingLandmarkIndex - startingLandmarkIndex == 1
+
+            val isStart = startingLandmarkIndex != null && index == startingLandmarkIndex
+            val isEnd = endingLandmarkIndex != null && index == endingLandmarkIndex
+
+            val inBetween = startingLandmarkIndex != null &&
+                    endingLandmarkIndex != null &&
+                    index > minOf(startingLandmarkIndex, endingLandmarkIndex) &&
+                    index < maxOf(startingLandmarkIndex, endingLandmarkIndex)
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -221,11 +234,31 @@ fun LandmarkList(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        LandmarksTimelineIcons(isFirst, isLast)
+                        LandmarksTimelineIcons(
+                            isFirst, isLast, isStart,
+                            isEnd,
+                            inBetween
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(6.dp))
                     Column {
+                        if (startingLandmark?.id == landmark.id) {
+                            Text(
+                                text = "From",
+                                color = DarkOrange,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.padding(bottom = 3.dp)
+                            )
+                        }
+                        if (endingLandmark?.id == landmark.id) {
+                            Text(
+                                text = "Till",
+                                color = DarkOrange,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.padding(bottom = 3.dp)
+                            )
+                        }
                         Text(
                             text = landmark.name,
                             color = Color.Black,
@@ -233,22 +266,6 @@ fun LandmarkList(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        if (startingLandmark?.id == landmark.id) {
-                            Text(
-                                text = "From",
-                                color = Color.Gray,
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.padding(top = 3.dp)
-                            )
-                        }
-                        if (endingLandmark?.id == landmark.id) {
-                            Text(
-                                text = "To",
-                                color = Color.Gray,
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.padding(top = 3.dp)
-                            )
-                        }
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                 }
@@ -258,7 +275,24 @@ fun LandmarkList(
 }
 
 @Composable
-fun LandmarksTimelineIcons(isFirst: Boolean, isLast: Boolean) {
+fun LandmarksTimelineIcons(
+    isFirst: Boolean,
+    isLast: Boolean,
+    isStart: Boolean,
+    isEnd: Boolean,
+    inBetween: Boolean,
+) {
+
+    val outerColor = when {
+        isStart || isEnd || inBetween -> Color(0x48974B00)
+        else -> DisabledButtonColor
+    }
+
+    val innerColor = when {
+        isStart || isEnd || inBetween -> Color(0x6B974B00)
+        else -> MaterialTheme.colorScheme.primary
+    }
+
     if (!isFirst) {
         Box(
             modifier = Modifier
@@ -279,7 +313,7 @@ fun LandmarksTimelineIcons(isFirst: Boolean, isLast: Boolean) {
             Icon(
                 imageVector = Icons.Default.MyLocation,
                 contentDescription = "Start",
-                tint = MaterialTheme.colorScheme.primary,
+                tint = innerColor,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -289,7 +323,7 @@ fun LandmarksTimelineIcons(isFirst: Boolean, isLast: Boolean) {
             Icon(
                 imageVector = Icons.Default.LocationOn,
                 contentDescription = "End",
-                tint = MaterialTheme.colorScheme.primary,
+                tint = innerColor,
                 modifier = Modifier.size(20.dp)
             )
             Box(
@@ -300,20 +334,31 @@ fun LandmarksTimelineIcons(isFirst: Boolean, isLast: Boolean) {
             )
         }
     } else {
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .background(
-                    color = DisabledButtonColor, shape = CircleShape
-                ), contentAlignment = Alignment.Center
-        ) {
+        if (inBetween) {
+            Icon(
+                imageVector = Icons.Default.KeyboardDoubleArrowDown,
+                contentDescription = "End",
+                tint = DarkOrange,
+                modifier = Modifier.size(20.dp)
+            )
+        } else {
             Box(
                 modifier = Modifier
-                    .size(10.dp)
+                    .size(20.dp)
                     .background(
-                        MaterialTheme.colorScheme.primary, shape = CircleShape
-                    )
-            )
+                        color = outerColor,
+                        shape = CircleShape
+                    ), contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .background(
+                            color = innerColor,
+                            shape = CircleShape
+                        )
+                )
+            }
         }
     }
     if (!isLast) {
@@ -478,9 +523,13 @@ fun CounterButton(
 fun BottomSummaryCard(
     startingLandmark: Landmark?,
     endingLandmark: Landmark?,
-    totalDistanceKm: Float
+    totalDistanceKm: Float,
+    passengers: List<Passenger>
 ) {
     val context = LocalContext.current
+    val isTicketValid = startingLandmark != null &&
+            endingLandmark != null &&
+            passengers.any { it.count > 0 }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -490,7 +539,7 @@ fun BottomSummaryCard(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center
         ) {
-            if (startingLandmark?.name != null) {
+            if (startingLandmark != null) {
                 Row {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
@@ -498,7 +547,7 @@ fun BottomSummaryCard(
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        " ${startingLandmark.name} ->  ${endingLandmark?.name ?: ""}",
+                        " ${startingLandmark.name} -> ${endingLandmark?.name ?: ""}",
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -533,20 +582,25 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        "0 RS", style = MaterialTheme.typography.titleLarge,
+                        String.format("%.0f RS", totalDistanceKm * 5),
+                        style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )
                 }
             }
             Spacer(Modifier.height(5.dp))
             Button(
+                enabled = isTicketValid,
                 onClick = {
                     Toast.makeText(
                         context,
                         "Printing ticket...",
                         Toast.LENGTH_SHORT
                     ).show()
-                }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(13.dp)
+                }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(13.dp),
+                colors = ButtonDefaults.buttonColors(
+                    disabledContainerColor = DisabledButtonColor
+                )
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
