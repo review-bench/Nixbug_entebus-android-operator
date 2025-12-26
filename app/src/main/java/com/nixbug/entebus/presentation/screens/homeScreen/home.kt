@@ -124,8 +124,8 @@ fun HomeScreen(
                         otherServices = filteredOtherServices,
                         searchQuery = searchQuery,
                         onSearchChange = { searchQuery = it },
-                        onResume = { rootNavController.navigate(AppNavItem.TicketScreen.route) },
-                        onStartAssigned = viewModel::onStartAssigned ,
+                        onResumeService = viewModel::onResumeService,
+                        onStartAssigned = viewModel::onStartAssigned,
                         onStartDownloaded = viewModel::onStartDownloaded,
                         onDownload = viewModel::onDownloadService,
                         convertUtcToIst = viewModel::convertUtcToIst,
@@ -193,7 +193,7 @@ fun ServiceList(
     otherServices: List<HomeUiModel>,
     searchQuery: String,
     onSearchChange: (String) -> Unit,
-    onResume: () -> Unit,
+    onResumeService: () -> Unit,
     onStartAssigned: (HomeUiModel) -> Unit,
     onStartDownloaded: (HomeUiModel) -> Unit,
     onDownload: (HomeUiModel) -> Unit,
@@ -224,7 +224,7 @@ fun ServiceList(
                     time = time,
                     routeName = extractRouteName(service.name),
                     isEnabled = true,
-                    onActionClick = { onResume() }
+                    onActionClick = { onResumeService() }
                 )
             }
             item { SectionDivider() }

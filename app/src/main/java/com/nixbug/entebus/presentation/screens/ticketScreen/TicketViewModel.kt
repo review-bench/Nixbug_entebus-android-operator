@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
+private const val MAX_PASSENGER_COUNT = 99
 
 @HiltViewModel
 class TicketViewModel @Inject constructor() : ViewModel() {
@@ -20,6 +21,7 @@ class TicketViewModel @Inject constructor() : ViewModel() {
 
     private val _events = MutableSharedFlow<TicketUiEvent>(extraBufferCapacity = 1)
     val events = _events.asSharedFlow()
+
 
     private fun emitToast(message: String) {
         _events.tryEmit(TicketUiEvent.ShowToast(message))
@@ -32,7 +34,7 @@ class TicketViewModel @Inject constructor() : ViewModel() {
                 state.copy(
                     startingLandmark = null,
                     startingLandmarkIndex = null,
-                    totalDistanceKm = 0f
+                    totalDistanceKm = calculateDistanceKm(null, state.endingLandmark)
                 )
             }
             return
@@ -44,7 +46,7 @@ class TicketViewModel @Inject constructor() : ViewModel() {
                 state.copy(
                     endingLandmark = null,
                     endingLandmarkIndex = null,
-                    totalDistanceKm = 0f
+                    totalDistanceKm = calculateDistanceKm(state.startingLandmark, null)
                 )
             }
             return
@@ -54,7 +56,7 @@ class TicketViewModel @Inject constructor() : ViewModel() {
         if (_uiState.value.startingLandmark == null && index > (_uiState.value.endingLandmarkIndex
                 ?: Int.MAX_VALUE)
         ) {
-            emitToast("Starting point must be above ending point")
+            emitToast("Starting point cannot be after ending point")
             return
         }
 
@@ -73,7 +75,7 @@ class TicketViewModel @Inject constructor() : ViewModel() {
 
         // Invalid ending (above starting)
         if (index < (_uiState.value.startingLandmarkIndex ?: 0)) {
-            emitToast("Ending point must be below starting point")
+            emitToast("Ending point must come after starting point")
             return
         }
 
@@ -97,12 +99,27 @@ class TicketViewModel @Inject constructor() : ViewModel() {
     }
 
     fun updatePassengerCount(id: Int, count: Int) {
-        _uiState.update { state ->
-            state.copy(
-                passengers = state.passengers.map {
-                    if (it.id == id) it.copy(count = count) else it
+        when {
+            count > MAX_PASSENGER_COUNT -> {
+                emitToast("Maximum $MAX_PASSENGER_COUNT passengers allowed")
+                _uiState.update { state ->
+                    state.copy(
+                        passengers = state.passengers.map {
+                            if (it.id == id) it.copy(count = MAX_PASSENGER_COUNT) else it
+                        }
+                    )
                 }
-            )
+            }
+
+            else -> {
+                _uiState.update { state ->
+                    state.copy(
+                        passengers = state.passengers.map {
+                            if (it.id == id) it.copy(count = count) else it
+                        }
+                    )
+                }
+            }
         }
     }
 

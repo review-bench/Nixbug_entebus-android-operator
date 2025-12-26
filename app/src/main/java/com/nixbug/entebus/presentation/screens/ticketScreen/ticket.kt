@@ -186,6 +186,10 @@ fun LandmarkList(
         itemsIndexed(landmarks) { index, landmark ->
             val isFirst = index == 0
             val isLast = index == landmarks.lastIndex
+            /* When the selected start and end landmarks are consecutive items,
+               we add a tiny bottom spacing to visually separate their highlight backgrounds.
+               Without this, the two highlighted rows visually merge
+               into a single block, which looks like one selection.*/
             val isAdjacent = startingLandmarkIndex != null &&
                     endingLandmarkIndex != null &&
                     index == startingLandmarkIndex &&
@@ -351,6 +355,7 @@ fun PassengerCountList(passengers: List<Passenger>, onCountChange: (Passenger, I
 fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> Unit) {
     val textValue = if (passenger.count == 0) "" else passenger.count.toString()
     var isFocused by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -441,7 +446,9 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                 Spacer(modifier = Modifier.width(6.dp))
                 CounterButton(
                     text = "+",
-                    onClick = { onCountChange(passenger, passenger.count + 1) })
+                    onClick = {
+                        onCountChange(passenger, passenger.count + 1)
+                    })
             }
         }
     }
@@ -473,6 +480,7 @@ fun BottomSummaryCard(
     endingLandmark: Landmark?,
     totalDistanceKm: Float
 ) {
+    val context = LocalContext.current
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -486,7 +494,7 @@ fun BottomSummaryCard(
                 Row {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Back",
+                        contentDescription = "Location",
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
@@ -532,12 +540,18 @@ fun BottomSummaryCard(
             }
             Spacer(Modifier.height(5.dp))
             Button(
-                onClick = {}, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(13.dp)
+                onClick = {
+                    Toast.makeText(
+                        context,
+                        "Printing ticket...",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(13.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Print,
-                        contentDescription = "Back",
+                        contentDescription = "Print Ticket",
                         tint = Color.White
                     )
                     Text(
