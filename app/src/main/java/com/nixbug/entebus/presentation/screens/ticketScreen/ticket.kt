@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AdsClick
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
@@ -116,14 +117,14 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
 
             Row(
                 modifier = Modifier
-                    .weight(0.75f)
+                    .weight(0.73f)
                     .fillMaxWidth()
             ) {
 
                 // LANDMARK LIST
                 Box(
                     modifier = Modifier
-                        .weight(0.65f)
+                        .weight(0.58f)
                         .fillMaxHeight()
                         .padding(horizontal = 5.dp)
                 ) {
@@ -142,7 +143,7 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                 // PASSENGER COUNT LIST
                 Box(
                     modifier = Modifier
-                        .weight(0.45f)
+                        .weight(0.42f)
                         .fillMaxHeight()
                 ) {
                     PassengerCountList(
@@ -156,8 +157,8 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
             // BOTTOM SUMMARY
             Surface(
                 modifier = Modifier
-                    .weight(0.25f)
-                    .padding(10.dp)
+                    .weight(0.27f)
+                    .padding(10.dp, 8.dp)
                     .fillMaxSize(),
                 shape = RoundedCornerShape(22.dp),
                 tonalElevation = 6.dp,
@@ -380,10 +381,9 @@ fun PassengerCountList(passengers: List<Passenger>, onCountChange: (Passenger, I
     ) {
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 10.dp),
+                .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 12.dp)
+            contentPadding = PaddingValues(  8.dp,10.dp)
         ) {
             // Passenger items
             items(passengers) { passenger ->
@@ -429,7 +429,7 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
             // Counter row
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
 
@@ -438,7 +438,7 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                         onCountChange(passenger, passenger.count - 1)
                     }
                 })
-                Spacer(modifier = Modifier.width(6.dp))
+//                Spacer(modifier = Modifier.width(5.dp))
                 BasicTextField(
                     value = textValue,
                     onValueChange = { input ->
@@ -470,9 +470,8 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                             innerTextField()
                         }
                     },
-
                     modifier = Modifier
-                        .width(48.dp)
+                        .width(46.dp)
                         .height(38.dp)
                         .border(
                             width = 1.dp,
@@ -483,12 +482,11 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                         .onFocusChanged {
                             isFocused = it.isFocused
                         },
-
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number
                     ),
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+//                Spacer(modifier = Modifier.width(5.dp))
                 CounterButton(
                     text = "+",
                     onClick = {
@@ -533,14 +531,14 @@ fun BottomSummaryCard(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(10.dp)
+            .padding(10.dp, 8.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center
         ) {
             if (startingLandmark != null) {
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
                         contentDescription = "Location",
@@ -553,12 +551,22 @@ fun BottomSummaryCard(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                Spacer(Modifier.height(10.dp))
-
-                HorizontalDivider(thickness = 1.dp, color = Color.Black)
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.AdsClick,
+                        contentDescription = "AdsClick",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        " Select a starting point and destination",
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
             }
-
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(5.dp))
+            HorizontalDivider(thickness = 1.dp, color = Color.Black)
+            Spacer(Modifier.height(5.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
@@ -590,30 +598,34 @@ fun BottomSummaryCard(
             }
             Spacer(Modifier.height(5.dp))
             Button(
-                enabled = isTicketValid,
+
                 onClick = {
                     Toast.makeText(
                         context,
                         "Printing ticket...",
                         Toast.LENGTH_SHORT
                     ).show()
-                }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(13.dp),
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(13.dp),
+                contentPadding = PaddingValues(5.dp),
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = DisabledButtonColor
-                )
+                ),
+                enabled = isTicketValid
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Print,
                         contentDescription = "Print Ticket",
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
                     )
                     Text(
                         " Print Ticket", style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
-            Spacer(Modifier.height(5.dp))
         }
     }
 }
