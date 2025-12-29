@@ -12,12 +12,12 @@ import javax.inject.Inject
 
 private const val MAX_PASSENGER_COUNT = 99
 private const val METERS_PER_KILOMETER = 1000f
+private val SortedSampleLandmarks = SampleLandmarks.sortedBy { it.distanceFromStart }
 
 @HiltViewModel
 class TicketViewModel @Inject constructor() : ViewModel() {
 
-    private val _uiState =
-        MutableStateFlow(TicketUiState(landmarks = SampleLandmarks.sortedBy { it.distanceFromStart }))
+    private val _uiState = MutableStateFlow(TicketUiState(landmarks = SortedSampleLandmarks))
     val uiState: StateFlow<TicketUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<TicketUiEvent>(extraBufferCapacity = 1)
@@ -28,7 +28,15 @@ class TicketViewModel @Inject constructor() : ViewModel() {
         _events.tryEmit(TicketUiEvent.ShowToast(message))
     }
 
-    fun handleLandmarkSelection(landmark: Landmark, index: Int) {
+    private fun calculateDistanceKm(start: Landmark?, end: Landmark?): Float {
+        return if (start != null && end != null) {
+            kotlin.math.abs(end.distanceFromStart - start.distanceFromStart) / METERS_PER_KILOMETER
+        } else {
+            0f
+        }
+    }
+
+    fun toggleLandmarkSelection(landmark: Landmark, index: Int) {
         // Retap start → deselect
         if (_uiState.value.startingLandmark?.id == landmark.id) {
             _uiState.update { state ->
@@ -91,14 +99,6 @@ class TicketViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    private fun calculateDistanceKm(start: Landmark?, end: Landmark?): Float {
-        return if (start != null && end != null) {
-            kotlin.math.abs(end.distanceFromStart - start.distanceFromStart) / METERS_PER_KILOMETER
-        } else {
-            0f
-        }
-    }
-
     fun updatePassengerCount(id: Int, count: Int) {
         when {
             count > MAX_PASSENGER_COUNT -> {
@@ -123,5 +123,4 @@ class TicketViewModel @Inject constructor() : ViewModel() {
             }
         }
     }
-
 }

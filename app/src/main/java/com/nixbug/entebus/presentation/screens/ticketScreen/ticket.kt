@@ -1,6 +1,5 @@
 package com.nixbug.entebus.presentation.screens.ticketScreen
 
-import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -71,6 +70,7 @@ import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
+import java.util.Locale
 
 @Composable
 fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = hiltViewModel()) {
@@ -109,7 +109,11 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
             showTopBarActions = true,
             primaryActionText = "QR",
             primaryActionIcon = Icons.Default.QrCode,
-            onPrimaryActionClick = {  /* TODO: Handle Logic To Show QR Code Scanner*/ })
+            onPrimaryActionClick = {
+                Toast
+                    .makeText(context, "QR scanner is not available yet.", Toast.LENGTH_SHORT)
+                    .show()
+            })
 
         Column(
             modifier = Modifier.fillMaxSize()
@@ -131,7 +135,7 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                     LandmarkList(
                         landmarks = state.landmarks,
                         handleLandmarkSelection = { landmark, index ->
-                            viewModel.handleLandmarkSelection(landmark, index)
+                            viewModel.toggleLandmarkSelection(landmark, index)
                         },
                         startingLandmark = state.startingLandmark,
                         endingLandmark = state.endingLandmark,
@@ -383,7 +387,7 @@ fun PassengerCountList(passengers: List<Passenger>, onCountChange: (Passenger, I
             modifier = Modifier
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(  8.dp,10.dp)
+            contentPadding = PaddingValues(8.dp, 10.dp)
         ) {
             // Passenger items
             items(passengers) { passenger ->
@@ -438,7 +442,6 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                         onCountChange(passenger, passenger.count - 1)
                     }
                 })
-//                Spacer(modifier = Modifier.width(5.dp))
                 BasicTextField(
                     value = textValue,
                     onValueChange = { input ->
@@ -486,7 +489,6 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                         keyboardType = KeyboardType.Number
                     ),
                 )
-//                Spacer(modifier = Modifier.width(5.dp))
                 CounterButton(
                     text = "+",
                     onClick = {
@@ -516,7 +518,7 @@ fun CounterButton(
     }
 }
 
-@SuppressLint("DefaultLocale")
+
 @Composable
 fun BottomSummaryCard(
     startingLandmark: Landmark?,
@@ -578,7 +580,7 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        String.format("%.2f km", totalDistanceKm),
+                        String.format(Locale.getDefault(), "%.2f km", totalDistanceKm),
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )
@@ -590,7 +592,7 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        String.format("%.0f RS", totalDistanceKm * 5),
+                        String.format(Locale.getDefault(), "%.0f RS", totalDistanceKm * 5),
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )
