@@ -23,7 +23,6 @@ class TicketViewModel @Inject constructor() : ViewModel() {
     private val _events = MutableSharedFlow<TicketUiEvent>(extraBufferCapacity = 1)
     val events = _events.asSharedFlow()
 
-
     private fun emitToast(message: String) {
         _events.tryEmit(TicketUiEvent.ShowToast(message))
     }

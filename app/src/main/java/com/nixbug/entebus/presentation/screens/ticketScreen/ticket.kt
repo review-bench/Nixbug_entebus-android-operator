@@ -134,7 +134,7 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                 ) {
                     LandmarkList(
                         landmarks = state.landmarks,
-                        handleLandmarkSelection = { landmark, index ->
+                        onToggleLandmarkSelection = { landmark, index ->
                             viewModel.toggleLandmarkSelection(landmark, index)
                         },
                         startingLandmark = state.startingLandmark,
@@ -183,7 +183,7 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
 @Composable
 fun LandmarkList(
     landmarks: List<Landmark>,
-    handleLandmarkSelection: (Landmark, Int) -> Unit,
+    onToggleLandmarkSelection: (Landmark, Int) -> Unit,
     startingLandmark: Landmark?,
     endingLandmark: Landmark?,
     startingLandmarkIndex: Int?,
@@ -233,7 +233,7 @@ fun LandmarkList(
                             Color.Transparent
                         }
                     )
-                    .clickable { handleLandmarkSelection(landmark, index) }
+                    .clickable { onToggleLandmarkSelection(landmark, index) }
             )
             {
                 Row(
@@ -593,7 +593,7 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        String.format(Locale.getDefault(), "%.0f RS", totalDistanceKm * 5),
+                        String.format(Locale.getDefault(), "%.1f \u20B9", totalDistanceKm * 5),
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )
