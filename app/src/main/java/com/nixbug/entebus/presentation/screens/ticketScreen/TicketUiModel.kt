@@ -9,5 +9,5 @@ data class Landmark(
 data class Passenger(
     val id: Int,
     val name: String,
-    val count: Int
+    val passengerCount: Int
 )

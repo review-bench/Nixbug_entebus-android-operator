@@ -22,7 +22,7 @@ fun MainScreen(rootNavController: NavHostController) {
             modifier = Modifier
                 .padding(it)
         ) {
-            BottomNavGraph(navController,rootNavController)
+            BottomNavGraph(navController, rootNavController)
         }
     }
 }

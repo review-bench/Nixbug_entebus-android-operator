@@ -106,7 +106,7 @@ class TicketViewModel @Inject constructor() : ViewModel() {
                 _uiState.update { state ->
                     state.copy(
                         passengers = state.passengers.map {
-                            if (it.id == id) it.copy(count = MAX_PASSENGER_COUNT) else it
+                            if (it.id == id) it.copy(passengerCount = MAX_PASSENGER_COUNT) else it
                         }
                     )
                 }
@@ -116,7 +116,7 @@ class TicketViewModel @Inject constructor() : ViewModel() {
                 _uiState.update { state ->
                     state.copy(
                         passengers = state.passengers.map {
-                            if (it.id == id) it.copy(count = count) else it
+                            if (it.id == id) it.copy(passengerCount = count) else it
                         }
                     )
                 }

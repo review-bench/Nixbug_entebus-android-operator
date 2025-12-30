@@ -198,7 +198,8 @@ fun LandmarkList(
             /* When the selected start and end landmarks are consecutive items,
                we add a tiny bottom spacing to visually separate their highlight backgrounds.
                Without this, the two highlighted rows visually merge
-               into a single block, which looks like one selection.*/
+               into a single block, which looks like one selection.
+            */
             val isAdjacent = startingLandmarkIndex != null &&
                     endingLandmarkIndex != null &&
                     index == startingLandmarkIndex &&
@@ -402,7 +403,7 @@ fun PassengerCountList(passengers: List<Passenger>, onCountChange: (Passenger, I
 
 @Composable
 fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> Unit) {
-    val textValue = if (passenger.count == 0) "" else passenger.count.toString()
+    val textValue = if (passenger.passengerCount == 0) "" else passenger.passengerCount.toString()
     var isFocused by remember { mutableStateOf(false) }
 
     Box(
@@ -438,8 +439,8 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
             ) {
 
                 CounterButton(text = "−", onClick = {
-                    if (passenger.count > 0) {
-                        onCountChange(passenger, passenger.count - 1)
+                    if (passenger.passengerCount > 0) {
+                        onCountChange(passenger, passenger.passengerCount - 1)
                     }
                 })
                 BasicTextField(
@@ -492,7 +493,7 @@ fun PassengerCountItem(passenger: Passenger, onCountChange: (Passenger, Int) -> 
                 CounterButton(
                     text = "+",
                     onClick = {
-                        onCountChange(passenger, passenger.count + 1)
+                        onCountChange(passenger, passenger.passengerCount + 1)
                     })
             }
         }
@@ -529,7 +530,7 @@ fun BottomSummaryCard(
     val context = LocalContext.current
     val isTicketValid = startingLandmark != null &&
             endingLandmark != null &&
-            passengers.any { it.count > 0 }
+            passengers.any { it.passengerCount > 0 }
     Box(
         modifier = Modifier
             .fillMaxSize()
