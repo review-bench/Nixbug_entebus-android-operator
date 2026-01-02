@@ -26,10 +26,6 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
     private val _events = MutableSharedFlow<HomeUiEvent>()
     val events: SharedFlow<HomeUiEvent> = _events.asSharedFlow()
 
-    fun onResumeService(service: HomeUiModel) {
-        /* TODO: Handle Logic To Navigate To Ticket Page*/
-    }
-
     private fun checkAndEmitIfServiceAlreadyRunning(): Boolean {
         return if (_uiState.value.ongoingService != null) {
             viewModelScope.launch {
@@ -38,6 +34,12 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
             true
         } else {
             false
+        }
+    }
+
+    fun onResumeService() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.NavigateToTicketScreen)
         }
     }
 
@@ -51,6 +53,9 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
                 assignedServiceList = newAssigned,
             )
         }
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.NavigateToTicketScreen)
+        }
     }
 
     fun onStartDownloaded(service: HomeUiModel) {
@@ -63,6 +68,9 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
                 ongoingService = service,
                 downloadedServiceList = newDownload,
             )
+        }
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.NavigateToTicketScreen)
         }
     }
 
@@ -121,7 +129,6 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
      * @param utcTimestamp ISO-8601 formatted UTC timestamp.
      * @return A Pair containing the date label and formatted time.
      */
-
     fun convertUtcToIst(utcTimestamp: String): Pair<String, String> {
         val instant = Instant.parse(utcTimestamp)
         val istZone = ZoneId.of("Asia/Kolkata")
@@ -154,7 +161,6 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
      * @param startingAtUtc ISO-8601 formatted UTC start time of the service.
      * @return `true` if the service can be started, `false` otherwise.
      */
-
     fun canStartService(startingAtUtc: String): Boolean {
         val instant = Instant.parse(startingAtUtc)
 
