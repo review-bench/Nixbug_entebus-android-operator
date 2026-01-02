@@ -1,7 +1,7 @@
 package com.nixbug.entebus.di
 
 import android.content.Context
-import com.nixbug.entebus.data.local.dataStore.LocationPreferences
+import com.nixbug.entebus.data.local.datastore.LocationPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

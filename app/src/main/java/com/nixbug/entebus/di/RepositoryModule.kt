@@ -1,6 +1,6 @@
 package com.nixbug.entebus.di
 
-import com.nixbug.entebus.data.local.dataStore.LocationPreferences
+import com.nixbug.entebus.data.local.datastore.LocationPreferences
 import com.nixbug.entebus.data.repository.LocationRepositoryImpl
 import com.nixbug.entebus.domain.repository.LocationRepository
 import dagger.Module

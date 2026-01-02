@@ -1,0 +1,28 @@
+package com.nixbug.entebus.presentation.screens.main
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.nixbug.entebus.presentation.navigation.bottomtab.BottomNavGraph
+import com.nixbug.entebus.presentation.navigation.bottomtab.BottomNavigationBar
+
+@Composable
+fun MainScreen(rootNavController: NavHostController) {
+    val navController = rememberNavController()
+    Scaffold(
+        bottomBar = {
+            BottomNavigationBar(navController)
+        }
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(it)
+        ) {
+            BottomNavGraph(navController, rootNavController)
+        }
+    }
+}
