@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,6 +26,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.*
 import com.nixbug.entebus.R
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
@@ -48,6 +51,66 @@ fun LocationRequest(
     var showLoader by remember { mutableStateOf(false) }
     var openedSettings by remember { mutableStateOf(false) }
 
+    // --- 1. THE GPS RESOLUTION LAUNCHER ---
+    // This handles the result of the "Enable GPS" system dialog
+    val gpsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // User clicked "OK" in the GPS dialog
+            viewModel.fetchLocationIfNeeded(
+                onSuccess = { showLoader = false },
+                onError = { error ->
+                    showLoader = false
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+        else {
+            // User clicked "No Thanks"
+            showLoader = false
+            Toast.makeText(context, "GPS is required for real-time bus tracking.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // --- 2. THE GPS CHECK LOGIC ---
+    // This checks if hardware GPS is ON. If not, it triggers the system dialog.
+    val checkAndEnableGps = {
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000).build()
+        val builder = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+            .setAlwaysShow(true) // Ensures the prompt shows even in battery saving mode
+
+        val client: SettingsClient = LocationServices.getSettingsClient(activity)
+        val task = client.checkLocationSettings(builder.build())
+
+        task.addOnSuccessListener {
+            // GPS is already ON, proceed to fetch
+            viewModel.fetchLocationIfNeeded(
+                onSuccess = { showLoader = false },
+                onError = { error ->
+                    showLoader = false
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
+        task.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException) {
+                try {
+                    // This creates the "Show Modal" intent
+                    val intentSenderRequest = IntentSenderRequest.Builder(exception.resolution.intentSender).build()
+                    gpsLauncher.launch(intentSenderRequest)
+                } catch (sendEx: Exception) {
+                    showLoader = false
+                }
+            } else {
+                showLoader = false
+                Toast.makeText(context, "Location services not available on this device.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     // Permission launcher to display the system's default location permission dialog
     val permissionLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestMultiplePermissions())
@@ -58,12 +121,7 @@ fun LocationRequest(
             when {
                 granted -> {
                     showLoader = true
-                    viewModel.fetchLocationIfNeeded(
-                        onSuccess = { showLoader = false },
-                        onError = { error ->
-                            showLoader = false
-                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                        })
+                    checkAndEnableGps()
                 }
 
                 LocationPermissionHelper.isPermanentlyDenied(activity) -> {
@@ -91,13 +149,7 @@ fun LocationRequest(
                     navController.currentDestination?.route != AppNavItem.Auth.route
                 ) {
                     showLoader = true
-                    viewModel.fetchLocationIfNeeded(
-                        onSuccess = { showLoader = false },
-                        onError = { error ->
-                            showLoader = false
-                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                        }
-                    )
+                    checkAndEnableGps()
                 }
             }
         }
@@ -125,7 +177,6 @@ fun LocationRequest(
             onExitClick = { activity.finishAffinity() }
         )
     }
-
 
     Column(
         modifier = Modifier
@@ -174,12 +225,7 @@ fun LocationRequest(
             onClick = {
                 if (hasPermission) {
                     showLoader = true
-                    viewModel.fetchLocationIfNeeded(
-                        onSuccess = { showLoader = false },
-                        onError = { error ->
-                            showLoader = false
-                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                        })
+                    checkAndEnableGps()
                     return@Button
                 }
                 permissionLauncher.launch(
