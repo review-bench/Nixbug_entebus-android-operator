@@ -143,4 +143,5 @@ enum class CardType {
 
 sealed class HomeUiEvent {
     data object ServiceAlreadyRunning : HomeUiEvent()
+    data object NavigateToTicketScreen : HomeUiEvent()
 }

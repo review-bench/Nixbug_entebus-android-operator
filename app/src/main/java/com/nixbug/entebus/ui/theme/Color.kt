@@ -9,3 +9,4 @@ val PrimaryColor = Color(0xFF8BC34A)
 val SelectedServiceColor = Color(0xFFDFF6DD)
 val DisabledButtonColor = Color(0x5B9BDA54)
 val Background = Color.White
+val DarkOrange = Color(0xFF974B00)

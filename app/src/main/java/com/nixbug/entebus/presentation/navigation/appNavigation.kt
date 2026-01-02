@@ -22,11 +22,15 @@ import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.screens.locationRequestScreen.LocationRequest
 import com.nixbug.entebus.presentation.screens.authScreen.Auth
 import com.nixbug.entebus.presentation.screens.mainScreen.MainScreen
+import com.nixbug.entebus.presentation.screens.ticketScreen.TicketScreen
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
 @SuppressLint("ContextCastToActivity")
 @Composable
-fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltViewModel()) {
+fun AppNavigation(
+    activity: Activity,
+    viewModel: AppNavigationViewModel = hiltViewModel(),
+) {
     val navController = rememberNavController()
     val isLoggedIn = false
     val context = LocalContext.current
@@ -98,7 +102,10 @@ fun AppNavigation(activity: Activity, viewModel: AppNavigationViewModel = hiltVi
             LocationRequest(navController = navController, activity = activity)
         }
         composable(AppNavItem.MainScreen.route) {
-            MainScreen()
+            MainScreen(rootNavController = navController)
+        }
+        composable(AppNavItem.TicketScreen.route) {
+            TicketScreen(navController = navController)
         }
     }
 }
