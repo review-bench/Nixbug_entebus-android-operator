@@ -59,17 +59,20 @@ fun LocationRequest(
         if (result.resultCode == Activity.RESULT_OK) {
             // User clicked "OK" in the GPS dialog
             viewModel.fetchLocationIfNeeded(
-                onSuccess = { showLoader = false },
+                onSuccess = {},
                 onError = { error ->
                     showLoader = false
                     Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                 }
             )
-        }
-        else {
+        } else {
             // User clicked "No Thanks"
             showLoader = false
-            Toast.makeText(context, "GPS is required for real-time bus tracking.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                context,
+                "GPS is required.",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -87,7 +90,7 @@ fun LocationRequest(
         task.addOnSuccessListener {
             // GPS is already ON, proceed to fetch
             viewModel.fetchLocationIfNeeded(
-                onSuccess = { showLoader = false },
+                onSuccess = {},
                 onError = { error ->
                     showLoader = false
                     Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
@@ -99,14 +102,19 @@ fun LocationRequest(
             if (exception is ResolvableApiException) {
                 try {
                     // This creates the "Show Modal" intent
-                    val intentSenderRequest = IntentSenderRequest.Builder(exception.resolution.intentSender).build()
+                    val intentSenderRequest =
+                        IntentSenderRequest.Builder(exception.resolution.intentSender).build()
                     gpsLauncher.launch(intentSenderRequest)
                 } catch (sendEx: Exception) {
                     showLoader = false
                 }
             } else {
                 showLoader = false
-                Toast.makeText(context, "Location services not available on this device.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "Location services not available on this device.",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -158,6 +166,7 @@ fun LocationRequest(
 
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            showLoader = false
         }
     }
 
