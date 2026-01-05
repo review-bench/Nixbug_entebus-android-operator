@@ -77,7 +77,7 @@ class LocationHelper(context: Context) {
                 if (loc != null) {
                     onSuccess(loc)
                 } else {
-                    onError("Unable to get current location. Please ensure location services are enabled.")
+                    onError("Unable to get current location. Please try again.")
                 }
             }
             .addOnFailureListener {
