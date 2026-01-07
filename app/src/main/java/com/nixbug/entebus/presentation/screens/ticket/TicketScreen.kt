@@ -1,6 +1,12 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
+import android.app.Activity
+import android.content.Context
+import android.content.pm.PackageManager
+import android.hardware.camera2.CameraManager
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -68,8 +74,11 @@ import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
+import com.nixbug.entebus.presentation.components.DialogBox
+import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
+import com.nixbug.entebus.utils.CameraPermissionHelper
 import java.util.Locale
 
 @Composable
@@ -77,6 +86,8 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
+    val activity = context as Activity
+    var showPermissionDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -89,6 +100,42 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
             }
         }
     }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            navController.navigate(AppNavItem.QrScannerScreen.route)
+        } else if (CameraPermissionHelper.isPermissionPermanentlyDenied(activity)) {
+            showPermissionDialog = true
+        } else {
+            Toast.makeText(
+                context,
+                "Please enable the camera access!",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    if (showPermissionDialog) {
+        DialogBox(
+            title = "Permission Required",
+            message = "Camera access is required to scan QR codes.",
+            confirmText = "Open Settings",
+            onConfirmClick = {
+                CameraPermissionHelper.openAppSettings(context)
+                showPermissionDialog = false
+            },
+            dismissible = true,
+            onDismiss = { showPermissionDialog = false },
+            showExitButton = true,
+            exitText = "Cancel",
+            onExitClick = { showPermissionDialog = false }
+        )
+    }
+
+    val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    val cameraIds = cameraManager.cameraIdList
 
     Column(
         modifier = Modifier
@@ -110,9 +157,21 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
             primaryActionText = "QR",
             primaryActionIcon = Icons.Default.QrCode,
             onPrimaryActionClick = {
-                Toast
-                    .makeText(context, "QR scanner is not available yet.", Toast.LENGTH_SHORT)
-                    .show()
+                if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) && cameraIds.isNotEmpty()) {
+                    if (CameraPermissionHelper.hasCameraPermission(context)) {
+                        navController.navigate(AppNavItem.QrScannerScreen.route)
+                    } else {
+                        permissionLauncher.launch(
+                            CameraPermissionHelper.CAMERA_PERMISSION
+                        )
+                    }
+                } else {
+                    Toast.makeText(
+                        context,
+                        "This device does not have a camera",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             })
 
         Column(

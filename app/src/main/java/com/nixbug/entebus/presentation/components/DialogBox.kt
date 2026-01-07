@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -19,12 +20,17 @@ fun DialogBox(
     confirmText: String = "Open Settings",
     onConfirmClick: () -> Unit,
     dismissible: Boolean = false,
+    onDismiss: (() -> Unit)? = null,
     showExitButton: Boolean = false,
     exitText: String = "Exit App",
     onExitClick: (() -> Unit)? = null
 ) {
     Dialog(
-        onDismissRequest = {},
+        onDismissRequest = {
+            if (dismissible) {
+                onDismiss?.invoke()
+            }
+        },
         properties = DialogProperties(
             dismissOnBackPress = dismissible,
             dismissOnClickOutside = dismissible
@@ -34,7 +40,7 @@ fun DialogBox(
             shape = MaterialTheme.shapes.medium,
             color = Color.White,
             tonalElevation = 8.dp,
-            shadowElevation = 6.dp,
+            shadowElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier
@@ -43,6 +49,7 @@ fun DialogBox(
                     .widthIn(min = 280.dp, max = 360.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
                 // Title
                 Text(
                     text = title,
@@ -57,8 +64,8 @@ fun DialogBox(
                     text = message,
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.Gray,
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -69,16 +76,19 @@ fun DialogBox(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D6EFD)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF0D6EFD)
+                    ),
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
                         text = confirmText,
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.White
                     )
                 }
 
+                // Optional Exit Button
                 if (showExitButton && onExitClick != null) {
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedButton(

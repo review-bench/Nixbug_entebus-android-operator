@@ -82,6 +82,15 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.play.services.location)
+
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+
+    implementation(libs.mlkit.barcode)
+
+    implementation(libs.androidx.compose.ui.geometry)
 }
 
 //Task to generate and re-generate API client library
