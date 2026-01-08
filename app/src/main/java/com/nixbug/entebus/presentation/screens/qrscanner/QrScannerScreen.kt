@@ -15,8 +15,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -37,6 +35,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.ui.theme.PrimaryColor
 import com.nixbug.entebus.utils.QrCodeAnalyzer
+import java.util.concurrent.Executors
 
 /* -------------------- MAIN SCREEN ---------------------- */
 @Composable
@@ -66,11 +65,17 @@ fun QrScannerScreen(
         )
     }
 
+    val analysisExecutor = remember {
+        Executors.newSingleThreadExecutor()
+    }
+
     /* -------- Cleanup Camera & Analyzer -------- */
     DisposableEffect(Unit) {
         onDispose {
             cameraProviderState.value?.unbindAll()
             analyzer.clear()
+            analysisExecutor.shutdown()
+            viewModel::clearResult
         }
     }
 
@@ -89,31 +94,40 @@ fun QrScannerScreen(
                 val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
 
                 cameraProviderFuture.addListener({
-                    val cameraProvider = cameraProviderFuture.get()
-                    cameraProviderState.value = cameraProvider
+                    try {
+                        val cameraProvider = cameraProviderFuture.get()
+                        cameraProviderState.value = cameraProvider
 
-                    val preview = Preview.Builder().build().apply {
-                        surfaceProvider = previewView.surfaceProvider
-                    }
-
-                    val imageAnalysis = ImageAnalysis.Builder()
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                        .build()
-                        .apply {
-                            setAnalyzer(
-                                ContextCompat.getMainExecutor(ctx),
-                                analyzer
-                            )
+                        val preview = Preview.Builder().build().apply {
+                            surfaceProvider = previewView.surfaceProvider
                         }
 
-                    cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
-                        CameraSelector.DEFAULT_BACK_CAMERA,
-                        preview,
-                        imageAnalysis
-                    )
+                        val imageAnalysis = ImageAnalysis.Builder()
+                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                            .build()
+                            .apply {
+                                setAnalyzer(analysisExecutor, analyzer)
+                            }
 
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            preview,
+                            imageAnalysis
+                        )
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+
+                        Toast.makeText(
+                            ctx,
+                            "Unable to open camera. Please try again.",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        navController.popBackStack()
+                    }
                 }, ContextCompat.getMainExecutor(ctx))
 
                 previewView
@@ -129,7 +143,6 @@ fun QrScannerScreen(
             QrResultOverlayDialog(
                 result = it,
                 onDismiss = {
-                    viewModel.clearResult()
                     navController.popBackStack()
                 }
             )

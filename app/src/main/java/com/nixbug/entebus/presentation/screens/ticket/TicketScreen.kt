@@ -1,9 +1,6 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
 import android.app.Activity
-import android.content.Context
-import android.content.pm.PackageManager
-import android.hardware.camera2.CameraManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -79,6 +76,7 @@ import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.CameraPermissionHelper
+import com.nixbug.entebus.utils.isCameraAvailable
 import java.util.Locale
 
 @Composable
@@ -91,9 +89,6 @@ fun TicketScreen(
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     var showPermissionDialog by remember { mutableStateOf(false) }
-    val cameraManager =
-        remember(context) { context.getSystemService(Context.CAMERA_SERVICE) as CameraManager }
-    val cameraIds = remember(cameraManager) { cameraManager.cameraIdList }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -160,7 +155,7 @@ fun TicketScreen(
             primaryActionText = "QR",
             primaryActionIcon = Icons.Default.QrCode,
             onPrimaryActionClick = {
-                if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) && cameraIds.isNotEmpty()) {
+                if (isCameraAvailable(context)) {
                     if (CameraPermissionHelper.hasCameraPermission(context)) {
                         navController.navigate(AppNavItem.QrScannerScreen.route)
                     } else {
