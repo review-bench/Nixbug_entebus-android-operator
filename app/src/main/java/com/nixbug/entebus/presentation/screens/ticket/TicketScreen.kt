@@ -82,12 +82,18 @@ import com.nixbug.entebus.utils.CameraPermissionHelper
 import java.util.Locale
 
 @Composable
-fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = hiltViewModel()) {
+fun TicketScreen(
+    navController: NavHostController,
+    activity: Activity,
+    viewModel: TicketViewModel = hiltViewModel()
+) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    val activity = context as Activity
     var showPermissionDialog by remember { mutableStateOf(false) }
+    val cameraManager =
+        remember(context) { context.getSystemService(Context.CAMERA_SERVICE) as CameraManager }
+    val cameraIds = remember(cameraManager) { cameraManager.cameraIdList }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -133,9 +139,6 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
             onExitClick = { showPermissionDialog = false }
         )
     }
-
-    val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-    val cameraIds = cameraManager.cameraIdList
 
     Column(
         modifier = Modifier

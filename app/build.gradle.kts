@@ -89,8 +89,6 @@ dependencies {
     implementation(libs.camerax.view)
 
     implementation(libs.mlkit.barcode)
-
-    implementation(libs.androidx.compose.ui.geometry)
 }
 
 //Task to generate and re-generate API client library

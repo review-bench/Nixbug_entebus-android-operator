@@ -1,6 +1,5 @@
 package com.nixbug.entebus.presentation.screens.qrscanner
 
-import android.util.Log
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -33,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.ui.theme.PrimaryColor
@@ -40,11 +40,39 @@ import com.nixbug.entebus.utils.QrCodeAnalyzer
 
 /* -------------------- MAIN SCREEN ---------------------- */
 @Composable
-fun QrScannerScreen(navController: NavHostController) {
+fun QrScannerScreen(
+    navController: NavHostController,
+    viewModel: QrScannerViewModel = hiltViewModel()
+) {
 
-    val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-    var scannedText by remember { mutableStateOf<String?>(null) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    val scannedText by viewModel.scannedResult.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+    val cameraProviderState = remember {
+        mutableStateOf<ProcessCameraProvider?>(null)
+    }
+
+    val analyzer = remember {
+        QrCodeAnalyzer(
+            onQrScanned = viewModel::onQrScanned,
+            onError = { throwable ->
+                viewModel.onScanError(
+                    throwable.message ?: "Failed to scan QR"
+                )
+            }
+        )
+    }
+
+    /* -------- Cleanup Camera & Analyzer -------- */
+    DisposableEffect(Unit) {
+        onDispose {
+            cameraProviderState.value?.unbindAll()
+            analyzer.clear()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -62,34 +90,19 @@ fun QrScannerScreen(navController: NavHostController) {
 
                 cameraProviderFuture.addListener({
                     val cameraProvider = cameraProviderFuture.get()
+                    cameraProviderState.value = cameraProvider
+
                     val preview = Preview.Builder().build().apply {
                         surfaceProvider = previewView.surfaceProvider
                     }
+
                     val imageAnalysis = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
                         .apply {
                             setAnalyzer(
                                 ContextCompat.getMainExecutor(ctx),
-                                QrCodeAnalyzer(
-                                    onQrScanned = { qrResult ->
-                                        scannedText = qrResult
-                                    },
-                                    onError = { error ->
-                                        Log.e(
-                                            "QR_SCAN",
-                                            error.message ?: "Unknown error",
-                                            error
-                                        )
-                                        Toast
-                                            .makeText(
-                                                context,
-                                                "Failed to scan QR. Try again.",
-                                                Toast.LENGTH_SHORT
-                                            )
-                                            .show()
-                                    }
-                                )
+                                analyzer
                             )
                         }
 
@@ -108,22 +121,30 @@ fun QrScannerScreen(navController: NavHostController) {
             modifier = Modifier.fillMaxSize()
         )
 
-        /* -------- Scanner Overlay -------- */
         ScannerOverlay()
-
-        /* -------- Top Back Button -------- */
         ScannerTopBar { navController.popBackStack() }
 
         /* -------- Result Dialog -------- */
         scannedText?.let {
             QrResultOverlayDialog(
                 result = it,
-                navController = navController
+                onDismiss = {
+                    viewModel.clearResult()
+                    navController.popBackStack()
+                }
             )
         }
+    }
 
+    /* -------- Error Handling -------- */
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.clearError()
+        }
     }
 }
+
 
 /* -------------------- OVERLAY -------------------------- */
 @Composable
@@ -280,7 +301,7 @@ fun ScannerTopBar(onBack: () -> Unit) {
 @Composable
 fun QrResultOverlayDialog(
     result: String,
-    navController: NavHostController
+    onDismiss: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -321,7 +342,7 @@ fun QrResultOverlayDialog(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
-                    onClick = { navController.popBackStack() },
+                    onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
