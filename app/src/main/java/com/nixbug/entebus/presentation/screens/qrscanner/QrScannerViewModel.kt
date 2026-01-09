@@ -31,4 +31,5 @@ class QrScannerViewModel @Inject constructor() : ViewModel() {
     fun clearError() {
         _errorMessage.value = null
     }
+
 }

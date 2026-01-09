@@ -75,7 +75,7 @@ fun QrScannerScreen(
             cameraProviderState.value?.unbindAll()
             analyzer.clear()
             analysisExecutor.shutdown()
-            viewModel::clearResult
+            viewModel.clearResult()
         }
     }
 
@@ -118,14 +118,11 @@ fun QrScannerScreen(
                         )
 
                     } catch (e: Exception) {
-                        e.printStackTrace()
-
                         Toast.makeText(
                             ctx,
                             "Unable to open camera. Please try again.",
                             Toast.LENGTH_LONG
                         ).show()
-
                         navController.popBackStack()
                     }
                 }, ContextCompat.getMainExecutor(ctx))

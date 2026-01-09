@@ -112,7 +112,7 @@ fun TicketScreen(
         } else {
             Toast.makeText(
                 context,
-                "Please enable the camera access!",
+                "Camera permission is required to scan QR codes",
                 Toast.LENGTH_SHORT
             ).show()
         }
