@@ -2,6 +2,10 @@ package com.nixbug.entebus.presentation.navigation
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -22,6 +26,7 @@ import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.screens.auth.AuthScreen
 import com.nixbug.entebus.presentation.screens.locationrequest.LocationRequestScreen
 import com.nixbug.entebus.presentation.screens.main.MainScreen
+import com.nixbug.entebus.presentation.screens.qrscanner.QrScannerScreen
 import com.nixbug.entebus.presentation.screens.ticket.TicketScreen
 import com.nixbug.entebus.utils.LocationPermissionHelper
 
@@ -92,6 +97,30 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
+        enterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(300)
+            ) + fadeIn(animationSpec = tween(300))
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(300)
+            ) + fadeOut(animationSpec = tween(300))
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(300)
+            ) + fadeIn(animationSpec = tween(300))
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(300)
+            ) + fadeOut(animationSpec = tween(300))
+        },
         startDestination = if (hasLocation) AppNavItem.Auth.route else AppNavItem.LocationRequest.route
     )
     {
@@ -105,7 +134,10 @@ fun AppNavigation(
             MainScreen(rootNavController = navController)
         }
         composable(AppNavItem.TicketScreen.route) {
-            TicketScreen(navController = navController)
+            TicketScreen(navController = navController, activity = activity)
+        }
+        composable(AppNavItem.QrScannerScreen.route) {
+            QrScannerScreen(navController = navController)
         }
     }
 }

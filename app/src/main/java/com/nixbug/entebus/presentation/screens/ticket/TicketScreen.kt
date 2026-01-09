@@ -1,6 +1,9 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -68,15 +71,24 @@ import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
+import com.nixbug.entebus.presentation.components.DialogBox
+import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
+import com.nixbug.entebus.utils.CameraPermissionHelper
+import com.nixbug.entebus.utils.isCameraAvailable
 import java.util.Locale
 
 @Composable
-fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = hiltViewModel()) {
+fun TicketScreen(
+    navController: NavHostController,
+    activity: Activity,
+    viewModel: TicketViewModel = hiltViewModel()
+) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
+    var showPermissionDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -88,6 +100,39 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
                 }
             }
         }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            navController.navigate(AppNavItem.QrScannerScreen.route)
+        } else if (CameraPermissionHelper.isPermissionPermanentlyDenied(activity)) {
+            showPermissionDialog = true
+        } else {
+            Toast.makeText(
+                context,
+                "Camera permission is required to scan QR codes",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    if (showPermissionDialog) {
+        DialogBox(
+            title = "Permission Required",
+            message = "Camera access is required to scan QR codes.",
+            confirmText = "Open Settings",
+            onConfirmClick = {
+                CameraPermissionHelper.openAppSettings(context)
+                showPermissionDialog = false
+            },
+            dismissible = true,
+            onDismiss = { showPermissionDialog = false },
+            showExitButton = true,
+            exitText = "Cancel",
+            onExitClick = { showPermissionDialog = false }
+        )
     }
 
     Column(
@@ -110,9 +155,21 @@ fun TicketScreen(navController: NavHostController, viewModel: TicketViewModel = 
             primaryActionText = "QR",
             primaryActionIcon = Icons.Default.QrCode,
             onPrimaryActionClick = {
-                Toast
-                    .makeText(context, "QR scanner is not available yet.", Toast.LENGTH_SHORT)
-                    .show()
+                if (isCameraAvailable(context)) {
+                    if (CameraPermissionHelper.hasCameraPermission(context)) {
+                        navController.navigate(AppNavItem.QrScannerScreen.route)
+                    } else {
+                        permissionLauncher.launch(
+                            CameraPermissionHelper.CAMERA_PERMISSION
+                        )
+                    }
+                } else {
+                    Toast.makeText(
+                        context,
+                        "This device does not have a camera",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             })
 
         Column(
