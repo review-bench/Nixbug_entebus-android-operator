@@ -16,6 +16,7 @@
 /.idea/assetWizardSettings.xml
 /.idea/deviceManager.xml
 /.idea/studiobot.xml
+/.idea/dictionaries
 /.kotlin
 .DS_Store
 /build
