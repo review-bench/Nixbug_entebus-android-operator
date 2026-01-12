@@ -1,6 +1,5 @@
 package com.nixbug.entebus.presentation.screens.qrscanner
 
-import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -25,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -35,6 +33,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.ui.theme.PrimaryColor
 import com.nixbug.entebus.utils.QrCodeAnalyzer
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
 import java.util.concurrent.Executors
 
 /* -------------------- MAIN SCREEN ---------------------- */
@@ -44,7 +44,6 @@ fun QrScannerScreen(
     viewModel: QrScannerViewModel = hiltViewModel()
 ) {
 
-    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val scannedText by viewModel.scannedResult.collectAsState()
@@ -118,11 +117,10 @@ fun QrScannerScreen(
                         )
 
                     } catch (e: Exception) {
-                        Toast.makeText(
-                            ctx,
-                            "Unable to open camera. Please try again.",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        SnackbarManager.show(
+                            message = "Unable to open camera. Please try again.",
+                            type = SnackbarType.ERROR,
+                        )
                         navController.popBackStack()
                     }
                 }, ContextCompat.getMainExecutor(ctx))
@@ -149,7 +147,10 @@ fun QrScannerScreen(
     /* -------- Error Handling -------- */
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            SnackbarManager.show(
+                message = it,
+                type = SnackbarType.ERROR,
+            )
             viewModel.clearError()
         }
     }

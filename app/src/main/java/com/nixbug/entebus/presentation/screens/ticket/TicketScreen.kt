@@ -1,7 +1,6 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
 import android.app.Activity
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -45,7 +44,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,6 +75,8 @@ import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.CameraPermissionHelper
 import com.nixbug.entebus.utils.isCameraAvailable
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
 import java.util.Locale
 
 @Composable
@@ -90,18 +90,6 @@ fun TicketScreen(
     val focusManager = LocalFocusManager.current
     var showPermissionDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is TicketUiEvent.ShowToast -> {
-                    Toast
-                        .makeText(context, event.message, Toast.LENGTH_SHORT)
-                        .show()
-                }
-            }
-        }
-    }
-
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -110,11 +98,10 @@ fun TicketScreen(
         } else if (CameraPermissionHelper.isPermissionPermanentlyDenied(activity)) {
             showPermissionDialog = true
         } else {
-            Toast.makeText(
-                context,
-                "Camera permission is required to scan QR codes",
-                Toast.LENGTH_SHORT
-            ).show()
+            SnackbarManager.show(
+                message = "Camera permission is required to scan QR codes",
+                type = SnackbarType.ERROR,
+            )
         }
     }
 
@@ -164,11 +151,10 @@ fun TicketScreen(
                         )
                     }
                 } else {
-                    Toast.makeText(
-                        context,
-                        "This device does not have a camera",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    SnackbarManager.show(
+                        message = "This device does not have a camera",
+                        type = SnackbarType.ERROR,
+                    )
                 }
             })
 
@@ -584,7 +570,6 @@ fun BottomSummaryCard(
     totalDistanceKm: Float,
     passengers: List<Passenger>
 ) {
-    val context = LocalContext.current
     val isTicketValid = startingLandmark != null &&
             endingLandmark != null &&
             passengers.any { it.passengerCount > 0 }
@@ -658,13 +643,16 @@ fun BottomSummaryCard(
             }
             Spacer(Modifier.height(5.dp))
             Button(
-
                 onClick = {
-                    Toast.makeText(
-                        context,
-                        "Printing ticket...",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    SnackbarManager.show(
+                        message = "Printing ticket...",
+                        type = SnackbarType.SUCCESS,
+                        actionLabel = "OK",
+                        onAction = {
+                           SnackbarManager.dismiss()
+                        }
+                    )
+
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(13.dp),
