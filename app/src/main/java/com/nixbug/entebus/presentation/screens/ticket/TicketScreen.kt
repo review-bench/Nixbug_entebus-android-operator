@@ -646,8 +646,7 @@ fun BottomSummaryCard(
                 onClick = {
                     SnackbarManager.show(
                         message = "Printing ticket...",
-                        type = SnackbarType.INFO,
-                        actionLabel = "OK",
+                        type = SnackbarType.INFO
                     )
 
                 },

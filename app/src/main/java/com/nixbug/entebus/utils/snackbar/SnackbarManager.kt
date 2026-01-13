@@ -22,9 +22,12 @@ import kotlinx.coroutines.flow.receiveAsFlow
  * using a `SnackbarHost`.
  *
  * ## Thread safety
- * - [show] and [dismiss] are safe to call from any thread.
- * - Internally, events are sent through a buffered [Channel], which avoids
- *   blocking callers.
+ * - [show] and [dismiss] are non-blocking and thread-safe to *invoke* from
+ *   any thread because they only enqueue events into a buffered [Channel]
+ *   using `trySend`.
+ * - The actual display and dismissal of Snackbars happens in the UI layer
+ *   that collects [events], which should be collected on the main thread as
+ *   required by Compose UI.
  * - If the channel buffer is full, the event may be dropped; such cases are
  *   logged to avoid silent failures.
  *
@@ -45,7 +48,7 @@ object SnackbarManager {
         duration: SnackbarDuration = SnackbarDuration.Short,
         actionLabel: String? = null,
         onAction: (() -> Unit)? = null,
-        showDismissButton: Boolean = true
+        showDismissButton: Boolean = true,
     ) {
         val result = _events.trySend(
             SnackbarEvent(

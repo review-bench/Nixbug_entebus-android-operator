@@ -59,9 +59,13 @@ fun AppNavigation(
     }
     val locationData = locationState.value.data
     val hasLocation = locationData?.hasLocation == true
+
+    if (locationState.value.isLoading) {
+        return
+    }
+
     val snackbarHostState = remember { SnackbarHostState() }
     var currentEvent by remember { mutableStateOf<SnackbarEvent?>(null) }
-
     LaunchedEffect(Unit) {
         SnackbarManager.events.collect { event ->
             if (event == null) {
@@ -102,10 +106,6 @@ fun AppNavigation(
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    if (locationState.value.isLoading) {
-        return
     }
 
     // Show a dialog box if the user denies location permission
