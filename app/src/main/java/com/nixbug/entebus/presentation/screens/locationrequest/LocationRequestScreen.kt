@@ -2,7 +2,6 @@ package com.nixbug.entebus.presentation.screens.locationrequest
 
 import android.Manifest
 import android.app.Activity
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +31,8 @@ import com.nixbug.entebus.R
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.utils.LocationPermissionHelper
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
 
 @Composable
 fun LocationRequestScreen(
@@ -62,17 +63,19 @@ fun LocationRequestScreen(
                 onSuccess = {},
                 onError = { error ->
                     showLoader = false
-                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                    SnackbarManager.show(
+                        message = error,
+                        type = SnackbarType.ERROR,
+                    )
                 }
             )
         } else {
             // User clicked "No Thanks"
             showLoader = false
-            Toast.makeText(
-                context,
-                "GPS is required.",
-                Toast.LENGTH_SHORT
-            ).show()
+            SnackbarManager.show(
+                message = "GPS is required.",
+                type = SnackbarType.ERROR,
+            )
         }
     }
 
@@ -93,7 +96,10 @@ fun LocationRequestScreen(
                 onSuccess = {},
                 onError = { error ->
                     showLoader = false
-                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                    SnackbarManager.show(
+                        message = error,
+                        type = SnackbarType.ERROR,
+                    )
                 }
             )
         }
@@ -110,11 +116,10 @@ fun LocationRequestScreen(
                 }
             } else {
                 showLoader = false
-                Toast.makeText(
-                    context,
-                    "Location services not available on this device.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                SnackbarManager.show(
+                    message = "Location services not available on this device.",
+                    type = SnackbarType.ERROR,
+                )
             }
         }
     }
@@ -137,11 +142,10 @@ fun LocationRequestScreen(
                 }
 
                 else -> {
-                    Toast.makeText(
-                        context,
-                        "Please enable the location access!",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    SnackbarManager.show(
+                        message = "Please enable the location access!",
+                        type = SnackbarType.ERROR,
+                    )
                 }
             }
         }

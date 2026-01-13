@@ -1,11 +1,11 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
 import androidx.lifecycle.ViewModel
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
@@ -19,13 +19,6 @@ class TicketViewModel @Inject constructor() : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketUiState(landmarks = SortedSampleLandmarks))
     val uiState: StateFlow<TicketUiState> = _uiState.asStateFlow()
-
-    private val _events = MutableSharedFlow<TicketUiEvent>(extraBufferCapacity = 1)
-    val events = _events.asSharedFlow()
-
-    private fun emitToast(message: String) {
-        _events.tryEmit(TicketUiEvent.ShowToast(message))
-    }
 
     private fun calculateDistanceKm(start: Landmark?, end: Landmark?): Float {
         return if (start != null && end != null) {
@@ -64,7 +57,10 @@ class TicketViewModel @Inject constructor() : ViewModel() {
         if (_uiState.value.startingLandmark == null && index > (_uiState.value.endingLandmarkIndex
                 ?: Int.MAX_VALUE)
         ) {
-            emitToast("Starting point cannot be after ending point")
+            SnackbarManager.show(
+                message = "Starting point cannot be after ending point",
+                type = SnackbarType.ERROR,
+            )
             return
         }
 
@@ -83,7 +79,10 @@ class TicketViewModel @Inject constructor() : ViewModel() {
 
         // Invalid ending (above starting)
         if (index < (_uiState.value.startingLandmarkIndex ?: 0)) {
-            emitToast("Ending point must come after starting point")
+            SnackbarManager.show(
+                message = "Ending point must come after starting point",
+                type = SnackbarType.ERROR,
+            )
             return
         }
 
@@ -101,7 +100,10 @@ class TicketViewModel @Inject constructor() : ViewModel() {
     fun updatePassengerCount(id: Int, count: Int) {
         when {
             count > MAX_PASSENGER_COUNT -> {
-                emitToast("Maximum $MAX_PASSENGER_COUNT passengers allowed")
+                SnackbarManager.show(
+                    message = "Maximum $MAX_PASSENGER_COUNT passengers allowed",
+                    type = SnackbarType.ERROR,
+                )
                 _uiState.update { state ->
                     state.copy(
                         passengers = state.passengers.map {

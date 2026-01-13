@@ -2,6 +2,8 @@ package com.nixbug.entebus.presentation.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,9 +30,10 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
 
     private fun checkAndEmitIfServiceAlreadyRunning(): Boolean {
         return if (_uiState.value.ongoingService != null) {
-            viewModelScope.launch {
-                _events.emit(HomeUiEvent.ServiceAlreadyRunning)
-            }
+            SnackbarManager.show(
+                message = "A service is already running",
+                type = SnackbarType.ERROR,
+            )
             true
         } else {
             false
