@@ -165,7 +165,7 @@ fun AppNavigation(
                     animationSpec = tween(300)
                 ) + fadeOut(animationSpec = tween(300))
             },
-            startDestination = if (hasLocation) AppNavItem.MainScreen.route else AppNavItem.LocationRequest.route
+            startDestination = if (hasLocation) AppNavItem.Auth.route else AppNavItem.LocationRequest.route
         )
         {
             composable(AppNavItem.Auth.route) {
