@@ -4,10 +4,8 @@ import androidx.lifecycle.ViewModel
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
@@ -21,9 +19,6 @@ class TicketViewModel @Inject constructor() : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketUiState(landmarks = SortedSampleLandmarks))
     val uiState: StateFlow<TicketUiState> = _uiState.asStateFlow()
-
-    private val _events = MutableSharedFlow<TicketUiEvent>(extraBufferCapacity = 1)
-    val events = _events.asSharedFlow()
 
     private fun calculateDistanceKm(start: Landmark?, end: Landmark?): Float {
         return if (start != null && end != null) {

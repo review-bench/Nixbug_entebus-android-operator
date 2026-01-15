@@ -37,7 +37,7 @@ fun StyledSnackbar(
             }
         },
         dismissAction = {
-            if (event.showDismissButton == true) {
+            if (event.showDismissButton) {
                 IconButton(onClick = { snackbarData.dismiss() }) {
                     Icon(
                         imageVector = Icons.Default.Close,
