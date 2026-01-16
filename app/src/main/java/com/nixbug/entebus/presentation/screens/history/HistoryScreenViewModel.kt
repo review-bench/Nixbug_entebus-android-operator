@@ -5,15 +5,17 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.text.SimpleDateFormat
 import javax.inject.Inject
 import java.time.Duration
 import java.time.Instant
+import java.util.Date
+import java.util.Locale
 
 @HiltViewModel
 class HistoryScreenViewModel @Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
-
 
     fun calculateDuration(startedOn: String?, finishedOn: String?): String {
         if (startedOn == null || finishedOn == null) return "Not finished yet"
@@ -31,5 +33,10 @@ class HistoryScreenViewModel @Inject constructor() : ViewModel() {
             minutes > 0 -> "${minutes}m"
             else -> "Less than a minute"
         }
+    }
+
+    fun convertMillisToDate(millis: Long): String {
+        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        return formatter.format(Date(millis))
     }
 }

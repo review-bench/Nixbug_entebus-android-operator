@@ -63,12 +63,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.nixbug.entebus.utils.utcToIstConverter
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @Composable
 fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
@@ -102,7 +101,8 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
         }
         DutyHistoryOverlay(
             showSheet = showSheet,
-            onDismiss = { showSheet = false }
+            onDismiss = { showSheet = false },
+            convertMillisToDate = viewModel::convertMillisToDate
         )
     }
 }
@@ -243,19 +243,18 @@ fun DutyHistoryCard(history: HistoryUiModel, calculateDuration: (String?, String
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Service ID • ${history.serviceId}",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    LabeledIdRow(
+                        label = "Service ID",
+                        value = history.serviceId.toString()
                     )
-                    Text(
-                        text = "Duty ID • ${history.id}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+
+                    LabeledIdRow(
+                        label = "Duty ID",
+                        value = history.id.toString()
                     )
                 }
+
 
                 /** Status Chip **/
                 Box(
@@ -409,11 +408,43 @@ fun InfoRow(
     }
 }
 
+@Composable
+private fun LabeledIdRow(
+    label: String,
+    value: String,
+    labelWidth: Dp = 80.dp
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.width(labelWidth),
+            style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold
+        )
+
+        Text(
+            text = "•",
+            modifier = Modifier.width(12.dp),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold
+        )
+
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DutyHistoryOverlay(
     showSheet: Boolean,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    convertMillisToDate: (Long) -> String
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var selectedDateText by remember { mutableStateOf("Select Date") }
@@ -549,10 +580,9 @@ fun DutyHistoryOverlay(
             }
         }
     }
-
+    val datePickerState = rememberDatePickerState()
     /** Date Picker **/
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState()
 
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -629,9 +659,4 @@ fun StatusOption(
             modifier = Modifier.padding(vertical = 8.dp)
         )
     }
-}
-
-fun convertMillisToDate(millis: Long): String {
-    val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-    return formatter.format(Date(millis))
 }
