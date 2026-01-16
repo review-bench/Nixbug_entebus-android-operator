@@ -76,6 +76,7 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
     val focusManager = LocalFocusManager.current
     var showSheet by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
+    // TODO: Use searchText to filter dutyHistoryData once search functionality is implemented.
 
     Box(
         modifier = Modifier
@@ -218,7 +219,8 @@ fun DutyHistoryCard(history: HistoryUiModel, calculateDuration: (String?, String
             Color(0xFF616161)
         )
     }
-    val (startDate, startTime) = utcToIstConverter(history.startedOn) ?: return
+    val (startDate, startTime) = utcToIstConverter(history.startedOn)
+        ?: ("Invalid date" to "Invalid time")
     val finishDateTime = utcToIstConverter(history.finishedOn)
     val durationText = calculateDuration(history.startedOn, history.finishedOn)
 
@@ -536,7 +538,7 @@ fun DutyHistoryOverlay(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
-                            Icon(Icons.Default.DateRange, contentDescription = "Calender")
+                            Icon(Icons.Default.DateRange, contentDescription = "Calendar")
                             Text(
                                 text = selectedDateText,
                                 modifier = Modifier.padding(6.dp),
@@ -567,7 +569,10 @@ fun DutyHistoryOverlay(
                     }
 
                     Button(
-                        onClick = { /* Apply filters */ },
+                        onClick = {
+                            // TODO: Implement filter application logic in a future PR
+                            onDismiss()
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {

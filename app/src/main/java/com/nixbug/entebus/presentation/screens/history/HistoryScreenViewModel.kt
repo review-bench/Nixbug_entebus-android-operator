@@ -5,11 +5,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.text.SimpleDateFormat
 import javax.inject.Inject
 import java.time.Duration
 import java.time.Instant
-import java.util.Date
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @HiltViewModel
@@ -36,7 +36,12 @@ class HistoryScreenViewModel @Inject constructor() : ViewModel() {
     }
 
     fun convertMillisToDate(millis: Long): String {
-        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        return formatter.format(Date(millis))
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+            .withLocale(Locale.getDefault())
+
+        return Instant.ofEpochMilli(millis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+            .format(formatter)
     }
 }
