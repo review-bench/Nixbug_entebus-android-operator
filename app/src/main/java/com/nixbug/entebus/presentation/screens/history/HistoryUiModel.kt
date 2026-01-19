@@ -15,6 +15,16 @@ data class HistoryUiModel(
     @SerializedName("service_id")
     val serviceId: Int,
 
+    /**
+     * Status code of the history entry.
+     *
+     * Known values:
+     * - 1: ASSIGNED
+     * - 2: STARTED
+     * - 3: TERMINATED
+     * - 4: ENDED
+     * - 5: NOT_USED
+     */
     val status: Int,
 
     @SerializedName("started_on")

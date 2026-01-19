@@ -40,6 +40,13 @@ class HistoryScreenViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    /**
+     * Converts epoch time in milliseconds to a formatted date string.
+     *
+     * @param millis Epoch time in milliseconds (UTC-based).
+     * @return A date string formatted as `dd/MM/yyyy` using the device's default locale
+     *         and system time zone.
+     */
     fun convertMillisToDate(millis: Long): String {
         val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
             .withLocale(Locale.getDefault())

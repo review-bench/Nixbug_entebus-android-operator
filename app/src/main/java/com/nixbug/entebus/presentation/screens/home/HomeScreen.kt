@@ -207,7 +207,7 @@ fun ServiceList(
                     service = service,
                     cardType = CardType.ONGOING,
                     date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Date unavailable",
+                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = true,
                     onActionClick = { onResumeService() }
@@ -226,7 +226,7 @@ fun ServiceList(
                     service = service,
                     cardType = CardType.ASSIGNED,
                     date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Date unavailable",
+                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = canStartService(service.startingAt),
                     onActionClick = { onStartAssigned(service) }
@@ -245,7 +245,7 @@ fun ServiceList(
                     service = service,
                     cardType = CardType.DOWNLOADED,
                     date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Date unavailable",
+                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = canStartService(service.startingAt),
                     onActionClick = { onStartDownloaded(service) }
@@ -274,7 +274,7 @@ fun ServiceList(
                     service = service,
                     cardType = CardType.OTHER,
                     date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Date unavailable",
+                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = true,
                     onActionClick = { onDownload(service) }

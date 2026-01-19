@@ -100,7 +100,7 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
                 onSearchTextChange = { searchText = it },
             )
             DutyHistoryList(
-                dutyHistoryData = state.dutyHistoryData,
+                dutyHistoryData = state.history,
                 calculateDuration = viewModel::calculateDuration,
             )
         }
@@ -423,9 +423,11 @@ fun InfoRow(
 private fun LabeledIdRow(
     label: String,
     value: String,
+    modifier: Modifier = Modifier,
     labelWidth: Dp = 80.dp
 ) {
     Row(
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -594,10 +596,10 @@ fun DutyHistoryOverlay(
             }
         }
     }
-    val datePickerState = rememberDatePickerState()
+
     /** Date Picker **/
     if (showDatePicker) {
-
+        val datePickerState = rememberDatePickerState()
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
