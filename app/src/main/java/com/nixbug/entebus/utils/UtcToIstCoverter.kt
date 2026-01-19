@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter
  * into a user-friendly date label and time string.
  *
  * This helper:
- * - Parses the given UTC timestamp (`ISO-8601` format) into an [Instant]
+ * - Safely parses the given UTC timestamp (`ISO-8601` format) into an [Instant]
  * - Converts it to the `Asia/Kolkata` time zone
  * - Formats the time in 12-hour format (`hh:mm a`)
  * - Returns a human-readable date label:
@@ -21,31 +21,40 @@ import java.time.format.DateTimeFormatter
  *
  * @param utcTimestamp UTC timestamp string in ISO-8601 format
  *                     (e.g. `"2026-01-15T08:30:00Z"`).
- *                     If `null`, the function returns `null`.
+ *                     If `null` or malformed, the function returns `null`.
  *
  * @return A [Pair] where:
  * - `first` is the formatted date label
  * - `second` is the formatted time in IST
- * Returns `null` if [utcTimestamp] is `null`.
+ * Returns `null` if parsing fails or if [utcTimestamp] is `null`.
  */
 fun utcToIstConverter(utcTimestamp: String?): Pair<String, String>? {
     if (utcTimestamp == null) return null
-    val instant = Instant.parse(utcTimestamp)
-    val istZone = ZoneId.of("Asia/Kolkata")
-    val dateTime = instant.atZone(istZone)
 
-    val date = dateTime.toLocalDate()
-    val time = dateTime.toLocalTime().format(DateTimeFormatter.ofPattern("hh:mm a"))
+    return try {
+        val instant = Instant.parse(utcTimestamp)
+        val istZone = ZoneId.of("Asia/Kolkata")
+        val dateTime = instant.atZone(istZone)
 
-    val today = LocalDate.now(istZone)
-    val yesterday = today.minusDays(1)
-    val tomorrow = today.plusDays(1)
+        val date = dateTime.toLocalDate()
+        val time = dateTime
+            .toLocalTime()
+            .format(DateTimeFormatter.ofPattern("hh:mm a"))
 
-    val dateLabel = when (date) {
-        today -> "Today"
-        yesterday -> "Yesterday"
-        tomorrow -> "Tomorrow"
-        else -> date.format(DateTimeFormatter.ofPattern("MMM dd yyyy"))
+        val today = LocalDate.now(istZone)
+        val yesterday = today.minusDays(1)
+        val tomorrow = today.plusDays(1)
+
+        val dateLabel = when (date) {
+            today -> "Today"
+            yesterday -> "Yesterday"
+            tomorrow -> "Tomorrow"
+            else -> date.format(DateTimeFormatter.ofPattern("MMM dd yyyy"))
+        }
+
+        Pair(dateLabel, time)
+    } catch (e: Exception) {
+        null
     }
-    return Pair(dateLabel, time)
 }
+
