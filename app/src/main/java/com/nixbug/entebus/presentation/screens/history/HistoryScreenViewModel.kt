@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -43,16 +43,20 @@ class HistoryScreenViewModel @Inject constructor() : ViewModel() {
     /**
      * Converts epoch time in milliseconds to a formatted date string.
      *
-     * @param millis Epoch time in milliseconds (UTC-based).
-     * @return A date string formatted as `dd/MM/yyyy` using the device's default locale
-     *         and system time zone.
+     * @param millis Epoch time in milliseconds, representing an instant in UTC.
+     * @return A date string formatted as `dd/MM/yyyy`, where the date is calculated
+     *         using the UTC time zone and formatted using the device's default locale.
+     *
+     * Note:
+     * This function intentionally uses UTC to ensure consistent date values
+     * across all devices, regardless of their local time zone.
      */
     fun convertMillisToDate(millis: Long): String {
         val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
             .withLocale(Locale.getDefault())
 
         return Instant.ofEpochMilli(millis)
-            .atZone(ZoneId.systemDefault())
+            .atZone(ZoneOffset.UTC)
             .toLocalDate()
             .format(formatter)
     }

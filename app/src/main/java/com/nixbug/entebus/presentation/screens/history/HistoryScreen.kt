@@ -96,7 +96,8 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
                 .padding(horizontal = 10.dp)
         ) {
             HistoryHeader(
-                onFilterClick = { showSheet = true }, searchText,
+                onFilterClick = { showSheet = true },
+                searchText,
                 onSearchTextChange = { searchText = it },
             )
             DutyHistoryList(
