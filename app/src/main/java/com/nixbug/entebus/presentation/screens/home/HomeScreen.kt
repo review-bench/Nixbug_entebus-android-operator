@@ -58,6 +58,7 @@ import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.ui.theme.SelectedServiceColor
+import com.nixbug.entebus.utils.utcToIstConverter
 
 @Composable
 fun HomeScreen(
@@ -115,7 +116,6 @@ fun HomeScreen(
                         onStartAssigned = viewModel::onStartAssigned,
                         onStartDownloaded = viewModel::onStartDownloaded,
                         onDownload = viewModel::onDownloadService,
-                        convertUtcToIst = viewModel::convertUtcToIst,
                         extractRouteName = viewModel::extractRouteName,
                         canStartService = viewModel::canStartService,
                         modifier = Modifier.weight(1f)
@@ -184,7 +184,6 @@ fun ServiceList(
     onStartAssigned: (HomeUiModel) -> Unit,
     onStartDownloaded: (HomeUiModel) -> Unit,
     onDownload: (HomeUiModel) -> Unit,
-    convertUtcToIst: (String) -> Pair<String, String>,
     extractRouteName: (String) -> String,
     canStartService: (String) -> Boolean,
     modifier: Modifier
@@ -200,15 +199,15 @@ fun ServiceList(
 
         // ---------------- Ongoing ----------------
         ongoingService?.let { service ->
-            val (date, time) = convertUtcToIst(service.startingAt)
+            val startDateTime = utcToIstConverter(service.startingAt)
 
             item { SectionHeader("Ongoing Service") }
             item {
                 ServiceCard(
                     service = service,
                     cardType = CardType.ONGOING,
-                    date = date,
-                    time = time,
+                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
+                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = true,
                     onActionClick = { onResumeService() }
@@ -222,13 +221,12 @@ fun ServiceList(
             item { SectionHeader("Assigned Services") }
 
             items(assignedServices) { service ->
-                val (date, time) = convertUtcToIst(service.startingAt)
-
+                val startDateTime = utcToIstConverter(service.startingAt)
                 ServiceCard(
                     service = service,
                     cardType = CardType.ASSIGNED,
-                    date = date,
-                    time = time,
+                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
+                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = canStartService(service.startingAt),
                     onActionClick = { onStartAssigned(service) }
@@ -242,13 +240,12 @@ fun ServiceList(
             item { SectionHeader("Downloaded Services") }
 
             items(downloadedServices) { service ->
-                val (date, time) = convertUtcToIst(service.startingAt)
-
+                val startDateTime = utcToIstConverter(service.startingAt)
                 ServiceCard(
                     service = service,
                     cardType = CardType.DOWNLOADED,
-                    date = date,
-                    time = time,
+                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
+                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = canStartService(service.startingAt),
                     onActionClick = { onStartDownloaded(service) }
@@ -272,13 +269,12 @@ fun ServiceList(
 
         if (otherServices.isNotEmpty()) {
             items(otherServices) { service ->
-                val (date, time) = convertUtcToIst(service.startingAt)
-
+                val startDateTime = utcToIstConverter(service.startingAt)
                 ServiceCard(
                     service = service,
                     cardType = CardType.OTHER,
-                    date = date,
-                    time = time,
+                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
+                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = true,
                     onActionClick = { onDownload(service) }
