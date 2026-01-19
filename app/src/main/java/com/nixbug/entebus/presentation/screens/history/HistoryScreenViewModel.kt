@@ -20,7 +20,6 @@ class HistoryScreenViewModel @Inject constructor() : ViewModel() {
     fun calculateDuration(startedOn: String?, finishedOn: String?): String {
         if (startedOn == null || finishedOn == null) return "Not finished yet"
 
-
         return try {
             val startInstant = Instant.parse(startedOn)
             val endInstant = Instant.parse(finishedOn)
