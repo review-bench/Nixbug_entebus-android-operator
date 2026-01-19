@@ -333,13 +333,14 @@ fun DutyHistoryCard(history: HistoryUiModel, calculateDuration: (String?, String
             }
 
             /** Collection **/
+            val hasFinished = finishDateTime != null
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                if (finishDateTime != null) {
+                if (hasFinished) {
                     Icon(
                         imageVector = Icons.Outlined.Payments,
                         contentDescription = "Payments Icon",
@@ -355,17 +356,17 @@ fun DutyHistoryCard(history: HistoryUiModel, calculateDuration: (String?, String
                 }
 
                 Text(
-                    text = if (finishDateTime != null) {
+                    text = if (hasFinished) {
                         "₹ ${history.collection}"
                     } else {
                         "End duty to view collection"
                     },
-                    style = if (finishDateTime != null) {
+                    style = if (hasFinished) {
                         MaterialTheme.typography.titleMedium
                     } else {
                         MaterialTheme.typography.labelSmall
                     },
-                    color = if (finishDateTime != null) {
+                    color = if (hasFinished) {
                         MaterialTheme.colorScheme.onSurface
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
