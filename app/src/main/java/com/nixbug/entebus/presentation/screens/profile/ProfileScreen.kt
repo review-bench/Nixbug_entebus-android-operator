@@ -22,12 +22,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.DoubleArrow
 import androidx.compose.material.icons.filled.Person2
+import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,11 +38,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
+import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 
-
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    rootNavController: NavHostController,
+    viewModel: ProfileScreenViewModel = hiltViewModel()
+) {
+    val state by viewModel.uiState.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -49,16 +58,18 @@ fun ProfileScreen() {
             )
     ) {
         ProfileScreenTop(
-            modifier = Modifier.weight(0.4f)
+            modifier = Modifier.weight(0.4f),
+            userDetails = state.userDetails
         )
         ProfileScreenBottom(
-            modifier = Modifier.weight(0.6f)
+            modifier = Modifier.weight(0.6f),
+            rootNavController = rootNavController
         )
     }
 }
 
 @Composable
-fun ProfileScreenTop(modifier: Modifier = Modifier) {
+fun ProfileScreenTop(modifier: Modifier = Modifier, userDetails: ProfileUiModel) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -78,13 +89,16 @@ fun ProfileScreenTop(modifier: Modifier = Modifier) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                "A", style = MaterialTheme.typography.displayLarge,
-                fontWeight = FontWeight.Bold, color = DisabledButtonColor
+                text = userDetails.username
+                    .firstOrNull()
+                    ?.uppercaseChar()
+                    ?.toString() ?: "", style = MaterialTheme.typography.displayLarge,
+                fontWeight = FontWeight.Bold, color = Color(0x8699CB5E)
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "Amal",
+            text = userDetails.username,
             color = Color.White,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
@@ -93,7 +107,7 @@ fun ProfileScreenTop(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ProfileScreenBottom(modifier: Modifier = Modifier) {
+fun ProfileScreenBottom(modifier: Modifier = Modifier, rootNavController: NavHostController) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -113,7 +127,8 @@ fun ProfileScreenBottom(modifier: Modifier = Modifier) {
             leadingIcon = Icons.Default.Person2,
             leadingIconBg = DisabledButtonColor,
             title = "Personal details",
-            subtitle = "View your personal info"
+            subtitle = "View your personal info",
+            onClick = { rootNavController.navigate(AppNavItem.PersonalDetailsScreen.route) }
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -128,10 +143,10 @@ fun ProfileScreenBottom(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(20.dp))
 
         ProfileOptionCard(
-            leadingIcon = Icons.AutoMirrored.Filled.Logout,
+            leadingIcon = Icons.Filled.Policy,
             leadingIconBg = DisabledButtonColor,
-            title = "Log Out",
-            subtitle = "Sign out from this account"
+            title = "Terms & Conditions",
+            subtitle = "View our terms and policies"
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -145,7 +160,6 @@ fun ProfileScreenBottom(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
-
 
 @Composable
 fun ProfileOptionCard(
