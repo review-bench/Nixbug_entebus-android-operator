@@ -1,7 +1,6 @@
 package com.nixbug.entebus.presentation.screens.profile
 
 import androidx.compose.foundation.background
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +30,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 
@@ -49,6 +52,25 @@ fun ProfileScreen(
     viewModel: ProfileScreenViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    var showLogOutDialog by remember { mutableStateOf(false) }
+
+    if (showLogOutDialog) {
+        DialogBox(
+            title = "Logout",
+            message = "Are you sure you want to log out of your account?",
+            confirmText = "Logout",
+            onConfirmClick = { /* logout */ },
+            dismissible = true,
+            onDismiss = { showLogOutDialog = false },
+            showExitButton = true,
+            exitText = "Cancel",
+            onExitClick = { showLogOutDialog = false },
+            titleColor= MaterialTheme.colorScheme.primary,
+            confirmBtnColor = MaterialTheme.colorScheme.primary,
+            exitBtnBorderColor= MaterialTheme.colorScheme.primary
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -63,7 +85,8 @@ fun ProfileScreen(
         )
         ProfileScreenBottom(
             modifier = Modifier.weight(0.6f),
-            rootNavController = rootNavController
+            rootNavController = rootNavController,
+            onLogoutClick = { showLogOutDialog = true }
         )
     }
 }
@@ -107,7 +130,11 @@ fun ProfileScreenTop(modifier: Modifier = Modifier, userDetails: ProfileUiModel)
 }
 
 @Composable
-fun ProfileScreenBottom(modifier: Modifier = Modifier, rootNavController: NavHostController) {
+fun ProfileScreenBottom(
+    modifier: Modifier = Modifier,
+    rootNavController: NavHostController,
+    onLogoutClick: () -> Unit
+) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -137,7 +164,8 @@ fun ProfileScreenBottom(modifier: Modifier = Modifier, rootNavController: NavHos
             leadingIcon = Icons.AutoMirrored.Filled.Logout,
             leadingIconBg = DisabledButtonColor,
             title = "Log Out",
-            subtitle = "Sign out from this account"
+            subtitle = "Sign out from this account",
+            onClick = onLogoutClick
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -146,7 +174,8 @@ fun ProfileScreenBottom(modifier: Modifier = Modifier, rootNavController: NavHos
             leadingIcon = Icons.Filled.Policy,
             leadingIconBg = DisabledButtonColor,
             title = "Terms & Conditions",
-            subtitle = "View our terms and policies"
+            subtitle = "View our terms and policies",
+                    onClick = { rootNavController.navigate(AppNavItem.TermsAndConditionsScreen.route) }
         )
 
         Spacer(modifier = Modifier.height(24.dp))

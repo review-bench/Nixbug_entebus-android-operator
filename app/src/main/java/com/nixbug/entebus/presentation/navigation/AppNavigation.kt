@@ -36,6 +36,7 @@ import com.nixbug.entebus.presentation.screens.locationrequest.LocationRequestSc
 import com.nixbug.entebus.presentation.screens.main.MainScreen
 import com.nixbug.entebus.presentation.screens.personaldetails.PersonalDetailsScreen
 import com.nixbug.entebus.presentation.screens.qrscanner.QrScannerScreen
+import com.nixbug.entebus.presentation.screens.termsandconditions.TermsAndConditionsScreen
 import com.nixbug.entebus.presentation.screens.ticket.TicketScreen
 import com.nixbug.entebus.utils.LocationPermissionHelper
 import com.nixbug.entebus.utils.snackbar.SnackbarEvent
@@ -186,6 +187,9 @@ fun AppNavigation(
             }
             composable(AppNavItem.PersonalDetailsScreen.route) {
                 PersonalDetailsScreen(navController = navController)
+            }
+            composable(AppNavItem.TermsAndConditionsScreen.route) {
+                TermsAndConditionsScreen(navController = navController)
             }
         }
     }
