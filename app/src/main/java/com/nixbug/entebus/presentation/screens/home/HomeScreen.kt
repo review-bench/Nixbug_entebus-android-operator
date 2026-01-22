@@ -100,7 +100,11 @@ fun HomeScreen(
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        Column(Modifier.fillMaxSize().padding(bottom = 70.dp)) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(bottom = 70.dp)
+        ) {
 
             TopBar(
                 selectedTab = selectedTab,

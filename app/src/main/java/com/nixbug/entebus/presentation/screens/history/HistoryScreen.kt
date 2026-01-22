@@ -205,7 +205,6 @@ fun DutyHistoryList(
     }
 }
 
-
 @Composable
 fun DutyHistoryCard(history: HistoryUiModel, calculateDuration: (String?, String?) -> String) {
 
@@ -457,7 +456,6 @@ private fun LabeledIdRow(
         )
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -33,7 +33,7 @@ fun AppHeader(
     primaryActionText: String = "",
     primaryActionIcon: ImageVector? = null,
     onPrimaryActionClick: () -> Unit = {},
-    paddingEnd: Dp=9.dp
+    paddingEnd: Dp = 9.dp
 ) {
     Surface(
         color = Color.White

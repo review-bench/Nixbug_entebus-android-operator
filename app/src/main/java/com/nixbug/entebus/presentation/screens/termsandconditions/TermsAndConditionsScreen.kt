@@ -34,6 +34,5 @@ fun TermsAndConditionsScreen(
         ) {
             Text("Terms and Conditions Screen")
         }
-
     }
 }
