@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -59,40 +60,57 @@ fun ProfileScreen(
             title = "Logout",
             message = "Are you sure you want to log out of your account?",
             confirmText = "Logout",
-            onConfirmClick = { /* logout */ },
+            onConfirmClick = {
+                // TODO: Implement actual logout logic. Currently only dismisses the modal.
+                showLogOutDialog = false
+            },
             dismissible = true,
             onDismiss = { showLogOutDialog = false },
             showExitButton = true,
             exitText = "Cancel",
             onExitClick = { showLogOutDialog = false },
-            titleColor= MaterialTheme.colorScheme.primary,
+            titleColor = MaterialTheme.colorScheme.primary,
             confirmBtnColor = MaterialTheme.colorScheme.primary,
-            exitBtnBorderColor= MaterialTheme.colorScheme.primary
+            exitBtnBorderColor = MaterialTheme.colorScheme.primary
         )
     }
-
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .navigationBarsPadding()
-            .background(
-                color = MaterialTheme.colorScheme.primary,
-            )
     ) {
-        ProfileScreenTop(
-            modifier = Modifier.weight(0.4f),
-            userDetails = state.userDetails
-        )
-        ProfileScreenBottom(
-            modifier = Modifier.weight(0.6f),
-            rootNavController = rootNavController,
-            onLogoutClick = { showLogOutDialog = true }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding()
+                .background(color = MaterialTheme.colorScheme.primary)
+        ) {
+
+            ProfileScreenTop(
+                modifier = Modifier.weight(0.4f),
+                userDetails = state.userDetails
+            )
+
+            ProfileScreenBottom(
+                modifier = Modifier.weight(0.6f),
+                rootNavController = rootNavController,
+                onLogoutClick = { showLogOutDialog = true }
+            )
+
+        }
+        Version(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 82.dp)
         )
     }
 }
 
 @Composable
 fun ProfileScreenTop(modifier: Modifier = Modifier, userDetails: ProfileUiModel) {
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -104,7 +122,7 @@ fun ProfileScreenTop(modifier: Modifier = Modifier, userDetails: ProfileUiModel)
     ) {
         Box(
             modifier = Modifier
-                .size(100.dp)
+                .size(150.dp)
                 .clip(CircleShape)
                 .background(
                     Color(0xFFE1E8F4)
@@ -115,15 +133,17 @@ fun ProfileScreenTop(modifier: Modifier = Modifier, userDetails: ProfileUiModel)
                 text = userDetails.username
                     .firstOrNull()
                     ?.uppercaseChar()
-                    ?.toString() ?: "", style = MaterialTheme.typography.displayLarge,
-                fontWeight = FontWeight.Bold, color = Color(0x8699CB5E)
+                    ?.toString() ?: "",
+                style = MaterialTheme.typography.displayLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color(0x8699CB5E)
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = userDetails.username,
             color = Color.White,
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
     }
@@ -135,6 +155,7 @@ fun ProfileScreenBottom(
     rootNavController: NavHostController,
     onLogoutClick: () -> Unit
 ) {
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -143,7 +164,7 @@ fun ProfileScreenBottom(
                 RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
             )
             .verticalScroll(rememberScrollState())
-            .padding(bottom = 60.dp, start = 16.dp, end = 16.dp),
+            .padding(bottom = 70.dp, start = 16.dp, end = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -161,6 +182,16 @@ fun ProfileScreenBottom(
         Spacer(modifier = Modifier.height(20.dp))
 
         ProfileOptionCard(
+            leadingIcon = Icons.Filled.Policy,
+            leadingIconBg = DisabledButtonColor,
+            title = "Terms & Conditions",
+            subtitle = "View our terms and policies",
+            onClick = { rootNavController.navigate(AppNavItem.TermsAndConditionsScreen.route) }
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        ProfileOptionCard(
             leadingIcon = Icons.AutoMirrored.Filled.Logout,
             leadingIconBg = DisabledButtonColor,
             title = "Log Out",
@@ -168,26 +199,10 @@ fun ProfileScreenBottom(
             onClick = onLogoutClick
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        ProfileOptionCard(
-            leadingIcon = Icons.Filled.Policy,
-            leadingIconBg = DisabledButtonColor,
-            title = "Terms & Conditions",
-            subtitle = "View our terms and policies",
-                    onClick = { rootNavController.navigate(AppNavItem.TermsAndConditionsScreen.route) }
-        )
-
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = "Version 0.1.0",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
     }
+
 }
 
 @Composable
@@ -200,15 +215,15 @@ fun ProfileOptionCard(
     trailingIcon: ImageVector = Icons.Default.DoubleArrow,
     onClick: (() -> Unit)? = null
 ) {
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         onClick = { onClick?.invoke() }
     ) {
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -216,7 +231,6 @@ fun ProfileOptionCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // Leading icon
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -233,7 +247,6 @@ fun ProfileOptionCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Text section
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -249,7 +262,6 @@ fun ProfileOptionCard(
                 )
             }
 
-            // Trailing icon
             Icon(
                 imageVector = trailingIcon,
                 contentDescription = null,
@@ -257,4 +269,15 @@ fun ProfileOptionCard(
             )
         }
     }
+}
+
+@Composable
+fun Version(modifier: Modifier = Modifier) {
+    Text(
+        modifier = modifier,
+        text = "Version 0.1.0",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center
+    )
 }

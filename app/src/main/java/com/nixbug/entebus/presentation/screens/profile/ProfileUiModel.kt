@@ -14,12 +14,12 @@ data class ProfileUiModel(
     val gender: Int,
 
     @SerializedName("full_name")
-    val fullName: String,
+    val fullName: String?,
 
     val status: Int,
 
     @SerializedName("phone_number")
-    val phoneNumber: String,
+    val phoneNumber: String?,
 
     @SerializedName("email_id")
     val emailId: String?,
