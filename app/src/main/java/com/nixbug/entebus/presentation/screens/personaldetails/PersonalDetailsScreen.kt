@@ -56,7 +56,7 @@ fun PersonalDetailsScreen(
     if (showDiscardDialog) {
         DialogBox(
             title = "Discard changes?",
-            message = "You have unsaved changes. If you leave now, your changes will be lost.",
+            message = "Changes have not been saved. Leaving this page will discard them.",
             confirmText = "Discard",
             onConfirmClick = {
                 showDiscardDialog = false
@@ -152,7 +152,7 @@ fun PersonalDetailsScreen(
                     }
 
                     EditableInfoRow(
-                        placeHolder = "Enter your Full Name",
+                        placeHolder = "Enter Your Full Name",
                         label = "Full Name",
                         value = profile.fullName,
                         icon = Icons.Default.Badge,
@@ -210,7 +210,7 @@ fun PersonalDetailsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
 
                     EditableInfoRow(
-                        placeHolder = "Enter your Phone Number",
+                        placeHolder = "Enter Your Phone Number",
                         label = "Phone",
                         value = profile.phoneNumber,
                         icon = Icons.Default.Phone,
@@ -223,7 +223,7 @@ fun PersonalDetailsScreen(
                     DividerWithSpacing()
 
                     EditableInfoRow(
-                        placeHolder = "Enter your Email",
+                        placeHolder = "Enter Your Email",
                         label = "Email",
                         value = profile.emailId,
                         icon = Icons.Default.Email,

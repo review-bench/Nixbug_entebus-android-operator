@@ -174,7 +174,7 @@ fun ProfileScreenBottom(
         ProfileOptionCard(
             leadingIcon = Icons.Default.Person2,
             leadingIconBg = DisabledButtonColor,
-            title = "Personal details",
+            title = "Personal Details",
             subtitle = "View your personal info",
             onClick = { rootNavController.navigate(AppNavItem.PersonalDetailsScreen.route) }
         )
