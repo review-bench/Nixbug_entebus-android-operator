@@ -23,7 +23,10 @@ fun DialogBox(
     onDismiss: (() -> Unit)? = null,
     showExitButton: Boolean = false,
     exitText: String = "Exit App",
-    onExitClick: (() -> Unit)? = null
+    onExitClick: (() -> Unit)? = null,
+    titleColor: Color = Color(0xFF144698),
+    confirmBtnColor: Color = Color(0xFF0D6EFD),
+    exitBtnBorderColor: Color = Color(0xFF0D6EFD)
 ) {
     Dialog(
         onDismissRequest = {
@@ -54,7 +57,7 @@ fun DialogBox(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
-                    color = Color(0xFF144698)
+                    color = titleColor
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -77,7 +80,7 @@ fun DialogBox(
                         .fillMaxWidth()
                         .height(48.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF0D6EFD)
+                        containerColor = confirmBtnColor
                     ),
                     shape = MaterialTheme.shapes.small
                 ) {
@@ -97,12 +100,12 @@ fun DialogBox(
                             .fillMaxWidth()
                             .height(48.dp),
                         shape = MaterialTheme.shapes.small,
-                        border = BorderStroke(1.dp, Color(0xFF0D6EFD))
+                        border = BorderStroke(1.dp, exitBtnBorderColor)
                     ) {
                         Text(
                             text = exitText,
                             style = MaterialTheme.typography.labelLarge,
-                            color = Color(0xFF0D6EFD)
+                            color = exitBtnBorderColor
                         )
                     }
                 }

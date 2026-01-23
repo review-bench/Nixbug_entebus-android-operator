@@ -64,7 +64,6 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
 
         _uiState.update { state ->
             val newDownload = state.downloadedServiceList.filter { it.id != service.id }
-
             state.copy(
                 ongoingService = service,
                 downloadedServiceList = newDownload,
@@ -81,6 +80,15 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
             state.copy(
                 downloadedServiceList = state.downloadedServiceList + service,
                 otherServiceList = newOtherServices,
+            )
+        }
+    }
+
+    fun onFinishDuty(service: HomeUiModel) {
+        _uiState.update { state ->
+            state.copy(
+                otherServiceList = state.otherServiceList + service,
+                ongoingService = null,
             )
         }
     }
