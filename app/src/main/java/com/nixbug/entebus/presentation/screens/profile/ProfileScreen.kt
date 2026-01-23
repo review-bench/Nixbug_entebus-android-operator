@@ -82,7 +82,6 @@ fun ProfileScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .navigationBarsPadding()
                 .background(color = MaterialTheme.colorScheme.primary)
         ) {
 
@@ -240,7 +239,7 @@ fun ProfileOptionCard(
             ) {
                 Icon(
                     imageVector = leadingIcon,
-                    contentDescription = null,
+                    contentDescription = title,
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -264,7 +263,7 @@ fun ProfileOptionCard(
 
             Icon(
                 imageVector = trailingIcon,
-                contentDescription = null,
+                contentDescription = "Go to details",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

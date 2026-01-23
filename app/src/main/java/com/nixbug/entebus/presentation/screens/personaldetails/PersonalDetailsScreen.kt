@@ -7,7 +7,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -539,7 +538,7 @@ fun GenderDropdownRow(
                                 } else {
                                     Icons.Default.ArrowDropDown
                                 },
-                                contentDescription = null,
+                                contentDescription = if (expanded) "Collapse dropdown" else "Expand dropdown",
                                 modifier = Modifier.align(Alignment.CenterEnd),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )

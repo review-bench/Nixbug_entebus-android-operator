@@ -18,16 +18,17 @@ class PersonalDetailsScreenViewModel @Inject constructor() : ViewModel() {
     private val _editState = MutableStateFlow<ProfileUiModel?>(null)
     val editState = _editState.asStateFlow()
 
-    val isEditMode = MutableStateFlow(false)
+    private val _isEditMode = MutableStateFlow(false)
+    val isEditMode = _isEditMode.asStateFlow()
 
     fun startEdit() {
         _editState.value = uiState.value.userDetails.copy()
-        isEditMode.value = true
+        _isEditMode.value = true
     }
 
     fun cancelEdit() {
         _editState.value = null
-        isEditMode.value = false
+        _isEditMode.value = false
     }
 
     fun saveEdit() {
@@ -39,7 +40,7 @@ class PersonalDetailsScreenViewModel @Inject constructor() : ViewModel() {
             it.copy(userDetails = updated)
         }
 
-        isEditMode.value = false
+        _isEditMode.value = false
         _editState.value = null
     }
 
