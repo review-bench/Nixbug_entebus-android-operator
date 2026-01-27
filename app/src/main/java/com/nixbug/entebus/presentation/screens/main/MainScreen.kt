@@ -10,6 +10,9 @@ import com.nixbug.entebus.presentation.navigation.bottomtab.BottomNavGraph
 import com.nixbug.entebus.presentation.navigation.bottomtab.BottomNavigationBar
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+// Padding is handled per-screen instead of using Scaffold padding.
+// This allows the Profile tab to use a primary-colored status bar
+// while other screens apply their own system bar insets.
 @Composable
 fun MainScreen(rootNavController: NavHostController) {
     val navController = rememberNavController()

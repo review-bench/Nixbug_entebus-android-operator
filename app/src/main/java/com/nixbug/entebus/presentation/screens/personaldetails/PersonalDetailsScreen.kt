@@ -170,6 +170,7 @@ fun PersonalDetailsScreen(
                         iconBg = DisabledButtonColor,
                         iconTint = MaterialTheme.colorScheme.primary,
                         isEditMode = isEditMode,
+                        options = viewModel.getGenderOptions(),
                         onValueChange = { viewModel.updateGender(viewModel.textToGender(it)) }
                     )
 
@@ -461,6 +462,7 @@ fun GenderDropdownRow(
     iconBg: Color,
     iconTint: Color,
     isEditMode: Boolean,
+    options: List<String>,
     onValueChange: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -501,7 +503,6 @@ fun GenderDropdownRow(
 
                     val borderColor = when {
                         expanded -> MaterialTheme.colorScheme.primary
-                        !isEditMode -> Color.Transparent
                         else -> Color.LightGray
                     }
 
@@ -556,12 +557,6 @@ fun GenderDropdownRow(
                         containerColor = Color.White,
                         shadowElevation = 8.dp
                     ) {
-                        val options = listOf(
-                            "Male",
-                            "Female",
-                            "Transgender",
-                            "Other"
-                        )
                         options.forEachIndexed { index, option ->
                             DropdownMenuItem(
                                 text = { Text(option) },

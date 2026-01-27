@@ -11,11 +11,23 @@ data class ProfileUiModel(
 
     val username: String,
 
+    /**
+     * Encoded gender value:
+     * 1 = Other
+     * 2 = Female
+     * 3 = Male
+     * 4 = Transgender
+     */
     val gender: Int,
 
     @SerializedName("full_name")
     val fullName: String?,
 
+    /**
+     * Encoded status value:
+     * 1 = Active
+     * Any other value = Suspended
+     */
     val status: Int,
 
     @SerializedName("phone_number")

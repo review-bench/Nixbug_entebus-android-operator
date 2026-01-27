@@ -83,6 +83,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(color = MaterialTheme.colorScheme.primary)
+                .padding(bottom = 80.dp)
         ) {
 
             ProfileScreenTop(
@@ -163,7 +164,7 @@ fun ProfileScreenBottom(
                 RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
             )
             .verticalScroll(rememberScrollState())
-            .padding(bottom = 70.dp, start = 16.dp, end = 16.dp),
+            .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

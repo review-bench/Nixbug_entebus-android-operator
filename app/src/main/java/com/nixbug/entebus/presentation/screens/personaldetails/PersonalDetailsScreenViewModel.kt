@@ -60,24 +60,41 @@ class PersonalDetailsScreenViewModel @Inject constructor() : ViewModel() {
         _editState.update { it?.copy(gender = value) }
     }
 
-    fun statusToText(status: Int): String =
-        if (status == 1) "Active" else "Suspended"
+    enum class Gender(val id: Int, val displayName: String) {
+        OTHER(1, "Other"),
+        FEMALE(2, "Female"),
+        MALE(3, "Male"),
+        TRANSGENDER(4, "Transgender");
 
-    fun genderToText(gender: Int): String =
-        when (gender) {
-            1 -> "Other"
-            2 -> "Female"
-            3 -> "Male"
-            4 -> "Transgender"
-            else -> "N/A"
+        companion object {
+            fun fromId(id: Int): Gender =
+                entries.firstOrNull { it.id == id } ?: OTHER
+
+            fun fromText(text: String): Gender =
+                entries.firstOrNull { it.displayName == text } ?: OTHER
         }
+    }
+
+    enum class Status(val id: Int, val displayName: String) {
+        ACTIVE(1, "Active"),
+        SUSPENDED(2, "Suspended");
+
+        companion object {
+            fun fromId(id: Int): Status =
+                entries.firstOrNull { it.id == id } ?: SUSPENDED
+        }
+    }
+
+    fun genderToText(genderId: Int): String =
+        Gender.fromId(genderId).displayName
 
     fun textToGender(text: String): Int =
-        when (text) {
-            "Other" -> 1
-            "Female" -> 2
-            "Male" -> 3
-            "Transgender" -> 4
-            else -> 1
-        }
+        Gender.fromText(text).id
+
+    fun statusToText(statusId: Int): String =
+        Status.fromId(statusId).displayName
+
+    fun getGenderOptions(): List<String> =
+        Gender.entries.map { it.displayName }
+
 }
