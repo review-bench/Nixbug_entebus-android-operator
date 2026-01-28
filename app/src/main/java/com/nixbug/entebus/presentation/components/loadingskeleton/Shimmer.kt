@@ -19,7 +19,7 @@ fun shimmerBrush(): Brush {
         initialValue = 0f,
         targetValue = 1000f,
         animationSpec = infiniteRepeatable(
-            animation =tween(durationMillis = 1200, easing = LinearEasing),
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "shimmer"
