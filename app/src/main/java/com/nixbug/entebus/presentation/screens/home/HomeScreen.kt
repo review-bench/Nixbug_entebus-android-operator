@@ -89,7 +89,11 @@ fun HomeScreen(
     finishDutyService?.let { service ->
         DialogBox(
             title = "Finish Duty?",
-            message = "Are you sure you want to finish this duty?",
+            message = "Are you sure you want to end your duty on the ${
+                viewModel.extractRouteName(
+                    service.name
+                )
+            } service?",
             confirmText = "Finish",
             onConfirmClick = {
                 viewModel.onFinishDuty(service)
