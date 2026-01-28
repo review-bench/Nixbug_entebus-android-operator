@@ -91,7 +91,7 @@ fun HomeScreen(
     finishDutyService?.let { service ->
         DialogBox(
             title = "Finish Duty?",
-            message = "Are you sure you want to end your duty on the ${
+            message = "Are you sure you want to finish your duty on the ${
                 viewModel.extractRouteName(
                     service.name
                 )
@@ -188,11 +188,11 @@ fun ServiceList(
                 ServiceCard(
                     service = service,
                     cardType = CardType.ONGOING,
+                    onActionClick = { onResumeService() },
                     date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
                     time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = true,
-                    onActionClick = { onResumeService() },
                     onFinishDutyClick = { onFinishDutyClick(service) }
                 )
             }
