@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -32,6 +33,7 @@ fun AppHeader(
     primaryActionText: String = "",
     primaryActionIcon: ImageVector? = null,
     onPrimaryActionClick: () -> Unit = {},
+    paddingEnd: Dp = 9.dp
 ) {
     Surface(
         color = Color.White
@@ -39,7 +41,7 @@ fun AppHeader(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 8.dp, end = 9.dp),
+                .padding(top = 8.dp, bottom = 8.dp, end = paddingEnd),
             verticalAlignment = Alignment.CenterVertically
         ) {
 

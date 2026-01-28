@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -85,6 +87,8 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -94,6 +98,7 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 10.dp)
+                .padding(bottom = 70.dp)
         ) {
             HistoryHeader(
                 onFilterClick = { showSheet = true },
@@ -199,7 +204,6 @@ fun DutyHistoryList(
         }
     }
 }
-
 
 @Composable
 fun DutyHistoryCard(history: HistoryUiModel, calculateDuration: (String?, String?) -> String) {
@@ -452,7 +456,6 @@ private fun LabeledIdRow(
         )
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

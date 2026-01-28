@@ -1,15 +1,18 @@
 package com.nixbug.entebus.presentation.screens.main
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.nixbug.entebus.presentation.navigation.bottomtab.BottomNavGraph
 import com.nixbug.entebus.presentation.navigation.bottomtab.BottomNavigationBar
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+// Padding is handled per-screen instead of using Scaffold padding.
+// This allows the Profile tab to use a primary-colored status bar
+// while other screens apply their own system bar insets.
 @Composable
 fun MainScreen(rootNavController: NavHostController) {
     val navController = rememberNavController()
@@ -18,10 +21,7 @@ fun MainScreen(rootNavController: NavHostController) {
             BottomNavigationBar(navController)
         }
     ) {
-        Box(
-            modifier = Modifier
-                .padding(it)
-        ) {
+        Box {
             BottomNavGraph(navController, rootNavController)
         }
     }
