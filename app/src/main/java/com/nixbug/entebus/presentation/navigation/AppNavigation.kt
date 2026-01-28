@@ -34,7 +34,9 @@ import com.nixbug.entebus.presentation.components.StyledSnackbar
 import com.nixbug.entebus.presentation.screens.auth.AuthScreen
 import com.nixbug.entebus.presentation.screens.locationrequest.LocationRequestScreen
 import com.nixbug.entebus.presentation.screens.main.MainScreen
+import com.nixbug.entebus.presentation.screens.personaldetails.PersonalDetailsScreen
 import com.nixbug.entebus.presentation.screens.qrscanner.QrScannerScreen
+import com.nixbug.entebus.presentation.screens.termsandconditions.TermsAndConditionsScreen
 import com.nixbug.entebus.presentation.screens.ticket.TicketScreen
 import com.nixbug.entebus.utils.LocationPermissionHelper
 import com.nixbug.entebus.utils.snackbar.SnackbarEvent
@@ -182,6 +184,12 @@ fun AppNavigation(
             }
             composable(AppNavItem.QrScannerScreen.route) {
                 QrScannerScreen(navController = navController)
+            }
+            composable(AppNavItem.PersonalDetailsScreen.route) {
+                PersonalDetailsScreen(navController = navController)
+            }
+            composable(AppNavItem.TermsAndConditionsScreen.route) {
+                TermsAndConditionsScreen(navController = navController)
             }
         }
     }
