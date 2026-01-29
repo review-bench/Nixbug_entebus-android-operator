@@ -42,7 +42,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -57,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.ui.theme.SelectedServiceColor
@@ -72,7 +72,7 @@ fun HomeScreen(
     val focusManager = LocalFocusManager.current
 
     var searchQuery by remember { mutableStateOf("") }
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var finishDutyService by remember { mutableStateOf<HomeUiModel?>(null) }
 
     val filteredOtherServices = remember(state.otherServiceList, searchQuery) {
         state.otherServiceList.filter {
@@ -88,6 +88,33 @@ fun HomeScreen(
         }
     }
 
+    finishDutyService?.let { service ->
+        DialogBox(
+            title = "Finish Duty?",
+            message = "Are you sure you want to finish your duty on the ${
+                viewModel.extractRouteName(
+                    service.name
+                )
+            } service?",
+            confirmText = "Finish",
+            onConfirmClick = {
+                viewModel.onFinishDuty(service)
+                finishDutyService = null
+            },
+            dismissible = true,
+            onDismiss = {
+                finishDutyService = null
+            },
+            showExitButton = true,
+            exitText = "Cancel",
+            onExitClick = {
+                finishDutyService = null
+            },
+            titleColor = MaterialTheme.colorScheme.primary,
+            confirmBtnColor = MaterialTheme.colorScheme.primary,
+            exitBtnBorderColor = MaterialTheme.colorScheme.primary
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -105,77 +132,25 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(bottom = 70.dp)
         ) {
-
-            TopBar(
-                selectedTab = selectedTab,
-                onTabChange = { selectedTab = it }
+            ServiceHeader()
+            ServiceList(
+                ongoingService = state.ongoingService,
+                assignedServices = state.assignedServiceList,
+                downloadedServices = state.downloadedServiceList,
+                otherServices = filteredOtherServices,
+                searchQuery = searchQuery,
+                onSearchChange = { searchQuery = it },
+                onResumeService = viewModel::onResumeService,
+                onStartAssigned = viewModel::onStartAssigned,
+                onStartDownloaded = viewModel::onStartDownloaded,
+                onFinishDutyClick = { service ->
+                    finishDutyService = service
+                },
+                onDownload = viewModel::onDownloadService,
+                extractRouteName = viewModel::extractRouteName,
+                canStartService = viewModel::canStartService,
+                modifier = Modifier.weight(1f)
             )
-
-            when (selectedTab) {
-                0 -> {
-                    ServiceList(
-                        ongoingService = state.ongoingService,
-                        assignedServices = state.assignedServiceList,
-                        downloadedServices = state.downloadedServiceList,
-                        otherServices = filteredOtherServices,
-                        searchQuery = searchQuery,
-                        onSearchChange = { searchQuery = it },
-                        onResumeService = viewModel::onResumeService,
-                        onStartAssigned = viewModel::onStartAssigned,
-                        onStartDownloaded = viewModel::onStartDownloaded,
-                        onDownload = viewModel::onDownloadService,
-                        extractRouteName = viewModel::extractRouteName,
-                        canStartService = viewModel::canStartService,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                1 -> DutyScreen()
-            }
-        }
-    }
-}
-
-@Composable
-fun TopBar(selectedTab: Int, onTabChange: (Int) -> Unit) {
-
-    val tabs = listOf("All Services", "Duty")
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceAround
-    ) {
-        tabs.forEachIndexed { index, title ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { onTabChange(index) }
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = if (selectedTab == index) Color.Black else Color.Gray
-                )
-                Spacer(modifier = Modifier.height(3.dp))
-                if (selectedTab == index) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth(.9f)
-                            .height(4.dp)
-                            .background(
-                                MaterialTheme.colorScheme.primary,
-                                shape = RoundedCornerShape(50)
-                            )
-                    )
-                } else {
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-            }
         }
     }
 }
@@ -194,7 +169,8 @@ fun ServiceList(
     onDownload: (HomeUiModel) -> Unit,
     extractRouteName: (String) -> String,
     canStartService: (String) -> Boolean,
-    modifier: Modifier
+    modifier: Modifier,
+    onFinishDutyClick: (HomeUiModel) -> Unit
 ) {
     LazyColumn(
         modifier = modifier
@@ -202,8 +178,6 @@ fun ServiceList(
             .padding(horizontal = 12.dp),
         contentPadding = WindowInsets.ime.asPaddingValues()
     ) {
-
-        item { Spacer(Modifier.height(12.dp)) }
 
         // ---------------- Ongoing ----------------
         ongoingService?.let { service ->
@@ -214,11 +188,12 @@ fun ServiceList(
                 ServiceCard(
                     service = service,
                     cardType = CardType.ONGOING,
+                    onActionClick = { onResumeService() },
                     date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
                     time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = true,
-                    onActionClick = { onResumeService() }
+                    onFinishDutyClick = { onFinishDutyClick(service) }
                 )
             }
             item { SectionDivider() }
@@ -233,11 +208,11 @@ fun ServiceList(
                 ServiceCard(
                     service = service,
                     cardType = CardType.ASSIGNED,
+                    onActionClick = { onStartAssigned(service) },
                     date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
                     time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = canStartService(service.startingAt),
-                    onActionClick = { onStartAssigned(service) }
                 )
             }
             item { SectionDivider() }
@@ -252,11 +227,11 @@ fun ServiceList(
                 ServiceCard(
                     service = service,
                     cardType = CardType.DOWNLOADED,
+                    onActionClick = { onStartDownloaded(service) },
                     date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
                     time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = canStartService(service.startingAt),
-                    onActionClick = { onStartDownloaded(service) }
                 )
             }
             item { SectionDivider() }
@@ -281,11 +256,11 @@ fun ServiceList(
                 ServiceCard(
                     service = service,
                     cardType = CardType.OTHER,
+                    onActionClick = { onDownload(service) },
                     date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
                     time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
                     routeName = extractRouteName(service.name),
                     isEnabled = true,
-                    onActionClick = { onDownload(service) }
                 )
             }
         } else {
@@ -311,7 +286,8 @@ fun ServiceCard(
     date: String,
     time: String,
     routeName: String,
-    isEnabled: Boolean
+    isEnabled: Boolean,
+    onFinishDutyClick: ((HomeUiModel) -> Unit)? = null
 ) {
 
     Card(
@@ -412,7 +388,10 @@ fun ServiceCard(
             //-------------- RESUME BUTTON----------------------//
             if (cardType == CardType.ONGOING) {
                 Spacer(Modifier.height(12.dp))
-                FullWidthActionButton("Resume Service", onActionClick)
+                OngoingActionButtons(
+                    onResume = onActionClick,
+                    onEnd = { onFinishDutyClick?.invoke(service) }
+                )
             }
         }
     }
@@ -478,16 +457,39 @@ fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
 }
 
 @Composable
-fun FullWidthActionButton(text: String, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(35.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-        shape = RoundedCornerShape(10.dp)
+fun OngoingActionButtons(
+    onResume: () -> Unit,
+    onEnd: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text(text, style = MaterialTheme.typography.titleMedium, color = Color.White)
+        Button(
+            onClick = onResume,
+            modifier = Modifier
+                .weight(1f)
+                .height(35.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            ),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Text("Resume", color = Color.White, style = MaterialTheme.typography.titleMedium)
+        }
+
+        Button(
+            onClick = onEnd,
+            modifier = Modifier
+                .weight(1f)
+                .height(35.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error
+            ),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Text("Finish", color = Color.White, style = MaterialTheme.typography.titleMedium)
+        }
     }
 }
 
@@ -511,14 +513,21 @@ fun SectionDivider() {
 }
 
 @Composable
-fun DutyScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+fun ServiceHeader() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 5.dp)
+            .padding(horizontal = 12.dp)
     ) {
         Text(
-            text = "Duty Page",
-            style = MaterialTheme.typography.titleLarge
+            "All Services",
+            style = MaterialTheme.typography.headlineSmall,
+            color = Color.Black
+        )
+        Text(
+            "Displaying All Services", style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
         )
     }
 }
