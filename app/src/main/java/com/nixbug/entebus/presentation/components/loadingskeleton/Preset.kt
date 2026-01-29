@@ -17,12 +17,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 
 // TODO: Currently unused – will be shown when API integration adds a loading state.
 @Composable
-fun HistoryCardSkeleton() {
-    val shimmerBrush = rememberShimmerBrush()
+fun HistoryCardSkeleton(shimmerBrush: Brush) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -70,8 +70,7 @@ fun HistoryCardSkeleton() {
 
 // TODO: Currently unused – will be shown when API integration adds a loading state.
 @Composable
-fun ServiceCardSkeleton() {
-    val shimmerBrush = rememberShimmerBrush()
+fun ServiceCardSkeleton(shimmerBrush: Brush) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -166,8 +165,7 @@ fun ServiceCardSkeleton() {
 
 // TODO: Currently unused – will be shown when API integration adds a loading state.
 @Composable
-fun PersonalDetailsSkeleton() {
-    val shimmerBrush = rememberShimmerBrush()
+fun PersonalDetailsSkeleton(shimmerBrush: Brush) {
     Column(
         modifier = Modifier
             .fillMaxSize()
