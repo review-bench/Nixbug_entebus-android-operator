@@ -2,6 +2,7 @@ package com.nixbug.entebus.presentation.components.loadingskeleton
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,13 +21,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 
-// TODO: Currently unused – will be shown when API integration adds a loading state.
+/**
+ * Common skeleton card wrapper.
+ * ONLY extracted shared Card configuration.
+ */
 @Composable
-fun HistoryCardSkeleton(shimmerBrush: Brush) {
+fun SkeletonCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         colors = CardDefaults.cardColors(
@@ -35,6 +40,20 @@ fun HistoryCardSkeleton(shimmerBrush: Brush) {
     ) {
         Column(
             modifier = Modifier.padding(15.dp),
+            content = content
+        )
+    }
+}
+
+// TODO: Currently unused – will be shown when API integration adds a loading state.
+@Composable
+fun HistoryCardSkeleton(shimmerBrush: Brush) {
+    SkeletonCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -71,93 +90,82 @@ fun HistoryCardSkeleton(shimmerBrush: Brush) {
 // TODO: Currently unused – will be shown when API integration adds a loading state.
 @Composable
 fun ServiceCardSkeleton(shimmerBrush: Brush) {
-    Card(
+    SkeletonCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 15.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            .padding(bottom = 15.dp)
     ) {
-        Column(modifier = Modifier.padding(15.dp)) {
+        SkeletonBlock(
+            shimmerBrush = shimmerBrush,
+            width = 180.dp,
+            height = 20.dp,
+            cornerRadius = 6.dp
+        )
 
-            SkeletonBlock(
-                shimmerBrush = shimmerBrush,
-                width = 180.dp,
-                height = 20.dp,
-                cornerRadius = 6.dp
-            )
+        Spacer(modifier = Modifier.height(15.dp))
 
-            Spacer(modifier = Modifier.height(15.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-
-                        SkeletonBlock(
-                            shimmerBrush = shimmerBrush,
-                            width = 24.dp,
-                            height = 24.dp,
-                            cornerRadius = 12.dp
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        SkeletonBlock(
-                            shimmerBrush = shimmerBrush,
-                            width = 80.dp,
-                            height = 14.dp,
-                            cornerRadius = 4.dp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(15.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        SkeletonBlock(
-                            shimmerBrush = shimmerBrush,
-                            width = 24.dp,
-                            height = 24.dp,
-                            cornerRadius = 12.dp
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        SkeletonBlock(
-                            shimmerBrush = shimmerBrush,
-                            width = 100.dp,
-                            height = 14.dp,
-                            cornerRadius = 4.dp
-                        )
-                    }
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        SkeletonBlock(
-                            shimmerBrush = shimmerBrush,
-                            width = 20.dp,
-                            height = 20.dp,
-                            cornerRadius = 10.dp
-                        )
-                        Spacer(Modifier.width(5.dp))
-                        SkeletonBlock(
-                            shimmerBrush = shimmerBrush,
-                            width = 50.dp,
-                            height = 14.dp,
-                            cornerRadius = 4.dp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     SkeletonBlock(
                         shimmerBrush = shimmerBrush,
-                        width = 95.dp,
-                        height = 35.dp,
-                        cornerRadius = 10.dp
+                        width = 24.dp,
+                        height = 24.dp,
+                        cornerRadius = 12.dp
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 80.dp,
+                        height = 14.dp,
+                        cornerRadius = 4.dp
                     )
                 }
+
+                Spacer(modifier = Modifier.height(15.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 24.dp,
+                        height = 24.dp,
+                        cornerRadius = 12.dp
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 100.dp,
+                        height = 14.dp,
+                        cornerRadius = 4.dp
+                    )
+                }
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 20.dp,
+                        height = 20.dp,
+                        cornerRadius = 10.dp
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 50.dp,
+                        height = 14.dp,
+                        cornerRadius = 4.dp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                SkeletonBlock(
+                    shimmerBrush = shimmerBrush,
+                    width = 95.dp,
+                    height = 35.dp,
+                    cornerRadius = 10.dp
+                )
             }
         }
     }
@@ -172,51 +180,49 @@ fun PersonalDetailsSkeleton(shimmerBrush: Brush) {
             .padding(horizontal = 10.dp)
     ) {
         Spacer(modifier = Modifier.height(10.dp))
+
         SkeletonBlock(
             shimmerBrush = shimmerBrush,
             width = 120.dp,
             height = 16.dp,
             cornerRadius = 4.dp
         )
+
         Spacer(modifier = Modifier.height(15.dp))
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(6.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                repeat(6) { index ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+        SkeletonCard(modifier = Modifier.fillMaxWidth()) {
+            repeat(6) { index ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 48.dp,
+                        height = 48.dp,
+                        cornerRadius = 14.dp
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
                         SkeletonBlock(
                             shimmerBrush = shimmerBrush,
-                            width = 48.dp,
-                            height = 48.dp,
-                            cornerRadius = 14.dp
+                            width = 70.dp,
+                            height = 12.dp,
+                            cornerRadius = 4.dp
                         )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            SkeletonBlock(
-                                shimmerBrush = shimmerBrush,
-                                width = 70.dp,
-                                height = 12.dp,
-                                cornerRadius = 4.dp
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            SkeletonBlock(
-                                shimmerBrush = shimmerBrush,
-                                width = 150.dp,
-                                height = 18.dp,
-                                cornerRadius = 4.dp
-                            )
-                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 150.dp,
+                            height = 18.dp,
+                            cornerRadius = 4.dp
+                        )
                     }
-                    if (index < 5) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
+                }
+
+                if (index < 5) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
         }
@@ -229,45 +235,42 @@ fun PersonalDetailsSkeleton(shimmerBrush: Brush) {
             height = 16.dp,
             cornerRadius = 4.dp
         )
+
         Spacer(modifier = Modifier.height(15.dp))
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(6.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                repeat(2) { index ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+        SkeletonCard(modifier = Modifier.fillMaxWidth()) {
+            repeat(2) { index ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 48.dp,
+                        height = 48.dp,
+                        cornerRadius = 14.dp
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
                         SkeletonBlock(
                             shimmerBrush = shimmerBrush,
-                            width = 48.dp,
-                            height = 48.dp,
-                            cornerRadius = 14.dp
+                            width = 65.dp,
+                            height = 12.dp,
+                            cornerRadius = 4.dp
                         )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            SkeletonBlock(
-                                shimmerBrush = shimmerBrush,
-                                width = 65.dp,
-                                height = 12.dp,
-                                cornerRadius = 4.dp
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            SkeletonBlock(
-                                shimmerBrush = shimmerBrush,
-                                width = 180.dp,
-                                height = 18.dp,
-                                cornerRadius = 4.dp
-                            )
-                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 180.dp,
+                            height = 18.dp,
+                            cornerRadius = 4.dp
+                        )
                     }
-                    if (index < 1) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
+                }
+
+                if (index < 1) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
         }
