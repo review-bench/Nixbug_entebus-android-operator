@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 // TODO: Currently unused – will be shown when API integration adds a loading state.
 @Composable
 fun HistoryCardSkeleton() {
+    val shimmerBrush = rememberShimmerBrush()
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -38,19 +39,29 @@ fun HistoryCardSkeleton() {
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    SkeletonBlock(width = 120.dp, height = 16.dp)
-                    SkeletonBlock(width = 80.dp, height = 16.dp)
+                    SkeletonBlock(shimmerBrush = shimmerBrush, width = 120.dp, height = 16.dp)
+                    SkeletonBlock(shimmerBrush = shimmerBrush, width = 80.dp, height = 16.dp)
                 }
-                SkeletonBlock(width = 100.dp, height = 30.dp, cornerRadius = 20.dp)
+                SkeletonBlock(
+                    shimmerBrush = shimmerBrush,
+                    width = 100.dp,
+                    height = 30.dp,
+                    cornerRadius = 20.dp
+                )
             }
 
             HorizontalDivider()
 
             repeat(3) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    SkeletonBlock(width = 20.dp, height = 20.dp, cornerRadius = 4.dp)
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 20.dp,
+                        height = 20.dp,
+                        cornerRadius = 4.dp
+                    )
                     Spacer(Modifier.width(8.dp))
-                    SkeletonBlock(width = 150.dp, height = 14.dp)
+                    SkeletonBlock(shimmerBrush = shimmerBrush, width = 150.dp, height = 14.dp)
                 }
             }
         }
@@ -60,6 +71,7 @@ fun HistoryCardSkeleton() {
 // TODO: Currently unused – will be shown when API integration adds a loading state.
 @Composable
 fun ServiceCardSkeleton() {
+    val shimmerBrush = rememberShimmerBrush()
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -72,7 +84,12 @@ fun ServiceCardSkeleton() {
     ) {
         Column(modifier = Modifier.padding(15.dp)) {
 
-            SkeletonBlock(width = 180.dp, height = 20.dp, cornerRadius = 6.dp)
+            SkeletonBlock(
+                shimmerBrush = shimmerBrush,
+                width = 180.dp,
+                height = 20.dp,
+                cornerRadius = 6.dp
+            )
 
             Spacer(modifier = Modifier.height(15.dp))
 
@@ -81,31 +98,66 @@ fun ServiceCardSkeleton() {
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
 
-                        SkeletonBlock(width = 24.dp, height = 24.dp, cornerRadius = 12.dp)
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 24.dp,
+                            height = 24.dp,
+                            cornerRadius = 12.dp
+                        )
                         Spacer(Modifier.width(8.dp))
-                        SkeletonBlock(width = 80.dp, height = 14.dp, cornerRadius = 4.dp)
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 80.dp,
+                            height = 14.dp,
+                            cornerRadius = 4.dp
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(15.dp))
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        SkeletonBlock(width = 24.dp, height = 24.dp, cornerRadius = 12.dp)
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 24.dp,
+                            height = 24.dp,
+                            cornerRadius = 12.dp
+                        )
                         Spacer(Modifier.width(8.dp))
-                        SkeletonBlock(width = 100.dp, height = 14.dp, cornerRadius = 4.dp)
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 100.dp,
+                            height = 14.dp,
+                            cornerRadius = 4.dp
+                        )
                     }
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        SkeletonBlock(width = 20.dp, height = 20.dp, cornerRadius = 10.dp)
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 20.dp,
+                            height = 20.dp,
+                            cornerRadius = 10.dp
+                        )
                         Spacer(Modifier.width(5.dp))
-                        SkeletonBlock(width = 50.dp, height = 14.dp, cornerRadius = 4.dp)
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 50.dp,
+                            height = 14.dp,
+                            cornerRadius = 4.dp
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    SkeletonBlock(width = 95.dp, height = 35.dp, cornerRadius = 10.dp)
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 95.dp,
+                        height = 35.dp,
+                        cornerRadius = 10.dp
+                    )
                 }
             }
         }
@@ -115,13 +167,19 @@ fun ServiceCardSkeleton() {
 // TODO: Currently unused – will be shown when API integration adds a loading state.
 @Composable
 fun PersonalDetailsSkeleton() {
+    val shimmerBrush = rememberShimmerBrush()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 10.dp)
     ) {
         Spacer(modifier = Modifier.height(10.dp))
-        SkeletonBlock(width = 120.dp, height = 16.dp, cornerRadius = 4.dp)
+        SkeletonBlock(
+            shimmerBrush = shimmerBrush,
+            width = 120.dp,
+            height = 16.dp,
+            cornerRadius = 4.dp
+        )
         Spacer(modifier = Modifier.height(15.dp))
 
         Card(
@@ -134,6 +192,7 @@ fun PersonalDetailsSkeleton() {
                 repeat(6) { index ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
                             width = 48.dp,
                             height = 48.dp,
                             cornerRadius = 14.dp
@@ -141,12 +200,14 @@ fun PersonalDetailsSkeleton() {
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             SkeletonBlock(
+                                shimmerBrush = shimmerBrush,
                                 width = 70.dp,
                                 height = 12.dp,
                                 cornerRadius = 4.dp
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             SkeletonBlock(
+                                shimmerBrush = shimmerBrush,
                                 width = 150.dp,
                                 height = 18.dp,
                                 cornerRadius = 4.dp
@@ -164,7 +225,12 @@ fun PersonalDetailsSkeleton() {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        SkeletonBlock(width = 110.dp, height = 16.dp, cornerRadius = 4.dp)
+        SkeletonBlock(
+            shimmerBrush = shimmerBrush,
+            width = 110.dp,
+            height = 16.dp,
+            cornerRadius = 4.dp
+        )
         Spacer(modifier = Modifier.height(15.dp))
 
         Card(
@@ -176,12 +242,27 @@ fun PersonalDetailsSkeleton() {
             Column(modifier = Modifier.padding(16.dp)) {
                 repeat(2) { index ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        SkeletonBlock(width = 48.dp, height = 48.dp, cornerRadius = 14.dp)
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 48.dp,
+                            height = 48.dp,
+                            cornerRadius = 14.dp
+                        )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            SkeletonBlock(width = 65.dp, height = 12.dp, cornerRadius = 4.dp)
+                            SkeletonBlock(
+                                shimmerBrush = shimmerBrush,
+                                width = 65.dp,
+                                height = 12.dp,
+                                cornerRadius = 4.dp
+                            )
                             Spacer(modifier = Modifier.height(6.dp))
-                            SkeletonBlock(width = 180.dp, height = 18.dp, cornerRadius = 4.dp)
+                            SkeletonBlock(
+                                shimmerBrush = shimmerBrush,
+                                width = 180.dp,
+                                height = 18.dp,
+                                cornerRadius = 4.dp
+                            )
                         }
                     }
                     if (index < 1) {

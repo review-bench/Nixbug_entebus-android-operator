@@ -8,21 +8,27 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun SkeletonBlock(
     modifier: Modifier = Modifier,
+    shimmerBrush: Brush,
     width: Dp = Dp.Unspecified,
     height: Dp = Dp.Unspecified,
     cornerRadius: Dp = 8.dp
 ) {
+    val sizeModifier = Modifier
+        .then(if (width != Dp.Unspecified) Modifier.width(width) else Modifier)
+        .then(if (height != Dp.Unspecified) Modifier.height(height) else Modifier)
+
     Box(
-        modifier = modifier
-            .then(if (width != Dp.Unspecified) Modifier.width(width) else Modifier)
-            .then(if (height != Dp.Unspecified) Modifier.height(height) else Modifier)
+        modifier = sizeModifier
+            .then(modifier)
             .clip(RoundedCornerShape(cornerRadius))
-            .background(shimmerBrush())
+            .background(shimmerBrush)
     )
 }
+

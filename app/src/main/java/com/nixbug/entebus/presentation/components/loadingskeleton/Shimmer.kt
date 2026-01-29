@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 @Composable
-fun shimmerBrush(): Brush {
+fun rememberShimmerBrush(): Brush {
     val shimmerColors = listOf(
         Color.LightGray.copy(alpha = 0.6f),
         Color.LightGray.copy(alpha = 0.2f),
@@ -22,7 +22,7 @@ fun shimmerBrush(): Brush {
             animation = tween(durationMillis = 1200, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "shimmer"
+        label = "shimmerAnim"
     )
 
     return Brush.linearGradient(
