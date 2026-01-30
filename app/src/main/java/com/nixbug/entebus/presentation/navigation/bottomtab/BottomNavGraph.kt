@@ -1,5 +1,8 @@
 package com.nixbug.entebus.presentation.navigation.bottomtab
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -12,7 +15,11 @@ import com.nixbug.entebus.presentation.screens.profile.ProfileScreen
 fun BottomNavGraph(navController: NavHostController, rootNavController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = BottomNavItem.Home.route
+        startDestination = BottomNavItem.Home.route,
+        enterTransition = { fadeIn(animationSpec = tween(0)) },
+        exitTransition = { fadeOut(animationSpec = tween(0)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(0)) },
+        popExitTransition = { fadeOut(animationSpec = tween(0)) }
     ) {
         composable(BottomNavItem.Home.route) { HomeScreen(rootNavController = rootNavController) }
         composable(BottomNavItem.History.route) { HistoryScreen() }
