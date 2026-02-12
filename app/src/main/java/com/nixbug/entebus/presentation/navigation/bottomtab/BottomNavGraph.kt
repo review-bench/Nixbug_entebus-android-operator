@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import com.nixbug.entebus.presentation.screens.history.HistoryScreen
 import com.nixbug.entebus.presentation.screens.home.HomeScreen
 import com.nixbug.entebus.presentation.screens.profile.ProfileScreen
+import com.nixbug.entebus.presentation.screens.summary.SummaryScreen
 
 @Composable
 fun BottomNavGraph(navController: NavHostController, rootNavController: NavHostController) {
@@ -23,6 +24,7 @@ fun BottomNavGraph(navController: NavHostController, rootNavController: NavHostC
     ) {
         composable(BottomNavItem.Home.route) { HomeScreen(rootNavController = rootNavController) }
         composable(BottomNavItem.History.route) { HistoryScreen() }
+        composable(BottomNavItem.Summary.route) { SummaryScreen() }
         composable(BottomNavItem.Profile.route) { ProfileScreen(rootNavController = rootNavController) }
     }
 }
