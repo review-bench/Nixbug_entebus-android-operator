@@ -472,6 +472,8 @@ fun PrintSummaryDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 4.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.headlineSmall
                         )
