@@ -324,9 +324,9 @@ fun ServiceDateRow(
 
         ExpandableEllipsizedText(
             text = if (startDate == finishDate) {
-                "$startDate, $startTime TO $finishTime"
+                "$startDate, $startTime To $finishTime"
             } else {
-                "$startDate,$startTime TO $finishDate,$finishTime"
+                "$startDate,$startTime T0 $finishDate,$finishTime"
             },
             style = MaterialTheme.typography.labelSmall.copy(
                 color = Color.Gray
@@ -504,9 +504,9 @@ fun PrintSummaryDialog(
 
                             Text(
                                 text = if (startDate == finishDate) {
-                                    "$startDate, $startTime TO $finishTime"
+                                    "$startDate, $startTime To $finishTime"
                                 } else {
-                                    "$startDate,$startTime TO $finishDate,$finishTime"
+                                    "$startDate,$startTime To $finishDate,$finishTime"
                                 },
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.Gray
