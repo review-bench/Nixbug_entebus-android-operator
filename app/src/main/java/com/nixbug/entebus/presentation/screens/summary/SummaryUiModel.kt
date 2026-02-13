@@ -10,5 +10,4 @@ data class SummaryUiModel(
     val operatorId: Int,
     val operatorName: String,
     val collection: Int,
-    val isAudited: Boolean,
 )

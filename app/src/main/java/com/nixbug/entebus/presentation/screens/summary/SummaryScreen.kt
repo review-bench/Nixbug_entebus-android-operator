@@ -360,7 +360,7 @@ fun ExpandableEllipsizedText(
                 isEllipsized = layoutResult.isLineEllipsized(0)
             },
             modifier = Modifier.clickable {
-                if (isEllipsized) {   // 👈 ONLY open if truncated
+                if (isEllipsized) {
                     expanded = true
                 }
             }
@@ -469,7 +469,9 @@ fun PrintSummaryDialog(
                         Text("----------- Print Header -----------")
                         Text(
                             text = "Krishna",
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.headlineSmall
                         )

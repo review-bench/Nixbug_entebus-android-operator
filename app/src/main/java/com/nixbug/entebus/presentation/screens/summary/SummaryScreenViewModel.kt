@@ -26,7 +26,6 @@ class SummaryScreenViewModel @Inject constructor() : ViewModel() {
             .groupBy { it.serviceId }
             .filter { (_, group) ->
                 val first = group.first()
-
                 val (date, _) = utcToIstConverter(first.startedOn)
                     ?: return@filter false
                 val (currentDate, _) = utcToIstConverter(today)
@@ -38,7 +37,7 @@ class SummaryScreenViewModel @Inject constructor() : ViewModel() {
 
         _uiState.value = _uiState.value.copy(
             selectedServiceIds = todayServiceIds,
-            todayServiceIds = todayServiceIds   // 🔥 store separately
+            todayServiceIds = todayServiceIds
         )
     }
 
@@ -59,4 +58,3 @@ class SummaryScreenViewModel @Inject constructor() : ViewModel() {
     }
 
 }
-
