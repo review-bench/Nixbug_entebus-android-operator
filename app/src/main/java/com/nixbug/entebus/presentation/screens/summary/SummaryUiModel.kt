@@ -6,7 +6,7 @@ data class SummaryUiModel(
     val serviceName: String,
     val startedOn: String,
     val finishedOn: String,
-    val regNO: String,
+    val regNo: String,
     val operatorId: Int,
     val operatorName: String,
     val collection: Int,

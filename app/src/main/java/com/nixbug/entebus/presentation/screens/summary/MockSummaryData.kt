@@ -1,14 +1,20 @@
 package com.nixbug.entebus.presentation.screens.summary
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
+val now = Instant.now()
+val yesterday = Instant.now().minus(1, ChronoUnit.DAYS)
+
 val sampleSummaryData = listOf(
 
     SummaryUiModel(
         id = 1,
         serviceId = 101,
         serviceName = "Mayyanad -> Kollam",
-        startedOn = "2026-02-13T08:00:00Z",
-        finishedOn = "2026-02-13T11:30:00Z",
-        regNO = "KL07AB1234",
+        startedOn = now.toString(),
+        finishedOn = now.plus(30, ChronoUnit.MINUTES).toString(),
+        regNo = "KL07AB1234",
         operatorId = 1,
         operatorName = "Rahul",
         collection = 5400,
@@ -17,9 +23,9 @@ val sampleSummaryData = listOf(
         id = 2,
         serviceId = 101,
         serviceName = "Mayyanad -> Kollam",
-        startedOn = "2026-02-13T08:00:00Z",
-        finishedOn = "2026-02-13T11:30:00Z",
-        regNO = "KL07AB1234",
+        startedOn = now.toString(),
+        finishedOn = now.plus(30, ChronoUnit.MINUTES).toString(),
+        regNo = "KL07AB1234",
         operatorId = 2,
         operatorName = "Arjun",
         collection = 6200,
@@ -28,9 +34,9 @@ val sampleSummaryData = listOf(
         id = 3,
         serviceId = 102,
         serviceName = "Kottarakkara -> Kollam",
-        startedOn = "2026-02-13T04:15:00Z",
-        finishedOn = "2026-02-13T09:00:00Z",
-        regNO = "KL07CD5678",
+        startedOn = now.toString(),
+        finishedOn = now.plus(30, ChronoUnit.MINUTES).toString(),
+        regNo = "KL07CD5678",
         operatorId = 3,
         operatorName = "Vivek",
         collection = 4800,
@@ -41,9 +47,9 @@ val sampleSummaryData = listOf(
         id = 4,
         serviceId = 110,
         serviceName = "Edava -> Kollam",
-        startedOn = "2026-02-12T03:45:00Z",
-        finishedOn = "2026-02-12T07:30:00Z",
-        regNO = "KL07AB1234",
+        startedOn = yesterday.toString(),
+        finishedOn = yesterday.plus(30, ChronoUnit.MINUTES).toString(),
+        regNo = "KL07AB1234",
         operatorId = 1,
         operatorName = "Rahul",
         collection = 5100,
@@ -52,9 +58,9 @@ val sampleSummaryData = listOf(
         id = 5,
         serviceId = 111,
         serviceName = "Oachira -> Kollam",
-        startedOn = "2026-02-12T05:00:00Z",
-        finishedOn = "2026-02-12T10:00:00Z",
-        regNO = "KL07CD5678",
+        startedOn = yesterday.toString(),
+        finishedOn = yesterday.plus(30, ChronoUnit.MINUTES).toString(),
+        regNo = "KL07CD5678",
         operatorId = 3,
         operatorName = "Vivek",
         collection = 4500,
@@ -63,9 +69,9 @@ val sampleSummaryData = listOf(
         id = 6,
         serviceId = 103,
         serviceName = "Kollam -> Paravur",
-        startedOn = "2026-02-12T06:00:00Z",
-        finishedOn = "2026-02-12T12:15:00Z",
-        regNO = "KL07EF9012",
+        startedOn = yesterday.toString(),
+        finishedOn = yesterday.plus(30, ChronoUnit.MINUTES).toString(),
+        regNo = "KL07EF9012",
         operatorId = 2,
         operatorName = "Arjun",
         collection = 7000,

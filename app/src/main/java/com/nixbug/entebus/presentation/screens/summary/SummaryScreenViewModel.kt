@@ -22,7 +22,7 @@ class SummaryScreenViewModel @Inject constructor() : ViewModel() {
     private fun autoSelectTodayServices() {
         val today = Instant.now().toString()
 
-        val todayServiceIds = sampleSummaryData
+        val todayServiceIds = _uiState.value.summary
             .groupBy { it.serviceId }
             .filter { (_, group) ->
                 val first = group.first()
@@ -37,13 +37,11 @@ class SummaryScreenViewModel @Inject constructor() : ViewModel() {
 
         _uiState.value = _uiState.value.copy(
             selectedServiceIds = todayServiceIds,
-            todayServiceIds = todayServiceIds
         )
     }
 
 
     fun toggleSelection(serviceId: Int) {
-
         val current = _uiState.value.selectedServiceIds.toMutableSet()
 
         if (current.contains(serviceId)) {

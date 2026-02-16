@@ -143,7 +143,7 @@ fun PrintButton(
         shape = RoundedCornerShape(16.dp)
     ) {
         Text(
-            text = "Continue",
+            text = "Preview Collection",
             fontWeight = FontWeight.SemiBold
         )
     }
@@ -208,7 +208,7 @@ fun SummaryCardContent(
     ) {
         SummaryCardHeader(
             serviceName = firstItem.serviceName,
-            regNo = firstItem.regNO,
+            regNo = firstItem.regNo,
             isSelected = isSelected,
             onToggle = onToggle,
             startDate = startDate,
@@ -326,7 +326,7 @@ fun ServiceDateRow(
             text = if (startDate == finishDate) {
                 "$startDate, $startTime To $finishTime"
             } else {
-                "$startDate,$startTime T0 $finishDate,$finishTime"
+                "$startDate, $startTime To $finishDate, $finishTime"
             },
             style = MaterialTheme.typography.labelSmall.copy(
                 color = Color.Gray
@@ -500,13 +500,13 @@ fun PrintSummaryDialog(
                                 fontWeight = FontWeight.Bold
                             )
 
-                            Text(text = first.regNO)
+                            Text(text = first.regNo)
 
                             Text(
                                 text = if (startDate == finishDate) {
                                     "$startDate, $startTime To $finishTime"
                                 } else {
-                                    "$startDate,$startTime To $finishDate,$finishTime"
+                                    "$startDate, $startTime To $finishDate, $finishTime"
                                 },
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.Gray
@@ -574,6 +574,8 @@ fun PrintSummaryDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // TODO: Replace onDismiss with actual printer implementation once printing logic is integrated.
+                // Currently dismissing the dialog because printer functionality is not yet implemented.
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
