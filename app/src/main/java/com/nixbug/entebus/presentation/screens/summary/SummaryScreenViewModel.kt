@@ -43,7 +43,6 @@ class SummaryScreenViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-
     fun toggleSelection(serviceId: Int) {
         _uiState.update { currentState ->
 
