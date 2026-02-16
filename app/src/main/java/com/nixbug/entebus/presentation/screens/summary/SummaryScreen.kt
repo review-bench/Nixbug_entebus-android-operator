@@ -3,7 +3,6 @@ package com.nixbug.entebus.presentation.screens.summary
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -29,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.utcToIstConverter
 import kotlinx.coroutines.delay
 
@@ -68,7 +69,16 @@ fun SummaryScreen(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 80.dp)
                 .padding(horizontal = 30.dp),
-            onClick = { showPrintDialog = true }
+            onClick = {
+                if (state.selectedServiceIds.isNotEmpty()) {
+                    showPrintDialog = true
+                } else {
+                    SnackbarManager.show(
+                        message = "Please select at least one service",
+                        type = SnackbarType.WARNING
+                    )
+                }
+            }
         )
 
     }
@@ -138,7 +148,7 @@ fun PrintButton(
     onClick: () -> Unit
 ) {
     Button(
-        onClick = { onClick() },
+        onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -270,7 +280,7 @@ fun SummaryCardHeader(
 
         Checkbox(
             checked = isSelected,
-            onCheckedChange = { onToggle() }
+            onCheckedChange = { _ -> onToggle() }
         )
     }
 

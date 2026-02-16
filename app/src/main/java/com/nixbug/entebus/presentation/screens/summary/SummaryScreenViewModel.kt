@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.time.Instant
 import javax.inject.Inject
 
@@ -35,24 +36,29 @@ class SummaryScreenViewModel @Inject constructor() : ViewModel() {
             }
             .keys
 
-        _uiState.value = _uiState.value.copy(
-            selectedServiceIds = todayServiceIds,
-        )
+        _uiState.update { currentState ->
+            currentState.copy(
+                selectedServiceIds = todayServiceIds
+            )
+        }
     }
 
 
     fun toggleSelection(serviceId: Int) {
-        val current = _uiState.value.selectedServiceIds.toMutableSet()
+        _uiState.update { currentState ->
 
-        if (current.contains(serviceId)) {
-            current.remove(serviceId)
-        } else {
-            current.add(serviceId)
+            val updatedSelection = currentState.selectedServiceIds.toMutableSet()
+
+            if (updatedSelection.contains(serviceId)) {
+                updatedSelection.remove(serviceId)
+            } else {
+                updatedSelection.add(serviceId)
+            }
+
+            currentState.copy(
+                selectedServiceIds = updatedSelection
+            )
         }
-
-        _uiState.value = _uiState.value.copy(
-            selectedServiceIds = current
-        )
     }
 
 }
