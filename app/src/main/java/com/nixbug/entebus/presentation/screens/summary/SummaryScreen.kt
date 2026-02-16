@@ -124,7 +124,7 @@ fun SummaryList(
     onToggle: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val groupedByService = summaryData.groupBy { it.serviceId }
+    val groupedByService = remember(summaryData) { summaryData.groupBy { it.serviceId } }
 
     LazyColumn(
         modifier = modifier.padding(horizontal = 10.dp),
@@ -166,12 +166,14 @@ fun SummaryCard(
     onClick: () -> Unit
 ) {
 
-    val firstItem = serviceGroup.first()
-    val totalCollection = serviceGroup.sumOf { it.collection }
-    val (startDate, startTime) = utcToIstConverter(firstItem.startedOn)
-        ?: ("Invalid date" to "Invalid time")
-    val (finishDate, finishTime) = utcToIstConverter(firstItem.finishedOn)
-        ?: ("Invalid date" to "Invalid time")
+    val firstItem = remember(serviceGroup) { serviceGroup.first() }
+    val totalCollection = remember(serviceGroup) { serviceGroup.sumOf { it.collection } }
+    val (startDate, startTime) = remember(firstItem.startedOn) {
+        utcToIstConverter(firstItem.startedOn) ?: ("Invalid date" to "Invalid time")
+    }
+    val (finishDate, finishTime) = remember(firstItem.finishedOn) {
+        utcToIstConverter(firstItem.finishedOn) ?: ("Invalid date" to "Invalid time")
+    }
     val containerColor = if (isSelected) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.surface
 
     Card(
@@ -430,12 +432,15 @@ fun PrintSummaryDialog(
     onDismiss: () -> Unit
 ) {
 
-    val selectedServices = summaryData
-        .filter { selectedIds.contains(it.serviceId) }
-        .groupBy { it.serviceId }
-
-    val grandTotal = selectedServices.values
-        .sumOf { group -> group.sumOf { it.collection } }
+    val selectedServices = remember(summaryData, selectedIds) {
+        summaryData
+            .filter { selectedIds.contains(it.serviceId) }
+            .groupBy { it.serviceId }
+    }
+    val grandTotal = remember(selectedServices) {
+        selectedServices.values
+            .sumOf { group -> group.sumOf { it.collection } }
+    }
 
     Dialog(onDismissRequest = onDismiss) {
 
@@ -493,20 +498,23 @@ fun PrintSummaryDialog(
                     itemsIndexed(selectedServices.values.toList()) { index, serviceGroup ->
 
                         val first = serviceGroup.first()
-                        val total = serviceGroup.sumOf { it.collection }
 
-                        val (startDate, startTime) =
-                            utcToIstConverter(first.startedOn)
-                                ?: ("Invalid" to "Invalid")
+                        val total = remember(serviceGroup) {
+                            serviceGroup.sumOf { it.collection }
+                        }
 
-                        val (finishDate, finishTime) =
-                            utcToIstConverter(first.finishedOn)
-                                ?: ("Invalid" to "Invalid")
+                        val (startDate, startTime) = remember(first.startedOn) {
+                            utcToIstConverter(first.startedOn) ?: ("Invalid" to "Invalid")
+                        }
+
+                        val (finishDate, finishTime) = remember(first.finishedOn) {
+                            utcToIstConverter(first.finishedOn) ?: ("Invalid" to "Invalid")
+                        }
 
                         Column {
 
                             Text(
-                                text = "${index + 1} . ${first.serviceName}",
+                                text = "${index + 1}. ${first.serviceName}",
                                 fontWeight = FontWeight.Bold
                             )
 
