@@ -54,6 +54,8 @@ import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.utcToIstConverter
 import kotlinx.coroutines.delay
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun SummaryScreen(
@@ -503,7 +505,13 @@ fun PrintSummaryDialog(
                 ) {
 
                     item {
-                        Text("----------- Print Header -----------")
+                        val currentDateTime = remember { LocalDateTime.now() }
+                        val formattedDateTime = remember(currentDateTime) {
+                            currentDateTime.format(
+                                DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
+                            )
+                        }
+                        ReceiptTextWithLine(formattedDateTime)
                         Text(
                             text = "Krishna",
                             modifier = Modifier
@@ -608,7 +616,7 @@ fun PrintSummaryDialog(
                     }
 
                     item {
-                        Text("----------- Print Footer ------------")
+                        ReceiptTextWithLine("Nixbug Softwares Opc Ltd")
                     }
                 }
 
@@ -624,5 +632,37 @@ fun PrintSummaryDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ReceiptTextWithLine(text: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        HorizontalDivider(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp),
+            thickness = 1.dp,
+            color = Color.Black
+        )
+
+        Text(
+            text = text,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1
+        )
+
+        HorizontalDivider(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 8.dp),
+            thickness = 1.dp,
+            color = Color.Black
+        )
     }
 }
