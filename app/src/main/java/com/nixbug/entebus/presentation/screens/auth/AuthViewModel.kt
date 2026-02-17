@@ -2,24 +2,46 @@ package com.nixbug.entebus.presentation.screens.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nixbug.entebus.domain.model.LocationData
-import com.nixbug.entebus.domain.usecase.GetLocationUseCase
+import com.nixbug.entebus.utils.LocationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class AuthViewModel @Inject constructor(getLocationUseCase: GetLocationUseCase) : ViewModel() {
+class AuthViewModel @Inject constructor(private val locationHelper: LocationHelper) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
-    // TODO: Use the `location` StateFlow in AuthScreen when location-based logic is implemented.
-    val location = getLocationUseCase()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LocationData(null, null))
+    private var isFetching = false
+
+    fun fetchLocation(
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (isFetching) return
+        isFetching = true
+
+        locationHelper.fetchCurrentLocation(
+            onSuccess = { loc ->
+                val job = viewModelScope.launch {
+                    try {
+                        println("DEBUG_LOG: Latitude: ${loc.latitude}, Longitude: ${loc.longitude}")
+                        onSuccess()
+                    } catch (e: Exception) {
+                        onError(e.message ?: "Failed to save location")
+                    }
+                }
+                job.invokeOnCompletion { isFetching = false }
+            },
+            onError = { err ->
+                onError(err)
+                isFetching = false
+            }
+        )
+    }
 
     fun onCompanyQueryChange(value: String) {
         _uiState.update { it.copy(companySearchQuery = value, expanded = true) }
@@ -61,4 +83,5 @@ class AuthViewModel @Inject constructor(getLocationUseCase: GetLocationUseCase) 
     fun clearSelectedCompany() {
         _uiState.update { it.copy(selectedCompany = null) }
     }
+
 }

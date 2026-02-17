@@ -1,13 +1,11 @@
 package com.nixbug.entebus.utils
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 object LocationPermissionHelper {
@@ -19,17 +17,6 @@ object LocationPermissionHelper {
             context, Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
         return fine || coarse
-    }
-
-    fun isPermanentlyDenied(activity: Activity): Boolean {
-        if (isPermissionGranted(activity)) return false
-        val fineDenied = !ActivityCompat.shouldShowRequestPermissionRationale(
-            activity, Manifest.permission.ACCESS_FINE_LOCATION
-        )
-        val coarseDenied = !ActivityCompat.shouldShowRequestPermissionRationale(
-            activity, Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-        return fineDenied && coarseDenied
     }
 
     fun openAppSettings(context: Context) {
