@@ -26,7 +26,10 @@ class AuthViewModel @Inject constructor(private val locationHelper: LocationHelp
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (isFetching) return
+        if (isFetching) {
+            onError("Location fetch already in progress")
+            return
+        }
         isFetching = true
         try {
             locationHelper.fetchCurrentLocation(
@@ -35,7 +38,7 @@ class AuthViewModel @Inject constructor(private val locationHelper: LocationHelp
                         try {
                             onSuccess()
                         } catch (e: Exception) {
-                            onError(e.message ?: "Failed to save location")
+                            onError(e.message ?: "Failed to fetch location")
                         }
                     }
                     job.invokeOnCompletion { isFetching = false }

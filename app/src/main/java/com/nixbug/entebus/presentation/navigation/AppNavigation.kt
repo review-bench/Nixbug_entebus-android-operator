@@ -44,7 +44,7 @@ fun AppNavigation(
     val context = LocalContext.current
 
     val isLoggedIn = false
-    var hasPermission by remember {
+    val hasPermission by remember {
         mutableStateOf(
             LocationPermissionHelper.isPermissionGranted(
                 context
