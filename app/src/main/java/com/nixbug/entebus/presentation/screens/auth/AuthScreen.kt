@@ -98,7 +98,6 @@ fun AuthScreen(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            showLoader = true
             SnackbarManager.show("GPS Enabled successfully", SnackbarType.SUCCESS)
             // User clicked "OK" in the GPS dialog
             viewModel.fetchLocation(
@@ -159,7 +158,10 @@ fun AuthScreen(
                     gpsLauncher.launch(intentSenderRequest)
                 } catch (sendEx: Exception) {
                     showLoader = false
-                    sendEx.printStackTrace()
+                    SnackbarManager.show(
+                        message = "Unable to open GPS settings.",
+                        type = SnackbarType.ERROR
+                    )
                 }
             } else {
                 showLoader = false
@@ -265,6 +267,7 @@ fun AuthScreen(
                 // MUST be replaced with proper authentication validation before production.
                 navController.navigate(AppNavItem.MainScreen.route) {
                     popUpTo(AppNavItem.Auth.route) { inclusive = true }
+                    launchSingleTop = true
                 }
             })
 

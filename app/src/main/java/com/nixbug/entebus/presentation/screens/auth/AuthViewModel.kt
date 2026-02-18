@@ -17,30 +17,38 @@ class AuthViewModel @Inject constructor(private val locationHelper: LocationHelp
 
     private var isFetching = false
 
+    // TODO:
+    // Currently, the fetched location (lat/lng) is not used.
+    // This is intentionally kept for future enhancement.
+    // Once the backend company endpoint supports location parameters,
+    // these coordinates will be passed for location-based company filtering.
     fun fetchLocation(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
         if (isFetching) return
         isFetching = true
-
-        locationHelper.fetchCurrentLocation(
-            onSuccess = { loc ->
-                val job = viewModelScope.launch {
-                    try {
-                        println("DEBUG_LOG: Latitude: ${loc.latitude}, Longitude: ${loc.longitude}")
-                        onSuccess()
-                    } catch (e: Exception) {
-                        onError(e.message ?: "Failed to save location")
+        try {
+            locationHelper.fetchCurrentLocation(
+                onSuccess = { loc ->
+                    val job = viewModelScope.launch {
+                        try {
+                            onSuccess()
+                        } catch (e: Exception) {
+                            onError(e.message ?: "Failed to save location")
+                        }
                     }
+                    job.invokeOnCompletion { isFetching = false }
+                },
+                onError = { err ->
+                    onError(err)
+                    isFetching = false
                 }
-                job.invokeOnCompletion { isFetching = false }
-            },
-            onError = { err ->
-                onError(err)
-                isFetching = false
-            }
-        )
+            )
+        } catch (e: Exception) {
+            isFetching = false
+            onError(e.message ?: "Failed to fetch location")
+        }
     }
 
     fun onCompanyQueryChange(value: String) {
