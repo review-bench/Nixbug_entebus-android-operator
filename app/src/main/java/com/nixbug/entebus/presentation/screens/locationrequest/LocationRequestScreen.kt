@@ -86,7 +86,7 @@ fun LocationRequestScreen(
     if (showSettingsDialog) {
         DialogBox(
             title = "Location Access Denied",
-            message = "To enable nearby company suggestions and real-time bus tracking please allow location access from Settings. You may continue without location access, but some features will be limited.",
+            message = "To enable nearby company suggestions and real-time bus tracking, please allow location access from Settings. You may continue without location access, but some features will be limited.",
             confirmText = "Open Settings",
             onConfirmClick = {
                 showSettingsDialog = false
