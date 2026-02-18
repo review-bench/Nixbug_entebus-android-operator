@@ -84,10 +84,21 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    fun onRestartRecentService(service: HomeUiModel) {
+        if (checkAndEmitIfServiceAlreadyRunning()) return
+        _uiState.update { state ->
+            val newRecentServices = state.recentServiceList.filter { it.id != service.id }
+            state.copy(
+                ongoingService = service,
+                recentServiceList = newRecentServices,
+            )
+        }
+    }
+
     fun onFinishDuty(service: HomeUiModel) {
         _uiState.update { state ->
             state.copy(
-                otherServiceList = state.otherServiceList + service,
+                recentServiceList = state.recentServiceList + service,
                 ongoingService = null,
             )
         }

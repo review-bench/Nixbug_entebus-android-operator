@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -137,12 +141,14 @@ fun HomeScreen(
                 ongoingService = state.ongoingService,
                 assignedServices = state.assignedServiceList,
                 downloadedServices = state.downloadedServiceList,
+                recentServices = state.recentServiceList,
                 otherServices = filteredOtherServices,
                 searchQuery = searchQuery,
                 onSearchChange = { searchQuery = it },
                 onResumeService = viewModel::onResumeService,
                 onStartAssigned = viewModel::onStartAssigned,
                 onStartDownloaded = viewModel::onStartDownloaded,
+                onRestartRecentService = viewModel::onRestartRecentService,
                 onFinishDutyClick = { service ->
                     finishDutyService = service
                 },
@@ -160,18 +166,25 @@ fun ServiceList(
     ongoingService: HomeUiModel?,
     assignedServices: List<HomeUiModel>,
     downloadedServices: List<HomeUiModel>,
+    recentServices: List<HomeUiModel>,
     otherServices: List<HomeUiModel>,
     searchQuery: String,
     onSearchChange: (String) -> Unit,
     onResumeService: () -> Unit,
     onStartAssigned: (HomeUiModel) -> Unit,
     onStartDownloaded: (HomeUiModel) -> Unit,
+    onRestartRecentService: (HomeUiModel) -> Unit,
     onDownload: (HomeUiModel) -> Unit,
     extractRouteName: (String) -> String,
     canStartService: (String) -> Boolean,
     modifier: Modifier,
-    onFinishDutyClick: (HomeUiModel) -> Unit
+    onFinishDutyClick: (HomeUiModel) -> Unit,
 ) {
+    var assignedVisibleCount by remember { mutableIntStateOf(5) }
+    var downloadedVisibleCount by remember { mutableIntStateOf(5) }
+    var recentVisibleCount by remember { mutableIntStateOf(5) }
+    var showOtherServices by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = modifier
             .fillMaxHeight()
@@ -179,7 +192,7 @@ fun ServiceList(
         contentPadding = WindowInsets.ime.asPaddingValues()
     ) {
 
-        // ---------------- Ongoing ----------------
+        // 1---------------- Ongoing ----------------
         ongoingService?.let { service ->
             val startDateTime = utcToIstConverter(service.startingAt)
 
@@ -199,11 +212,11 @@ fun ServiceList(
             item { SectionDivider() }
         }
 
-        // ---------------- Assigned ----------------
+        // 2---------------- Assigned ----------------
         if (assignedServices.isNotEmpty()) {
             item { SectionHeader("Assigned Services") }
-
-            items(assignedServices) { service ->
+            val visibleAssigned = assignedServices.take(assignedVisibleCount)
+            items(visibleAssigned) { service ->
                 val startDateTime = utcToIstConverter(service.startingAt)
                 ServiceCard(
                     service = service,
@@ -215,14 +228,26 @@ fun ServiceList(
                     isEnabled = canStartService(service.startingAt),
                 )
             }
+            if (assignedServices.size > assignedVisibleCount) {
+                item {
+                    ViewMoreText(
+                        onClick = {
+                            assignedVisibleCount = minOf(
+                                assignedVisibleCount + 5,
+                                assignedServices.size
+                            )
+                        }
+                    )
+                }
+            }
             item { SectionDivider() }
         }
 
-        // ---------------- Downloaded ----------------
+        // 3---------------- Downloaded ----------------
         if (downloadedServices.isNotEmpty()) {
             item { SectionHeader("Downloaded Services") }
-
-            items(downloadedServices) { service ->
+            val visibleDownloaded = downloadedServices.take(downloadedVisibleCount)
+            items(visibleDownloaded) { service ->
                 val startDateTime = utcToIstConverter(service.startingAt)
                 ServiceCard(
                     service = service,
@@ -234,10 +259,53 @@ fun ServiceList(
                     isEnabled = canStartService(service.startingAt),
                 )
             }
+            if (downloadedServices.size > downloadedVisibleCount) {
+                item {
+                    ViewMoreText(
+                        onClick = {
+                            downloadedVisibleCount = minOf(
+                                downloadedVisibleCount + 5,
+                                downloadedServices.size
+                            )
+                        }
+                    )
+                }
+            }
             item { SectionDivider() }
         }
 
-        // ---------------- Other ----------------
+        // 4---------------- Recent ----------------
+        if (recentServices.isNotEmpty()) {
+            item { SectionHeader("Recent Services") }
+            val visibleRecent = recentServices.take(recentVisibleCount)
+            items(visibleRecent) { service ->
+                val startDateTime = utcToIstConverter(service.startingAt)
+                ServiceCard(
+                    service = service,
+                    cardType = CardType.RECENT,
+                    onActionClick = { onRestartRecentService(service) },
+                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
+                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
+                    routeName = extractRouteName(service.name),
+                    isEnabled = canStartService(service.startingAt),
+                )
+            }
+            if (recentServices.size > recentVisibleCount) {
+                item {
+                    ViewMoreText(
+                        onClick = {
+                            recentVisibleCount = minOf(
+                                recentVisibleCount + 5,
+                                recentServices.size
+                            )
+                        }
+                    )
+                }
+            }
+            item { SectionDivider() }
+        }
+
+        // 5---------------- Other ----------------
         item {
             Row(
                 Modifier.fillMaxWidth(),
@@ -251,17 +319,29 @@ fun ServiceList(
         }
 
         if (otherServices.isNotEmpty()) {
-            items(otherServices) { service ->
-                val startDateTime = utcToIstConverter(service.startingAt)
-                ServiceCard(
-                    service = service,
-                    cardType = CardType.OTHER,
-                    onActionClick = { onDownload(service) },
-                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                    routeName = extractRouteName(service.name),
-                    isEnabled = true,
-                )
+            if (showOtherServices) {
+                items(otherServices) { service ->
+                    val startDateTime = utcToIstConverter(service.startingAt)
+                    ServiceCard(
+                        service = service,
+                        cardType = CardType.OTHER,
+                        onActionClick = { onDownload(service) },
+                        date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
+                        time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
+                        routeName = extractRouteName(service.name),
+                        isEnabled = true,
+                    )
+                }
+            } else {
+                item {
+                    ViewMoreText(
+                        text = "Tap to view",
+                        onClick = {
+                            showOtherServices = true
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
             }
         } else {
             item {
@@ -431,6 +511,7 @@ fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
     val text = when (cardType) {
         CardType.ASSIGNED -> "Start"
         CardType.DOWNLOADED -> "Start"
+        CardType.RECENT -> "Restart"
         else -> "Download"
 
     }
@@ -528,6 +609,39 @@ fun ServiceHeader() {
         Text(
             "Displaying All Services", style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray
+        )
+    }
+}
+
+@Composable
+fun ViewMoreText(
+    text: String = "View More",
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Icon(
+            imageVector = Icons.Filled.KeyboardDoubleArrowDown,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .size(25.dp)
         )
     }
 }

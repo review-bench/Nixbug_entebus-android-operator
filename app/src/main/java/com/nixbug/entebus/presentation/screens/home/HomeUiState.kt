@@ -19,9 +19,74 @@ data class HomeUiState(
             endingAt = "2025-12-06T05:10:00Z",
             regNo = "KL02BT8234",
         ),
+        sampleHomeUiModel.copy(
+            id = 103,
+            name = "2025-12-06 10:00 AM Kottarakkara -> Kollam (KL02BT8234)",
+            startingAt = "2025-12-07T06:30:00Z",
+            endingAt = "2025-12-06T05:10:00Z",
+            regNo = "KL02BT8234",
+        ),
+        sampleHomeUiModel.copy(
+            id = 104,
+            name = "2025-12-06 10:00 AM Kottarakkara -> Kollam (KL02BT8234)",
+            startingAt = "2025-12-07T06:30:00Z",
+            endingAt = "2025-12-06T05:10:00Z",
+            regNo = "KL02BT8234",
+        ),
+        sampleHomeUiModel.copy(
+            id = 105,
+            name = "2025-12-06 10:00 AM Kottarakkara -> Kollam (KL02BT8234)",
+            startingAt = "2025-12-07T06:30:00Z",
+            endingAt = "2025-12-06T05:10:00Z",
+            regNo = "KL02BT8234",
+        ),
+        sampleHomeUiModel.copy(
+            id = 106,
+            name = "2025-12-06 10:00 AM Kottarakkara -> Kollam (KL02BT8234)",
+            startingAt = "2025-12-07T06:30:00Z",
+            endingAt = "2025-12-06T05:10:00Z",
+            regNo = "KL02BT8234",
+        ),
+        sampleHomeUiModel.copy(
+            id = 107,
+            name = "2025-12-06 10:00 AM Kottarakkara -> Kollam (KL02BT8234)",
+            startingAt = "2025-12-07T06:30:00Z",
+            endingAt = "2025-12-06T05:10:00Z",
+            regNo = "KL02BT8234",
+        ),
+        sampleHomeUiModel.copy(
+            id = 108,
+            name = "2025-12-06 10:00 AM Kottarakkara -> Kollam (KL02BT8234)",
+            startingAt = "2025-12-07T06:30:00Z",
+            endingAt = "2025-12-06T05:10:00Z",
+            regNo = "KL02BT8234",
+        ),
+        sampleHomeUiModel.copy(
+            id = 109,
+            name = "2025-12-06 10:00 AM Kottarakkara -> Kollam (KL02BT8234)",
+            startingAt = "2025-12-07T06:30:00Z",
+            endingAt = "2025-12-06T05:10:00Z",
+            regNo = "KL02BT8234",
+        ),
+        sampleHomeUiModel.copy(
+            id = 110,
+            name = "2025-12-06 10:00 AM Kottarakkara -> Kollam (KL02BT8234)",
+            startingAt = "2025-12-07T06:30:00Z",
+            endingAt = "2025-12-06T05:10:00Z",
+            regNo = "KL02BT8234",
+        ),
+        sampleHomeUiModel.copy(
+            id = 111,
+            name = "2025-12-06 10:00 AM Kottarakkara -> Kollam (KL02BT8234)",
+            startingAt = "2025-12-07T06:30:00Z",
+            endingAt = "2025-12-06T05:10:00Z",
+            regNo = "KL02BT8234",
+        ),
     ),
 
     val downloadedServiceList: List<HomeUiModel> = listOf(),
+
+    val recentServiceList: List<HomeUiModel> = listOf(),
 
     val otherServiceList: List<HomeUiModel> = listOf(
         sampleHomeUiModel.copy(
@@ -67,6 +132,16 @@ data class HomeUiState(
         sampleHomeUiModel.copy(
             id = 205,
             name = "2025-12-06 04:30 PM Kollam -> Karunagappally (KL02BT5555)",
+            startingAt = "2025-12-06T11:00:00Z",
+            endingAt = "2025-12-06T12:00:00Z",
+            regNo = "KL02BT5555",
+            route = sampleHomeUiModel.route.copy(
+                name = "04:30 PM Kollam to Karunagappally"
+            )
+        ),
+        sampleHomeUiModel.copy(
+            id = 206,
+            name = "2025-12-06 04:30 PM Kottayam-> Karunagappally (KL02BT5555)",
             startingAt = "2025-12-06T11:00:00Z",
             endingAt = "2025-12-06T12:00:00Z",
             regNo = "KL02BT5555",
