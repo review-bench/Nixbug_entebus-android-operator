@@ -1,5 +1,9 @@
 package com.nixbug.entebus.presentation.screens.auth
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,6 +30,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -40,6 +45,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +58,7 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
@@ -57,27 +67,126 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.Priority
+import com.google.android.gms.location.SettingsClient
 import com.nixbug.entebus.R
 import com.nixbug.entebus.presentation.navigation.AppNavItem
+import com.nixbug.entebus.utils.LocationPermissionHelper
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AuthScreen(navController: NavHostController, viewModel: AuthViewModel = hiltViewModel()) {
+fun AuthScreen(
+    navController: NavHostController,
+    viewModel: AuthViewModel = hiltViewModel(),
+    activity: Activity
+) {
+
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
+    var showLoader by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    // The Launcher that handles the result of the System GPS Dialog
+    val gpsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            SnackbarManager.show("GPS Enabled successfully", SnackbarType.SUCCESS)
+            // User clicked "OK" in the GPS dialog
+            viewModel.fetchLocation(
+                onSuccess = {
+                    showLoader = false
+                    SnackbarManager.show("Location updated!", SnackbarType.SUCCESS)
+                },
+                onError = { error ->
+                    showLoader = false
+                    SnackbarManager.show(
+                        message = error,
+                        type = SnackbarType.ERROR,
+                    )
+                }
+            )
+        } else {
+            // User clicked "No Thanks"
+            showLoader = false
+            SnackbarManager.show(
+                "Location disabled. Company listings won’t be based on your current location.",
+                SnackbarType.WARNING
+            )
+        }
+    }
+
+    // The Logic to check and trigger the System Modal
+    val checkAndEnableGps = {
+        showLoader = true
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000).build()
+        val builder = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+            .setAlwaysShow(true)
+
+        val client: SettingsClient = LocationServices.getSettingsClient(activity)
+        val task = client.checkLocationSettings(builder.build())
+
+        task.addOnSuccessListener {
+            viewModel.fetchLocation(
+                onSuccess = {
+                    showLoader = false
+                    SnackbarManager.show("Location updated!", SnackbarType.SUCCESS)
+                },
+                onError = { error ->
+                    showLoader = false
+                    SnackbarManager.show(
+                        message = error,
+                        type = SnackbarType.ERROR,
+                    )
+                }
+            )
+        }
+
+        task.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException) {
+                try {
+                    val intentSenderRequest =
+                        IntentSenderRequest.Builder(exception.resolution.intentSender).build()
+                    gpsLauncher.launch(intentSenderRequest)
+                } catch (sendEx: Exception) {
+                    showLoader = false
+                    SnackbarManager.show(
+                        message = "Unable to open GPS settings.",
+                        type = SnackbarType.ERROR
+                    )
+                }
+            } else {
+                showLoader = false
+                SnackbarManager.show("Location services unavailable.", SnackbarType.ERROR)
+            }
+        }
+    }
+
+    // TRIGGER: Call the check when the screen loads
+    LaunchedEffect(Unit) {
+        if (LocationPermissionHelper.isPermissionGranted(context)) {
+            checkAndEnableGps()
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
             .pointerInput(Unit) {
-                detectTapGestures(onTap = {
-                    focusManager.clearFocus()
-                })
+                detectTapGestures(onTap = { focusManager.clearFocus() })
             },
         contentAlignment = Alignment.Center
     ) {
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -86,8 +195,8 @@ fun AuthScreen(navController: NavHostController, viewModel: AuthViewModel = hilt
                 .verticalScroll(scrollState)
                 .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally
-        )
-        {
+        ) {
+            // Logo Section
             Image(
                 painter = painterResource(
                     id = R.drawable.entebus_logo
@@ -118,20 +227,21 @@ fun AuthScreen(navController: NavHostController, viewModel: AuthViewModel = hilt
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            //Company Drop Down
+            // Company Dropdown
             CompanyDropdown(
+                uiState = state,
                 expanded = state.expanded,
                 onExpandChange = viewModel::expandedFunc,
-                onSelect = viewModel::onCompanySelected,
                 onQueryChange = viewModel::onCompanyQueryChange,
+                onSelect = viewModel::onCompanySelected,
                 clearSelectedCompany = viewModel::clearSelectedCompany,
                 clearSearchQuery = viewModel::clearSearchQuery,
-                uiState = state
+                showLoader = showLoader
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Username Field
+            // Username
             UsernameField(
                 value = state.userName,
                 onChange = viewModel::onUserNameChange,
@@ -140,7 +250,7 @@ fun AuthScreen(navController: NavHostController, viewModel: AuthViewModel = hilt
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            //password Field
+            // Password
             PasswordField(
                 value = state.password,
                 onChange = viewModel::onPasswordChange,
@@ -150,7 +260,7 @@ fun AuthScreen(navController: NavHostController, viewModel: AuthViewModel = hilt
 
             Spacer(modifier = Modifier.height(25.dp))
 
-            //Sign in Button
+            // Sign In
             SignInButton(onClick = {
                 // TODO(AUTH-SECURITY): Temporary bypass of authentication for testing only.
                 // This directly navigates to MainScreen without validating credentials.
@@ -176,7 +286,8 @@ fun CompanyDropdown(
     onQueryChange: (String) -> Unit,
     onSelect: (String) -> Unit,
     clearSelectedCompany: () -> Unit,
-    clearSearchQuery: () -> Unit
+    clearSearchQuery: () -> Unit,
+    showLoader: Boolean
 ) {
     Text(
         text = "Company",
@@ -188,7 +299,7 @@ fun CompanyDropdown(
     )
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = onExpandChange,
+        onExpandedChange = { if (!showLoader) onExpandChange(it) },
         modifier = Modifier.fillMaxWidth()
     ) {
         LaunchedEffect(expanded, uiState.selectedCompany) {
@@ -204,9 +315,10 @@ fun CompanyDropdown(
             onValueChange = { onQueryChange(it) },
             singleLine = true,
             readOnly = !expanded,
+            enabled = !showLoader,
             placeholder = {
                 Text(
-                    if (expanded) "Search your company" else "Select your company",
+                    if (expanded) "Search your company" else if (showLoader) "Fetching nearby companies..." else "Select your company",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray
                 )
@@ -216,7 +328,15 @@ fun CompanyDropdown(
                 .fillMaxWidth()
                 .shadow(1.dp, RoundedCornerShape(12.dp)),
             trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded)
+                if (showLoader) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.Gray
+                    )
+                } else {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded)
+                }
             },
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -225,7 +345,10 @@ fun CompanyDropdown(
                 focusedBorderColor = Color(0xFF47C7FF),
                 unfocusedBorderColor = Color(0xFFC0C0C0),
                 focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black
+                unfocusedTextColor = Color.Black,
+                disabledContainerColor = Color.White,
+                disabledTextColor = Color.Black,
+                disabledBorderColor = Color(0xFFC0C0C0),
             )
         )
         ExposedDropdownMenu(
