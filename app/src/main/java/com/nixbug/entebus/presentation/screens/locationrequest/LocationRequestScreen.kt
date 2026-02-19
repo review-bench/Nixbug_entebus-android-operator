@@ -3,7 +3,6 @@ package com.nixbug.entebus.presentation.screens.locationrequest
 import android.Manifest
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,176 +17,120 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
-import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.*
 import com.nixbug.entebus.R
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.utils.LocationPermissionHelper
-import com.nixbug.entebus.utils.snackbar.SnackbarManager
-import com.nixbug.entebus.utils.snackbar.SnackbarType
+
 
 @Composable
 fun LocationRequestScreen(
     navController: NavHostController,
     activity: Activity,
-    viewModel: LocationRequestViewModel = hiltViewModel()
 ) {
+
     val context = LocalContext.current
-    var hasPermission by remember {
-        mutableStateOf(
-            LocationPermissionHelper.isPermissionGranted(
-                context
-            )
-        )
-    }
-    var showDialog by remember { mutableStateOf(false) }
-    var showLoader by remember { mutableStateOf(false) }
-    var openedSettings by remember { mutableStateOf(false) }
-
-    // --- 1. THE GPS RESOLUTION LAUNCHER ---
-    // This handles the result of the "Enable GPS" system dialog
-    val gpsLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            // User clicked "OK" in the GPS dialog
-            viewModel.fetchLocationIfNeeded(
-                onSuccess = {},
-                onError = { error ->
-                    showLoader = false
-                    SnackbarManager.show(
-                        message = error,
-                        type = SnackbarType.ERROR,
-                    )
-                }
-            )
-        } else {
-            // User clicked "No Thanks"
-            showLoader = false
-            SnackbarManager.show(
-                message = "GPS is required.",
-                type = SnackbarType.ERROR,
-            )
+    var showRationale by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+    val navigateToAuth = {
+        navController.navigate(AppNavItem.Auth.route) {
+            popUpTo(AppNavItem.LocationRequest.route) { inclusive = true }
         }
     }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    // --- 2. THE GPS CHECK LOGIC ---
-    // This checks if hardware GPS is ON. If not, it triggers the system dialog.
-    val checkAndEnableGps = {
-        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000).build()
-        val builder = LocationSettingsRequest.Builder()
-            .addLocationRequest(locationRequest)
-            .setAlwaysShow(true) // Ensures the prompt shows even in battery saving mode
-
-        val client: SettingsClient = LocationServices.getSettingsClient(activity)
-        val task = client.checkLocationSettings(builder.build())
-
-        task.addOnSuccessListener {
-            // GPS is already ON, proceed to fetch
-            viewModel.fetchLocationIfNeeded(
-                onSuccess = {},
-                onError = { error ->
-                    showLoader = false
-                    SnackbarManager.show(
-                        message = error,
-                        type = SnackbarType.ERROR,
-                    )
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (LocationPermissionHelper.isPermissionGranted(context)) {
+                    navigateToAuth()
                 }
-            )
-        }
-
-        task.addOnFailureListener { exception ->
-            if (exception is ResolvableApiException) {
-                try {
-                    // This creates the "Show Modal" intent
-                    val intentSenderRequest =
-                        IntentSenderRequest.Builder(exception.resolution.intentSender).build()
-                    gpsLauncher.launch(intentSenderRequest)
-                } catch (sendEx: Exception) {
-                    showLoader = false
-                }
-            } else {
-                showLoader = false
-                SnackbarManager.show(
-                    message = "Location services not available on this device.",
-                    type = SnackbarType.ERROR,
-                )
             }
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
-    // Permission launcher to display the system's default location permission dialog
     val permissionLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestMultiplePermissions())
         { permissions ->
             val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                     permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-            hasPermission = granted
             when {
-                granted -> {
-                    showLoader = true
-                    checkAndEnableGps()
-                }
+                granted -> navigateToAuth()
 
-                LocationPermissionHelper.isPermanentlyDenied(activity) -> {
-                    showDialog = true
+                ActivityCompat.shouldShowRequestPermissionRationale(
+                    activity,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) -> {
+                    showRationale = true
                 }
 
                 else -> {
-                    SnackbarManager.show(
-                        message = "Please enable the location access!",
-                        type = SnackbarType.ERROR,
-                    )
+                    showSettingsDialog = true
                 }
             }
         }
 
-    // Automatically navigate to the Auth screen when the user grants location permission
-    // after returning from the app settings
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME && openedSettings) {
-                openedSettings = false
-                if (LocationPermissionHelper.isPermissionGranted(context) &&
-                    navController.currentDestination?.route != AppNavItem.Auth.route
-                ) {
-                    showLoader = true
-                    checkAndEnableGps()
-                }
-            }
-        }
-
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            showLoader = false
-        }
-    }
-
-    if (showDialog) {
+    if (showSettingsDialog) {
         DialogBox(
-            title = "Permission Required",
-            message = "Location access is required to continue. Please enable location in Settings.",
+            title = "Location Access Denied",
+            message = "To enable nearby company suggestions and real-time bus tracking, please allow location access from Settings. You may continue without location access, but some features will be limited.",
             confirmText = "Open Settings",
             onConfirmClick = {
+                showSettingsDialog = false
                 LocationPermissionHelper.openAppSettings(context)
-                openedSettings = true
-                showDialog = false
             },
-            dismissible = false,
+            dismissible = true,
+            onDismiss = { showSettingsDialog = false },
             showExitButton = true,
-            exitText = "Exit App",
-            onExitClick = { activity.finishAffinity() }
+            exitText = "Continue Without Location",
+            onExitClick = {
+                showSettingsDialog = false
+                navigateToAuth()
+            },
+            titleColor = MaterialTheme.colorScheme.primary,
+            confirmBtnColor = MaterialTheme.colorScheme.primary,
+            exitBtnBorderColor = MaterialTheme.colorScheme.primary
+        )
+    }
+
+    if (showRationale) {
+        DialogBox(
+            title = "Location Importance",
+            message = "We use your location to show nearby companies and track buses in real time. Without it, the app's features will be limited.",
+            confirmText = "Allow Location Access",
+            onConfirmClick = {
+                showRationale = false
+                permissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            },
+            dismissible = true,
+            onDismiss = { showRationale = false },
+            showExitButton = true,
+            exitText = "Continue Without Location",
+            onExitClick = {
+                showRationale = false
+                navigateToAuth()
+            },
+            titleColor = MaterialTheme.colorScheme.primary,
+            confirmBtnColor = MaterialTheme.colorScheme.primary,
+            exitBtnBorderColor = MaterialTheme.colorScheme.primary
         )
     }
 
@@ -220,13 +163,16 @@ fun LocationRequestScreen(
                 modifier = Modifier.padding(top = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "We use your location to show nearby companies and track buses in real time. Your data stays private and secure.",
+                text = "We use your location to show nearby companies and enable real-time bus tracking during your shift. Your location data is used only while you are on duty and is kept secure.",
                 textAlign = TextAlign.Center,
                 color = Color.Gray,
                 style = MaterialTheme.typography.bodyLarge,
+                lineHeight = 20.sp,
+                letterSpacing = 0.1.sp,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
             )
 
@@ -236,11 +182,6 @@ fun LocationRequestScreen(
 
         Button(
             onClick = {
-                if (hasPermission) {
-                    showLoader = true
-                    checkAndEnableGps()
-                    return@Button
-                }
                 permissionLauncher.launch(
                     arrayOf(
                         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -252,8 +193,7 @@ fun LocationRequestScreen(
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(12.dp),
-            enabled = !showLoader,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D6EFD))
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
 
             Row(
@@ -261,29 +201,21 @@ fun LocationRequestScreen(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (showLoader) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
 
-                    Icon(
-                        imageVector = Icons.Outlined.LocationOn,
-                        contentDescription = "Location Icon",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
+                Icon(
+                    imageVector = Icons.Outlined.LocationOn,
+                    contentDescription = "Location Icon",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-                    Text(
-                        text = if (hasPermission) "Fetch location" else "Allow Location Access",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                }
+                Text(
+                    text = "Allow Location Access",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleSmall,
+                )
             }
         }
     }
