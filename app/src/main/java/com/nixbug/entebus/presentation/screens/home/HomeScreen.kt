@@ -375,9 +375,9 @@ fun ServiceList(
                 title = "No services available!",
                 description = when (selectedTab) {
                     0 -> "You don’t have any assigned services right now. You can download services from the Others tab."
-                    1 -> "You don’t have any downloaded services yet. Browse the Others tab to download services you’d like to start."
+                    1 -> "You don’t have any downloaded services yet. Browse Other Services to download services you’d like to start."
                     2 -> "You don’t have any recent services right now. Once you complete a service, it will appear here."
-                    else -> "No other services are available at the moment. Please check back later."
+                    else -> "No services are available right now. Please check back later."
                 }
             )
         }

@@ -616,7 +616,7 @@ fun PrintSummaryDialog(
                     }
 
                     item {
-                        ReceiptTextWithLine("Nixbug Softwares Opc Ltd")
+                        ReceiptTextWithLine("Nixbug Softwares OPC Pvt Ltd")
                     }
                 }
 
