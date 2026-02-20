@@ -1,7 +1,9 @@
 package com.nixbug.entebus.presentation.screens.home
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,22 +25,28 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
+import androidx.compose.material.icons.filled.NoTransfer
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults.FocusedBorderThickness
+import androidx.compose.material3.OutlinedTextFieldDefaults.UnfocusedBorderThickness
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,11 +58,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -83,6 +92,7 @@ fun HomeScreen(
             it.regNo.contains(searchQuery, ignoreCase = true)
         }
     }
+    var selectedTab by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -137,40 +147,201 @@ fun HomeScreen(
                 .padding(bottom = 70.dp)
         ) {
             ServiceHeader()
-            ServiceList(
+            OngoingServiceSection(
                 ongoingService = state.ongoingService,
+                onResumeService = viewModel::onResumeService,
+                onFinishDutyClick = { service ->
+                    finishDutyService = service
+                },
+                extractRouteName = viewModel::extractRouteName,
+            )
+            RowTab(
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                searchQuery = searchQuery,
+                onSearchChange = { searchQuery = it })
+            ServiceList(
                 assignedServices = state.assignedServiceList,
                 downloadedServices = state.downloadedServiceList,
                 recentServices = state.recentServiceList,
                 otherServices = filteredOtherServices,
-                searchQuery = searchQuery,
-                onSearchChange = { searchQuery = it },
-                onResumeService = viewModel::onResumeService,
                 onStartAssigned = viewModel::onStartAssigned,
                 onStartDownloaded = viewModel::onStartDownloaded,
                 onRestartRecentService = viewModel::onRestartRecentService,
-                onFinishDutyClick = { service ->
-                    finishDutyService = service
-                },
                 onDownload = viewModel::onDownloadService,
                 extractRouteName = viewModel::extractRouteName,
                 canStartService = viewModel::canStartService,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                selectedTab = selectedTab,
             )
         }
     }
 }
 
 @Composable
-fun ServiceList(
+fun ServiceHeader() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 1.dp)
+            .padding(horizontal = 12.dp)
+    ) {
+        Text(
+            "All Services",
+            style = MaterialTheme.typography.headlineSmall,
+            color = Color.Black
+        )
+        Text(
+            "Displaying All Services",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+        Spacer(modifier = Modifier.height(5.dp))
+        HorizontalDivider()
+    }
+}
+
+@Composable
+fun OngoingServiceSection(
     ongoingService: HomeUiModel?,
+    onResumeService: () -> Unit,
+    onFinishDutyClick: (HomeUiModel) -> Unit,
+    extractRouteName: (String) -> String,
+) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 16.dp),
+    ) {
+        ongoingService?.let { service ->
+            val startDateTime = utcToIstConverter(service.startingAt)
+
+            Text(
+                text = "ONGOING SERVICE",
+                style = MaterialTheme.typography.titleMedium,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                color = Color.DarkGray
+            )
+
+            ServiceCard(
+                service = service,
+                cardType = CardType.ONGOING,
+                onActionClick = { onResumeService() },
+                date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
+                time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
+                routeName = extractRouteName(service.name),
+                isEnabled = true,
+                onFinishDutyClick = { onFinishDutyClick(service) }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+    }
+}
+
+@Composable
+fun RowTab(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    searchQuery: String,
+    onSearchChange: (String) -> Unit
+) {
+    val tabs = listOf("Your Service", "Downloaded", "Recent", "Others")
+    Row(
+        modifier = Modifier
+            .horizontalScroll(rememberScrollState())
+            .background(color = Color.White)
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        tabs.forEachIndexed { index, title ->
+
+            val isSelected = selectedTab == index
+            val backgroundColor by animateColorAsState(
+                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(
+                    0x45C5EAD9
+                ),
+                label = "TabColorAnimation"
+            )
+            val textColor by animateColorAsState(
+                targetValue = if (isSelected) Color.White else Color(0xFF6B7C75),
+                label = "TextColorAnimation"
+            )
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(backgroundColor)
+                    .clickable { onTabSelected(index) }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = title,
+                    color = textColor,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(6.dp))
+
+    if (selectedTab == 3) {
+        ServiceSearchBar(searchQuery, onSearchChange)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ServiceSearchBar(query: String, onChange: (String) -> Unit) {
+    BasicTextField(
+        value = query,
+        onValueChange = onChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .height(40.dp),
+        singleLine = true,
+        decorationBox = { innerTextField ->
+            OutlinedTextFieldDefaults.DecorationBox(
+                value = query,
+                innerTextField = innerTextField,
+                enabled = true,
+                singleLine = true,
+                visualTransformation = VisualTransformation.None,
+                interactionSource = remember { MutableInteractionSource() },
+                trailingIcon = {
+                    Icon(Icons.Filled.Search, contentDescription = null)
+                },
+                placeholder = {
+                    Text("Search...", style = MaterialTheme.typography.bodyMedium)
+                },
+
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                container = {
+                    OutlinedTextFieldDefaults.Container(
+                        enabled = true,
+                        isError = false,
+                        interactionSource = remember { MutableInteractionSource() },
+                        colors = OutlinedTextFieldDefaults.colors(),
+                        shape = RoundedCornerShape(12.dp),
+                        focusedBorderThickness = FocusedBorderThickness,
+                        unfocusedBorderThickness = UnfocusedBorderThickness,
+                    )
+                }
+            )
+        }
+    )
+}
+
+@Composable
+fun ServiceList(
     assignedServices: List<HomeUiModel>,
     downloadedServices: List<HomeUiModel>,
     recentServices: List<HomeUiModel>,
     otherServices: List<HomeUiModel>,
-    searchQuery: String,
-    onSearchChange: (String) -> Unit,
-    onResumeService: () -> Unit,
     onStartAssigned: (HomeUiModel) -> Unit,
     onStartDownloaded: (HomeUiModel) -> Unit,
     onRestartRecentService: (HomeUiModel) -> Unit,
@@ -178,180 +349,212 @@ fun ServiceList(
     extractRouteName: (String) -> String,
     canStartService: (String) -> Boolean,
     modifier: Modifier,
-    onFinishDutyClick: (HomeUiModel) -> Unit,
+    selectedTab: Int,
 ) {
     var assignedVisibleCount by remember { mutableIntStateOf(5) }
     var downloadedVisibleCount by remember { mutableIntStateOf(5) }
     var recentVisibleCount by remember { mutableIntStateOf(5) }
-    var showOtherServices by remember { mutableStateOf(false) }
+    val currentList = when (selectedTab) {
+        0 -> assignedServices
+        1 -> downloadedServices
+        2 -> recentServices
+        else -> otherServices
+    }
+    if (currentList.isEmpty()) {
 
-    LazyColumn(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            EmptyServiceState(
+                icon = Icons.Filled.NoTransfer,
+                title = "No services available!",
+                description = when (selectedTab) {
+                    0 -> "You don’t have any assigned services right now. You can download services from the Others tab."
+                    1 -> "You don’t have any downloaded services yet. Browse the Others tab to download services you’d like to start."
+                    2 -> "You don’t have any recent services right now. Once you complete a service, it will appear here."
+                    else -> "No other services are available at the moment. Please check back later."
+                }
+            )
+        }
+
+    } else {
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            contentPadding = WindowInsets.ime.asPaddingValues()
+        ) {
+
+
+            item { Spacer(modifier = Modifier.height(10.dp)) }
+
+            when (selectedTab) {
+                0 -> {
+                    if (assignedServices.isNotEmpty()) {
+                        val visibleAssigned = assignedServices.take(assignedVisibleCount)
+                        items(visibleAssigned) { service ->
+                            val startDateTime = utcToIstConverter(service.startingAt)
+                            ServiceCard(
+                                service = service,
+                                cardType = CardType.ASSIGNED,
+                                onActionClick = { onStartAssigned(service) },
+                                date = startDateTime?.let { (date, _) -> date }
+                                    ?: "Date unavailable",
+                                time = startDateTime?.let { (_, time) -> time }
+                                    ?: "Time unavailable",
+                                routeName = extractRouteName(service.name),
+                                isEnabled = canStartService(service.startingAt),
+                            )
+                            Spacer(modifier = Modifier.height(15.dp))
+                        }
+                        if (assignedServices.size > assignedVisibleCount) {
+                            item {
+                                ViewMoreText(
+                                    onClick = {
+                                        assignedVisibleCount = minOf(
+                                            assignedVisibleCount + 5,
+                                            assignedServices.size
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                1 -> {
+                    if (downloadedServices.isNotEmpty()) {
+                        val visibleDownloaded = downloadedServices.take(downloadedVisibleCount)
+                        items(visibleDownloaded) { service ->
+                            val startDateTime = utcToIstConverter(service.startingAt)
+                            ServiceCard(
+                                service = service,
+                                cardType = CardType.DOWNLOADED,
+                                onActionClick = { onStartDownloaded(service) },
+                                date = startDateTime?.let { (date, _) -> date }
+                                    ?: "Date unavailable",
+                                time = startDateTime?.let { (_, time) -> time }
+                                    ?: "Time unavailable",
+                                routeName = extractRouteName(service.name),
+                                isEnabled = canStartService(service.startingAt),
+                            )
+                            Spacer(modifier = Modifier.height(15.dp))
+                        }
+                        if (downloadedServices.size > downloadedVisibleCount) {
+                            item {
+                                ViewMoreText(
+                                    onClick = {
+                                        downloadedVisibleCount = minOf(
+                                            downloadedVisibleCount + 5,
+                                            downloadedServices.size
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                2 -> {
+                    if (recentServices.isNotEmpty()) {
+                        val visibleRecent = recentServices.take(recentVisibleCount)
+                        items(visibleRecent) { service ->
+                            val startDateTime = utcToIstConverter(service.startingAt)
+                            ServiceCard(
+                                service = service,
+                                cardType = CardType.RECENT,
+                                onActionClick = { onRestartRecentService(service) },
+                                date = startDateTime?.let { (date, _) -> date }
+                                    ?: "Date unavailable",
+                                time = startDateTime?.let { (_, time) -> time }
+                                    ?: "Time unavailable",
+                                routeName = extractRouteName(service.name),
+                                isEnabled = canStartService(service.startingAt),
+                            )
+                            Spacer(modifier = Modifier.height(15.dp))
+                        }
+                        if (recentServices.size > recentVisibleCount) {
+                            item {
+                                ViewMoreText(
+                                    onClick = {
+                                        recentVisibleCount = minOf(
+                                            recentVisibleCount + 5,
+                                            recentServices.size
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                3 -> {
+                    if (otherServices.isNotEmpty()) {
+                        items(otherServices) { service ->
+                            val startDateTime = utcToIstConverter(service.startingAt)
+                            ServiceCard(
+                                service = service,
+                                cardType = CardType.OTHER,
+                                onActionClick = { onDownload(service) },
+                                date = startDateTime?.let { (date, _) -> date }
+                                    ?: "Date unavailable",
+                                time = startDateTime?.let { (_, time) -> time }
+                                    ?: "Time unavailable",
+                                routeName = extractRouteName(service.name),
+                                isEnabled = true,
+                            )
+                            Spacer(modifier = Modifier.height(15.dp))
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+@Composable
+fun EmptyServiceState(
+    icon: ImageVector,
+    title: String,
+    modifier: Modifier = Modifier,
+    description: String? = null
+) {
+    Box(
         modifier = modifier
-            .fillMaxHeight()
-            .padding(horizontal = 12.dp),
-        contentPadding = WindowInsets.ime.asPaddingValues()
+            .fillMaxWidth()
+            .padding(vertical = 40.dp),
+        contentAlignment = Alignment.Center
     ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
 
-        // 1---------------- Ongoing ----------------
-        ongoingService?.let { service ->
-            val startDateTime = utcToIstConverter(service.startingAt)
+            Icon(
+                icon,
+                null,
+                tint = DisabledButtonColor,
+                modifier = Modifier
+                    .size(110.dp)
+                    .padding(bottom = 20.dp)
+            )
 
-            item { SectionHeader("Ongoing Service") }
-            item {
-                ServiceCard(
-                    service = service,
-                    cardType = CardType.ONGOING,
-                    onActionClick = { onResumeService() },
-                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                    routeName = extractRouteName(service.name),
-                    isEnabled = true,
-                    onFinishDutyClick = { onFinishDutyClick(service) }
-                )
-            }
-            item { SectionDivider() }
-        }
+            Text(
+                text = title,
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
 
-        // 2---------------- Assigned ----------------
-        if (assignedServices.isNotEmpty()) {
-            item { SectionHeader("Assigned Services") }
-            val visibleAssigned = assignedServices.take(assignedVisibleCount)
-            items(visibleAssigned) { service ->
-                val startDateTime = utcToIstConverter(service.startingAt)
-                ServiceCard(
-                    service = service,
-                    cardType = CardType.ASSIGNED,
-                    onActionClick = { onStartAssigned(service) },
-                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                    routeName = extractRouteName(service.name),
-                    isEnabled = canStartService(service.startingAt),
-                )
-            }
-            if (assignedServices.size > assignedVisibleCount) {
-                item {
-                    ViewMoreText(
-                        onClick = {
-                            assignedVisibleCount = minOf(
-                                assignedVisibleCount + 5,
-                                assignedServices.size
-                            )
-                        }
-                    )
-                }
-            }
-            item { SectionDivider() }
-        }
-
-        // 3---------------- Downloaded ----------------
-        if (downloadedServices.isNotEmpty()) {
-            item { SectionHeader("Downloaded Services") }
-            val visibleDownloaded = downloadedServices.take(downloadedVisibleCount)
-            items(visibleDownloaded) { service ->
-                val startDateTime = utcToIstConverter(service.startingAt)
-                ServiceCard(
-                    service = service,
-                    cardType = CardType.DOWNLOADED,
-                    onActionClick = { onStartDownloaded(service) },
-                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                    routeName = extractRouteName(service.name),
-                    isEnabled = canStartService(service.startingAt),
-                )
-            }
-            if (downloadedServices.size > downloadedVisibleCount) {
-                item {
-                    ViewMoreText(
-                        onClick = {
-                            downloadedVisibleCount = minOf(
-                                downloadedVisibleCount + 5,
-                                downloadedServices.size
-                            )
-                        }
-                    )
-                }
-            }
-            item { SectionDivider() }
-        }
-
-        // 4---------------- Recent ----------------
-        if (recentServices.isNotEmpty()) {
-            item { SectionHeader("Recent Services") }
-            val visibleRecent = recentServices.take(recentVisibleCount)
-            items(visibleRecent) { service ->
-                val startDateTime = utcToIstConverter(service.startingAt)
-                ServiceCard(
-                    service = service,
-                    cardType = CardType.RECENT,
-                    onActionClick = { onRestartRecentService(service) },
-                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                    routeName = extractRouteName(service.name),
-                    isEnabled = canStartService(service.startingAt),
-                )
-            }
-            if (recentServices.size > recentVisibleCount) {
-                item {
-                    ViewMoreText(
-                        onClick = {
-                            recentVisibleCount = minOf(
-                                recentVisibleCount + 5,
-                                recentServices.size
-                            )
-                        }
-                    )
-                }
-            }
-            item { SectionDivider() }
-        }
-
-        // 5---------------- Other ----------------
-        item {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SectionHeader("Other Services")
-                ServiceSearchBar(searchQuery, onSearchChange)
-            }
-            Spacer(modifier = Modifier.height(15.dp))
-        }
-
-        if (otherServices.isNotEmpty()) {
-            if (showOtherServices) {
-                items(otherServices) { service ->
-                    val startDateTime = utcToIstConverter(service.startingAt)
-                    ServiceCard(
-                        service = service,
-                        cardType = CardType.OTHER,
-                        onActionClick = { onDownload(service) },
-                        date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                        time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                        routeName = extractRouteName(service.name),
-                        isEnabled = true,
-                    )
-                }
-            } else {
-                item {
-                    ViewMoreText(
-                        text = "Tap to view",
-                        onClick = {
-                            showOtherServices = true
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                }
-            }
-        } else {
-            item {
+            if (description != null) {
                 Text(
-                    text = "No services available!",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    textAlign = TextAlign.Center,
-                    color = Color.Gray
+                    text = description,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -475,34 +678,7 @@ fun ServiceCard(
             }
         }
     }
-    Spacer(modifier = Modifier.height(15.dp))
-}
 
-@Composable
-fun ServiceSearchBar(query: String, onChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onChange,
-        label = {
-            Text(
-                "Search...",
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.Gray
-            )
-        },
-        singleLine = true,
-        modifier = Modifier
-            .width(200.dp)
-            .height(65.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black
-        ),
-        trailingIcon = {
-            Icon(imageVector = Icons.Filled.Search, contentDescription = "Search icon")
-        }
-    )
 }
 
 @Composable
@@ -571,45 +747,6 @@ fun OngoingActionButtons(
         ) {
             Text("Finish", color = Color.White, style = MaterialTheme.typography.titleMedium)
         }
-    }
-}
-
-@Composable
-fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
-        color = Color.Black
-    )
-}
-
-@Composable
-fun SectionDivider() {
-    Spacer(Modifier.height(12.dp))
-    HorizontalDivider(thickness = Dp.Hairline, color = Color.Black)
-    Spacer(Modifier.height(12.dp))
-}
-
-@Composable
-fun ServiceHeader() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 5.dp)
-            .padding(horizontal = 12.dp)
-    ) {
-        Text(
-            "All Services",
-            style = MaterialTheme.typography.headlineSmall,
-            color = Color.Black
-        )
-        Text(
-            "Displaying All Services", style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
-        )
     }
 }
 
