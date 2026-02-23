@@ -118,7 +118,10 @@ fun TicketScreen(
             onDismiss = { showPermissionDialog = false },
             showExitButton = true,
             exitText = "Cancel",
-            onExitClick = { showPermissionDialog = false }
+            onExitClick = { showPermissionDialog = false },
+            titleColor = MaterialTheme.colorScheme.primary,
+            confirmBtnColor = MaterialTheme.colorScheme.primary,
+            exitBtnBorderColor = MaterialTheme.colorScheme.primary
         )
     }
 

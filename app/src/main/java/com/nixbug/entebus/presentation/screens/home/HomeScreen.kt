@@ -1,7 +1,9 @@
 package com.nixbug.entebus.presentation.screens.home
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,47 +13,60 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
+import androidx.compose.material.icons.filled.NoTransfer
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults.FocusedBorderThickness
+import androidx.compose.material3.OutlinedTextFieldDefaults.UnfocusedBorderThickness
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -79,6 +94,7 @@ fun HomeScreen(
             it.regNo.contains(searchQuery, ignoreCase = true)
         }
     }
+    var selectedTab by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -133,145 +149,385 @@ fun HomeScreen(
                 .padding(bottom = 70.dp)
         ) {
             ServiceHeader()
-            ServiceList(
+            OngoingServiceSection(
                 ongoingService = state.ongoingService,
-                assignedServices = state.assignedServiceList,
-                downloadedServices = state.downloadedServiceList,
-                otherServices = filteredOtherServices,
-                searchQuery = searchQuery,
-                onSearchChange = { searchQuery = it },
                 onResumeService = viewModel::onResumeService,
-                onStartAssigned = viewModel::onStartAssigned,
-                onStartDownloaded = viewModel::onStartDownloaded,
                 onFinishDutyClick = { service ->
                     finishDutyService = service
                 },
+                extractRouteName = viewModel::extractRouteName,
+            )
+            RowTab(
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                searchQuery = searchQuery,
+                onSearchChange = { searchQuery = it })
+            ServiceList(
+                assignedServices = state.assignedServiceList,
+                downloadedServices = state.downloadedServiceList,
+                recentServices = state.recentServiceList,
+                otherServices = filteredOtherServices,
+                onStartAssigned = viewModel::onStartAssigned,
+                onStartDownloaded = viewModel::onStartDownloaded,
+                onRestartRecentService = viewModel::onRestartRecentService,
                 onDownload = viewModel::onDownloadService,
                 extractRouteName = viewModel::extractRouteName,
                 canStartService = viewModel::canStartService,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                selectedTab = selectedTab,
             )
         }
     }
 }
 
 @Composable
-fun ServiceList(
-    ongoingService: HomeUiModel?,
-    assignedServices: List<HomeUiModel>,
-    downloadedServices: List<HomeUiModel>,
-    otherServices: List<HomeUiModel>,
-    searchQuery: String,
-    onSearchChange: (String) -> Unit,
-    onResumeService: () -> Unit,
-    onStartAssigned: (HomeUiModel) -> Unit,
-    onStartDownloaded: (HomeUiModel) -> Unit,
-    onDownload: (HomeUiModel) -> Unit,
-    extractRouteName: (String) -> String,
-    canStartService: (String) -> Boolean,
-    modifier: Modifier,
-    onFinishDutyClick: (HomeUiModel) -> Unit
-) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxHeight()
-            .padding(horizontal = 12.dp),
-        contentPadding = WindowInsets.ime.asPaddingValues()
+fun ServiceHeader() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 1.dp)
+            .padding(horizontal = 12.dp)
     ) {
+        Text(
+            "All Services",
+            style = MaterialTheme.typography.headlineSmall,
+            color = Color.Black
+        )
+        Text(
+            "Displaying All Services",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+        Spacer(modifier = Modifier.height(5.dp))
+        HorizontalDivider()
+    }
+}
 
-        // ---------------- Ongoing ----------------
+@Composable
+fun OngoingServiceSection(
+    ongoingService: HomeUiModel?,
+    onResumeService: () -> Unit,
+    onFinishDutyClick: (HomeUiModel) -> Unit,
+    extractRouteName: (String) -> String,
+) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 16.dp),
+    ) {
         ongoingService?.let { service ->
             val startDateTime = utcToIstConverter(service.startingAt)
 
-            item { SectionHeader("Ongoing Service") }
-            item {
-                ServiceCard(
-                    service = service,
-                    cardType = CardType.ONGOING,
-                    onActionClick = { onResumeService() },
-                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                    routeName = extractRouteName(service.name),
-                    isEnabled = true,
-                    onFinishDutyClick = { onFinishDutyClick(service) }
-                )
-            }
-            item { SectionDivider() }
+            Text(
+                text = "ONGOING SERVICE",
+                style = MaterialTheme.typography.titleMedium,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                color = Color.DarkGray
+            )
+
+            ServiceCard(
+                service = service,
+                cardType = CardType.ONGOING,
+                onActionClick = { onResumeService() },
+                date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
+                time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
+                routeName = extractRouteName(service.name),
+                isEnabled = true,
+                onFinishDutyClick = { onFinishDutyClick(service) }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
         }
+    }
+}
 
-        // ---------------- Assigned ----------------
-        if (assignedServices.isNotEmpty()) {
-            item { SectionHeader("Assigned Services") }
+@Composable
+fun RowTab(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    searchQuery: String,
+    onSearchChange: (String) -> Unit
+) {
+    val tabs = listOf("Your Services", "Downloaded", "Recent", "Others")
+    Row(
+        modifier = Modifier
+            .horizontalScroll(rememberScrollState())
+            .background(color = Color.White)
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        tabs.forEachIndexed { index, title ->
 
-            items(assignedServices) { service ->
-                val startDateTime = utcToIstConverter(service.startingAt)
-                ServiceCard(
-                    service = service,
-                    cardType = CardType.ASSIGNED,
-                    onActionClick = { onStartAssigned(service) },
-                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                    routeName = extractRouteName(service.name),
-                    isEnabled = canStartService(service.startingAt),
-                )
-            }
-            item { SectionDivider() }
-        }
+            val isSelected = selectedTab == index
+            val backgroundColor by animateColorAsState(
+                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(
+                    0x45C5EAD9
+                ),
+                label = "TabColorAnimation"
+            )
+            val textColor by animateColorAsState(
+                targetValue = if (isSelected) Color.White else Color(0xFF6B7C75),
+                label = "TextColorAnimation"
+            )
 
-        // ---------------- Downloaded ----------------
-        if (downloadedServices.isNotEmpty()) {
-            item { SectionHeader("Downloaded Services") }
-
-            items(downloadedServices) { service ->
-                val startDateTime = utcToIstConverter(service.startingAt)
-                ServiceCard(
-                    service = service,
-                    cardType = CardType.DOWNLOADED,
-                    onActionClick = { onStartDownloaded(service) },
-                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                    routeName = extractRouteName(service.name),
-                    isEnabled = canStartService(service.startingAt),
-                )
-            }
-            item { SectionDivider() }
-        }
-
-        // ---------------- Other ----------------
-        item {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(backgroundColor)
+                    .clickable { onTabSelected(index) }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
             ) {
-                SectionHeader("Other Services")
-                ServiceSearchBar(searchQuery, onSearchChange)
+                Text(
+                    text = title,
+                    color = textColor,
+                    fontWeight = FontWeight.Medium
+                )
             }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(6.dp))
+
+    if (selectedTab == 3) {
+        ServiceSearchBar(searchQuery, onSearchChange)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ServiceSearchBar(query: String, onChange: (String) -> Unit) {
+    BasicTextField(
+        value = query,
+        onValueChange = onChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .height(40.dp),
+        singleLine = true,
+        decorationBox = { innerTextField ->
+            OutlinedTextFieldDefaults.DecorationBox(
+                value = query,
+                innerTextField = innerTextField,
+                enabled = true,
+                singleLine = true,
+                visualTransformation = VisualTransformation.None,
+                interactionSource = remember { MutableInteractionSource() },
+                trailingIcon = {
+                    Icon(Icons.Filled.Search, contentDescription = null)
+                },
+                placeholder = {
+                    Text("Search...", style = MaterialTheme.typography.bodyMedium)
+                },
+
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                container = {
+                    OutlinedTextFieldDefaults.Container(
+                        enabled = true,
+                        isError = false,
+                        interactionSource = remember { MutableInteractionSource() },
+                        colors = OutlinedTextFieldDefaults.colors(),
+                        shape = RoundedCornerShape(12.dp),
+                        focusedBorderThickness = FocusedBorderThickness,
+                        unfocusedBorderThickness = UnfocusedBorderThickness,
+                    )
+                }
+            )
+        }
+    )
+}
+
+@Composable
+fun ServiceList(
+    assignedServices: List<HomeUiModel>,
+    downloadedServices: List<HomeUiModel>,
+    recentServices: List<HomeUiModel>,
+    otherServices: List<HomeUiModel>,
+    onStartAssigned: (HomeUiModel) -> Unit,
+    onStartDownloaded: (HomeUiModel) -> Unit,
+    onRestartRecentService: (HomeUiModel) -> Unit,
+    onDownload: (HomeUiModel) -> Unit,
+    extractRouteName: (String) -> String,
+    canStartService: (String) -> Boolean,
+    modifier: Modifier = Modifier,
+    selectedTab: Int,
+) {
+
+    val currentList = when (selectedTab) {
+        0 -> assignedServices
+        1 -> downloadedServices
+        2 -> recentServices
+        else -> otherServices
+    }
+
+    if (currentList.isEmpty()) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            EmptyServiceState(
+                icon = Icons.Filled.NoTransfer,
+                title = "No services available!",
+                description = when (selectedTab) {
+                    0 -> "You don’t have any assigned services right now. You can download services from the Other Services tab."
+                    1 -> "You don’t have any downloaded services yet. Browse Other Services to download services you’d like to start."
+                    2 -> "You don’t have any recent services right now. Once you complete a service, it will appear here."
+                    else -> "No services are available right now. Please check back later."
+                }
+            )
+        }
+        return
+    }
+
+    when (selectedTab) {
+
+        0 -> ServiceTabContent(
+            services = assignedServices,
+            visibleCount = 5,
+            cardType = CardType.ASSIGNED,
+            onActionClick = onStartAssigned,
+            extractRouteName = extractRouteName,
+            canStartService = canStartService,
+            modifier = modifier.padding(horizontal = 16.dp)
+        )
+
+        1 -> ServiceTabContent(
+            services = downloadedServices,
+            visibleCount = 5,
+            cardType = CardType.DOWNLOADED,
+            onActionClick = onStartDownloaded,
+            extractRouteName = extractRouteName,
+            canStartService = canStartService,
+            modifier = modifier.padding(horizontal = 16.dp)
+        )
+
+        2 -> ServiceTabContent(
+            services = recentServices,
+            visibleCount = 5,
+            cardType = CardType.RECENT,
+            onActionClick = onRestartRecentService,
+            extractRouteName = extractRouteName,
+            canStartService = canStartService,
+            modifier = modifier.padding(horizontal = 16.dp)
+        )
+
+        3 -> ServiceTabContent(
+            services = otherServices,
+            visibleCount = null,
+            cardType = CardType.OTHER,
+            onActionClick = onDownload,
+            extractRouteName = extractRouteName,
+            canStartService = canStartService,
+            modifier = modifier.padding(horizontal = 16.dp)
+        )
+    }
+}
+
+@Composable
+fun ServiceTabContent(
+    services: List<HomeUiModel>,
+    visibleCount: Int?,
+    cardType: CardType,
+    onActionClick: (HomeUiModel) -> Unit,
+    extractRouteName: (String) -> String,
+    canStartService: (String) -> Boolean,
+    modifier: Modifier = Modifier,
+) {
+
+    val defaultVisibleCount = 5
+
+    var isExpanded by rememberSaveable(cardType) { mutableStateOf(false) }
+    val visibleServices = if (visibleCount == null) {
+        services
+    } else {
+        if (isExpanded) services else services.take(defaultVisibleCount)
+    }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = WindowInsets.ime.asPaddingValues()
+    ) {
+
+        item { Spacer(modifier = Modifier.height(10.dp)) }
+
+        items(visibleServices) { service ->
+
+            val startDateTime = utcToIstConverter(service.startingAt)
+
+            ServiceCard(
+                service = service,
+                cardType = cardType,
+                onActionClick = { onActionClick(service) },
+                date = startDateTime?.first ?: "Date unavailable",
+                time = startDateTime?.second ?: "Time unavailable",
+                routeName = extractRouteName(service.name),
+                isEnabled = when (cardType) {
+                    CardType.ASSIGNED,
+                    CardType.DOWNLOADED -> canStartService(service.startingAt)
+
+                    else -> true
+                }
+            )
+
             Spacer(modifier = Modifier.height(15.dp))
         }
 
-        if (otherServices.isNotEmpty()) {
-            items(otherServices) { service ->
-                val startDateTime = utcToIstConverter(service.startingAt)
-                ServiceCard(
-                    service = service,
-                    cardType = CardType.OTHER,
-                    onActionClick = { onDownload(service) },
-                    date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
-                    time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                    routeName = extractRouteName(service.name),
-                    isEnabled = true,
+        if (visibleCount != null && services.size > defaultVisibleCount) {
+            item {
+                ViewMoreText(
+                    text = if (isExpanded) "View Less" else "View More",
+                    onClick = {
+                        isExpanded = !isExpanded
+                    },
+                    isExpanded = isExpanded
                 )
             }
-        } else {
-            item {
+        }
+    }
+}
+
+@Composable
+fun EmptyServiceState(
+    icon: ImageVector,
+    title: String,
+    modifier: Modifier = Modifier,
+    description: String? = null
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 40.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Icon(
+                icon,
+                null,
+                tint = DisabledButtonColor,
+                modifier = Modifier
+                    .size(110.dp)
+                    .padding(bottom = 20.dp)
+            )
+
+            Text(
+                text = title,
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+
+            if (description != null) {
                 Text(
-                    text = "No services available!",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    textAlign = TextAlign.Center,
-                    color = Color.Gray
+                    text = description,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -395,34 +651,7 @@ fun ServiceCard(
             }
         }
     }
-    Spacer(modifier = Modifier.height(15.dp))
-}
 
-@Composable
-fun ServiceSearchBar(query: String, onChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onChange,
-        label = {
-            Text(
-                "Search...",
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.Gray
-            )
-        },
-        singleLine = true,
-        modifier = Modifier
-            .width(200.dp)
-            .height(65.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black
-        ),
-        trailingIcon = {
-            Icon(imageVector = Icons.Filled.Search, contentDescription = "Search icon")
-        }
-    )
 }
 
 @Composable
@@ -431,6 +660,7 @@ fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
     val text = when (cardType) {
         CardType.ASSIGNED -> "Start"
         CardType.DOWNLOADED -> "Start"
+        CardType.RECENT -> "Restart"
         else -> "Download"
 
     }
@@ -494,40 +724,35 @@ fun OngoingActionButtons(
 }
 
 @Composable
-fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
-        color = Color.Black
-    )
-}
-
-@Composable
-fun SectionDivider() {
-    Spacer(Modifier.height(12.dp))
-    HorizontalDivider(thickness = Dp.Hairline, color = Color.Black)
-    Spacer(Modifier.height(12.dp))
-}
-
-@Composable
-fun ServiceHeader() {
-    Column(
+fun ViewMoreText(
+    text: String = "View More",
+    onClick: () -> Unit,
+    isExpanded: Boolean,
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 5.dp)
-            .padding(horizontal = 12.dp)
+            .heightIn(min = 48.dp)
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            "All Services",
-            style = MaterialTheme.typography.headlineSmall,
-            color = Color.Black
+            text = text,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold
         )
-        Text(
-            "Displaying All Services", style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Icon(
+            imageVector = if (isExpanded) Icons.Filled.KeyboardDoubleArrowUp else Icons.Filled.KeyboardDoubleArrowDown,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .size(25.dp)
         )
     }
 }

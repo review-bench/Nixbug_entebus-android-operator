@@ -138,7 +138,7 @@ data class TicketType(
 )
 
 enum class CardType {
-    ONGOING, ASSIGNED, DOWNLOADED, OTHER
+    ONGOING, ASSIGNED, DOWNLOADED, RECENT, OTHER
 }
 
 sealed class HomeUiEvent {
