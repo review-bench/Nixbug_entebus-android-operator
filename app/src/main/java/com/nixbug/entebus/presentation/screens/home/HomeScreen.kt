@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.filled.NoTransfer
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
@@ -55,6 +56,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -247,7 +249,7 @@ fun RowTab(
     searchQuery: String,
     onSearchChange: (String) -> Unit
 ) {
-    val tabs = listOf("Your Service", "Downloaded", "Recent", "Others")
+    val tabs = listOf("Your Services", "Downloaded", "Recent", "Others")
     Row(
         modifier = Modifier
             .horizontalScroll(rememberScrollState())
@@ -348,22 +350,20 @@ fun ServiceList(
     onDownload: (HomeUiModel) -> Unit,
     extractRouteName: (String) -> String,
     canStartService: (String) -> Boolean,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     selectedTab: Int,
 ) {
-    var assignedVisibleCount by remember { mutableIntStateOf(5) }
-    var downloadedVisibleCount by remember { mutableIntStateOf(5) }
-    var recentVisibleCount by remember { mutableIntStateOf(5) }
+
     val currentList = when (selectedTab) {
         0 -> assignedServices
         1 -> downloadedServices
         2 -> recentServices
         else -> otherServices
     }
-    if (currentList.isEmpty()) {
 
+    if (currentList.isEmpty()) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
@@ -381,140 +381,114 @@ fun ServiceList(
                 }
             )
         }
+        return
+    }
 
+    when (selectedTab) {
+
+        0 -> ServiceTabContent(
+            services = assignedServices,
+            visibleCount = 5,
+            cardType = CardType.ASSIGNED,
+            onActionClick = onStartAssigned,
+            extractRouteName = extractRouteName,
+            canStartService = canStartService,
+            modifier = modifier.padding(horizontal = 16.dp)
+        )
+
+        1 -> ServiceTabContent(
+            services = downloadedServices,
+            visibleCount = 5,
+            cardType = CardType.DOWNLOADED,
+            onActionClick = onStartDownloaded,
+            extractRouteName = extractRouteName,
+            canStartService = canStartService,
+            modifier = modifier.padding(horizontal = 16.dp)
+        )
+
+        2 -> ServiceTabContent(
+            services = recentServices,
+            visibleCount = 5,
+            cardType = CardType.RECENT,
+            onActionClick = onRestartRecentService,
+            extractRouteName = extractRouteName,
+            canStartService = canStartService,
+            modifier = modifier.padding(horizontal = 16.dp)
+        )
+
+        3 -> ServiceTabContent(
+            services = otherServices,
+            visibleCount = null,
+            cardType = CardType.OTHER,
+            onActionClick = onDownload,
+            extractRouteName = extractRouteName,
+            canStartService = canStartService,
+            modifier = modifier.padding(horizontal = 16.dp)
+        )
+    }
+}
+
+@Composable
+fun ServiceTabContent(
+    services: List<HomeUiModel>,
+    visibleCount: Int?,
+    cardType: CardType,
+    onActionClick: (HomeUiModel) -> Unit,
+    extractRouteName: (String) -> String,
+    canStartService: (String) -> Boolean,
+    modifier: Modifier = Modifier,
+) {
+
+    val defaultVisibleCount = 5
+
+    var isExpanded by rememberSaveable { mutableStateOf(false) }
+
+    val visibleServices = if (visibleCount == null) {
+        services
     } else {
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            contentPadding = WindowInsets.ime.asPaddingValues()
-        ) {
+        if (isExpanded) services else services.take(defaultVisibleCount)
+    }
 
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = WindowInsets.ime.asPaddingValues()
+    ) {
 
-            item { Spacer(modifier = Modifier.height(10.dp)) }
+        item { Spacer(modifier = Modifier.height(10.dp)) }
 
-            when (selectedTab) {
-                0 -> {
-                    if (assignedServices.isNotEmpty()) {
-                        val visibleAssigned = assignedServices.take(assignedVisibleCount)
-                        items(visibleAssigned) { service ->
-                            val startDateTime = utcToIstConverter(service.startingAt)
-                            ServiceCard(
-                                service = service,
-                                cardType = CardType.ASSIGNED,
-                                onActionClick = { onStartAssigned(service) },
-                                date = startDateTime?.let { (date, _) -> date }
-                                    ?: "Date unavailable",
-                                time = startDateTime?.let { (_, time) -> time }
-                                    ?: "Time unavailable",
-                                routeName = extractRouteName(service.name),
-                                isEnabled = canStartService(service.startingAt),
-                            )
-                            Spacer(modifier = Modifier.height(15.dp))
-                        }
-                        if (assignedServices.size > assignedVisibleCount) {
-                            item {
-                                ViewMoreText(
-                                    onClick = {
-                                        assignedVisibleCount = minOf(
-                                            assignedVisibleCount + 5,
-                                            assignedServices.size
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
+        items(visibleServices) { service ->
+
+            val startDateTime = utcToIstConverter(service.startingAt)
+
+            ServiceCard(
+                service = service,
+                cardType = cardType,
+                onActionClick = { onActionClick(service) },
+                date = startDateTime?.first ?: "Date unavailable",
+                time = startDateTime?.second ?: "Time unavailable",
+                routeName = extractRouteName(service.name),
+                isEnabled = when (cardType) {
+                    CardType.ASSIGNED,
+                    CardType.DOWNLOADED -> canStartService(service.startingAt)
+
+                    else -> true
                 }
+            )
 
-                1 -> {
-                    if (downloadedServices.isNotEmpty()) {
-                        val visibleDownloaded = downloadedServices.take(downloadedVisibleCount)
-                        items(visibleDownloaded) { service ->
-                            val startDateTime = utcToIstConverter(service.startingAt)
-                            ServiceCard(
-                                service = service,
-                                cardType = CardType.DOWNLOADED,
-                                onActionClick = { onStartDownloaded(service) },
-                                date = startDateTime?.let { (date, _) -> date }
-                                    ?: "Date unavailable",
-                                time = startDateTime?.let { (_, time) -> time }
-                                    ?: "Time unavailable",
-                                routeName = extractRouteName(service.name),
-                                isEnabled = canStartService(service.startingAt),
-                            )
-                            Spacer(modifier = Modifier.height(15.dp))
-                        }
-                        if (downloadedServices.size > downloadedVisibleCount) {
-                            item {
-                                ViewMoreText(
-                                    onClick = {
-                                        downloadedVisibleCount = minOf(
-                                            downloadedVisibleCount + 5,
-                                            downloadedServices.size
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                2 -> {
-                    if (recentServices.isNotEmpty()) {
-                        val visibleRecent = recentServices.take(recentVisibleCount)
-                        items(visibleRecent) { service ->
-                            val startDateTime = utcToIstConverter(service.startingAt)
-                            ServiceCard(
-                                service = service,
-                                cardType = CardType.RECENT,
-                                onActionClick = { onRestartRecentService(service) },
-                                date = startDateTime?.let { (date, _) -> date }
-                                    ?: "Date unavailable",
-                                time = startDateTime?.let { (_, time) -> time }
-                                    ?: "Time unavailable",
-                                routeName = extractRouteName(service.name),
-                                isEnabled = canStartService(service.startingAt),
-                            )
-                            Spacer(modifier = Modifier.height(15.dp))
-                        }
-                        if (recentServices.size > recentVisibleCount) {
-                            item {
-                                ViewMoreText(
-                                    onClick = {
-                                        recentVisibleCount = minOf(
-                                            recentVisibleCount + 5,
-                                            recentServices.size
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                3 -> {
-                    if (otherServices.isNotEmpty()) {
-                        items(otherServices) { service ->
-                            val startDateTime = utcToIstConverter(service.startingAt)
-                            ServiceCard(
-                                service = service,
-                                cardType = CardType.OTHER,
-                                onActionClick = { onDownload(service) },
-                                date = startDateTime?.let { (date, _) -> date }
-                                    ?: "Date unavailable",
-                                time = startDateTime?.let { (_, time) -> time }
-                                    ?: "Time unavailable",
-                                routeName = extractRouteName(service.name),
-                                isEnabled = true,
-                            )
-                            Spacer(modifier = Modifier.height(15.dp))
-                        }
-                    }
-                }
-            }
+            Spacer(modifier = Modifier.height(15.dp))
         }
 
+        if (visibleCount != null && services.size > defaultVisibleCount) {
+            item {
+                ViewMoreText(
+                    text = if (isExpanded) "View Less" else "View More",
+                    onClick = {
+                        isExpanded = !isExpanded
+                    },
+                    isExpanded = isExpanded
+                )
+            }
+        }
     }
 }
 
@@ -754,6 +728,7 @@ fun OngoingActionButtons(
 fun ViewMoreText(
     text: String = "View More",
     onClick: () -> Unit,
+    isExpanded: Boolean,
 ) {
     Row(
         modifier = Modifier
@@ -774,7 +749,7 @@ fun ViewMoreText(
         Spacer(modifier = Modifier.width(4.dp))
 
         Icon(
-            imageVector = Icons.Filled.KeyboardDoubleArrowDown,
+            imageVector = if (isExpanded) Icons.Filled.KeyboardDoubleArrowUp else Icons.Filled.KeyboardDoubleArrowDown,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier

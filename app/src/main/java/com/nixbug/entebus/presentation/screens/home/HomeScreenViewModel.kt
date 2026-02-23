@@ -93,6 +93,9 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
                 recentServiceList = newRecentServices,
             )
         }
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.NavigateToTicketScreen)
+        }
     }
 
     fun onFinishDuty(service: HomeUiModel) {

@@ -54,7 +54,8 @@ import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.utcToIstConverter
 import kotlinx.coroutines.delay
-import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -505,7 +506,8 @@ fun PrintSummaryDialog(
                 ) {
 
                     item {
-                        val currentDateTime = remember { LocalDateTime.now() }
+                        val currentDateTime =
+                            remember { ZonedDateTime.now(ZoneId.of("Asia/Kolkata")) }
                         val formattedDateTime = remember(currentDateTime) {
                             currentDateTime.format(
                                 DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
