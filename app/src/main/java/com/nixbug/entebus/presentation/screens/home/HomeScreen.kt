@@ -441,8 +441,7 @@ fun ServiceTabContent(
 
     val defaultVisibleCount = 5
 
-    var isExpanded by rememberSaveable { mutableStateOf(false) }
-
+    var isExpanded by rememberSaveable(cardType) { mutableStateOf(false) }
     val visibleServices = if (visibleCount == null) {
         services
     } else {
