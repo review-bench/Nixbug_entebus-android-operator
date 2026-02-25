@@ -77,6 +77,15 @@ import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.ui.theme.SelectedServiceColor
 import com.nixbug.entebus.utils.utcToIstConverter
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.nixbug.entebus.utils.BluetoothPermissionHelper
+
 @Composable
 fun HomeScreen(
     rootNavController: NavHostController,
@@ -85,16 +94,49 @@ fun HomeScreen(
 
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
-
+    val context = LocalContext.current
+    val activity = context as Activity
     var searchQuery by remember { mutableStateOf("") }
     var finishDutyService by remember { mutableStateOf<HomeUiModel?>(null) }
-
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var showPermissionDialog by remember { mutableStateOf(false) }
+    var isPermanentDenial by remember { mutableStateOf(false) }
     val filteredOtherServices = remember(state.otherServiceList, searchQuery) {
         state.otherServiceList.filter {
             it.regNo.contains(searchQuery, ignoreCase = true)
         }
     }
     var selectedTab by remember { mutableIntStateOf(0) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.values.all { it }
+        if (allGranted) {
+            pendingAction?.invoke()
+            pendingAction = null
+        } else {
+            isPermanentDenial = BluetoothPermissionHelper.isPermanentlyDenied(activity)
+            showPermissionDialog = true
+        }
+    }
+
+    fun checkBluetoothPermissionAndRun(action: () -> Unit) {
+        if (BluetoothPermissionHelper.hasBluetoothPermissions(context)) {
+            action()
+        } else {
+            pendingAction = action
+
+            if (BluetoothPermissionHelper.shouldShowRationale(activity)) {
+                isPermanentDenial = false
+                showPermissionDialog = true
+            } else {
+                permissionLauncher.launch(
+                    BluetoothPermissionHelper.REQUIRED_PERMISSIONS
+                )
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -108,9 +150,7 @@ fun HomeScreen(
         DialogBox(
             title = "Finish Duty?",
             message = "Are you sure you want to finish your duty on the ${
-                viewModel.extractRouteName(
-                    service.name
-                )
+                viewModel.extractRouteName(service.name)
             } service?",
             confirmText = "Finish",
             onConfirmClick = {
@@ -118,13 +158,41 @@ fun HomeScreen(
                 finishDutyService = null
             },
             dismissible = true,
-            onDismiss = {
-                finishDutyService = null
-            },
+            onDismiss = { finishDutyService = null },
             showExitButton = true,
             exitText = "Cancel",
-            onExitClick = {
-                finishDutyService = null
+            onExitClick = { finishDutyService = null },
+            titleColor = MaterialTheme.colorScheme.primary,
+            confirmBtnColor = MaterialTheme.colorScheme.primary,
+            exitBtnBorderColor = MaterialTheme.colorScheme.primary
+        )
+    }
+    if (showPermissionDialog) {
+
+        DialogBox(
+            title = "Permission Required",
+            message = "Bluetooth permission is required to start or resume services. Without it, ticket printing and device connection will not work properly.",
+            confirmText = if (isPermanentDenial) "Open Settings" else "Retry",
+            dismissible = true,
+            onDismiss = { showPermissionDialog = false },
+            showExitButton = true,
+            exitText = "Cancel",
+            onExitClick = { showPermissionDialog = false },
+            onConfirmClick = {
+                showPermissionDialog = false
+
+                if (isPermanentDenial) {
+                    val intent = Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                    ).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                } else {
+                    permissionLauncher.launch(
+                        BluetoothPermissionHelper.REQUIRED_PERMISSIONS
+                    )
+                }
             },
             titleColor = MaterialTheme.colorScheme.primary,
             confirmBtnColor = MaterialTheme.colorScheme.primary,
@@ -148,28 +216,43 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(bottom = 70.dp)
         ) {
+
             ServiceHeader()
+
             OngoingServiceSection(
                 ongoingService = state.ongoingService,
-                onResumeService = viewModel::onResumeService,
-                onFinishDutyClick = { service ->
-                    finishDutyService = service
-                },
+                onResumeService = { checkBluetoothPermissionAndRun { viewModel.onResumeService() } },
+                onFinishDutyClick = { service -> finishDutyService = service },
                 extractRouteName = viewModel::extractRouteName,
             )
+
             RowTab(
                 selectedTab = selectedTab,
                 onTabSelected = { selectedTab = it },
                 searchQuery = searchQuery,
-                onSearchChange = { searchQuery = it })
+                onSearchChange = { searchQuery = it }
+            )
+
             ServiceList(
                 assignedServices = state.assignedServiceList,
                 downloadedServices = state.downloadedServiceList,
                 recentServices = state.recentServiceList,
                 otherServices = filteredOtherServices,
-                onStartAssigned = viewModel::onStartAssigned,
-                onStartDownloaded = viewModel::onStartDownloaded,
-                onRestartRecentService = viewModel::onRestartRecentService,
+                onStartAssigned = { service ->
+                    checkBluetoothPermissionAndRun {
+                        viewModel.onStartAssigned(service)
+                    }
+                },
+                onStartDownloaded = { service ->
+                    checkBluetoothPermissionAndRun {
+                        viewModel.onStartDownloaded(service)
+                    }
+                },
+                onRestartRecentService = { service ->
+                    checkBluetoothPermissionAndRun {
+                        viewModel.onRestartRecentService(service)
+                    }
+                },
                 onDownload = viewModel::onDownloadService,
                 extractRouteName = viewModel::extractRouteName,
                 canStartService = viewModel::canStartService,
