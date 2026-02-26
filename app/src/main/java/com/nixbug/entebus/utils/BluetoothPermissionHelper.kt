@@ -2,6 +2,8 @@ package com.nixbug.entebus.utils
 
 import android.Manifest
 import android.app.Activity
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -36,15 +38,6 @@ object BluetoothPermissionHelper {
     }
 
     /**
-     * Checks if any of the permissions show a "Rationale" (User denied once).
-     */
-    fun shouldShowRationale(activity: Activity): Boolean {
-        return REQUIRED_PERMISSIONS.any {
-            ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
-        }
-    }
-
-    /**
      * Checks if permissions are permanently denied.
      * (Not granted AND should NOT show rationale)
      */
@@ -55,6 +48,36 @@ object BluetoothPermissionHelper {
                 permission
             ) == PackageManager.PERMISSION_GRANTED
             !isGranted && !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+        }
+    }
+
+    /**
+     * Checks whether Bluetooth is currently enabled on the device.
+     *
+     * This method:
+     * 1. First verifies that all required Bluetooth permissions are granted.
+     * 2. Safely retrieves the [BluetoothAdapter] using [BluetoothManager].
+     * 3. Returns true only if the adapter exists and Bluetooth is enabled.
+     *
+     * If permissions are not granted, or a [SecurityException] occurs,
+     * this method safely returns false.
+     *
+     * @param context The application or activity context.
+     * @return true if Bluetooth is enabled and permissions are granted, false otherwise.
+     */
+    fun isBluetoothEnabled(context: Context): Boolean {
+
+        if (!hasBluetoothPermissions(context)) {
+            return false
+        }
+
+        return try {
+            val bluetoothManager =
+                context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+            val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
+            bluetoothAdapter?.isEnabled == true
+        } catch (e: SecurityException) {
+            false
         }
     }
 }

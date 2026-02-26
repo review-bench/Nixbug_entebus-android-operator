@@ -149,5 +149,14 @@ data class HomeUiState(
                 name = "04:30 PM Kollam to Karunagappally"
             )
         ),
-    )
-)
+    ),
+
+    val searchQuery: String = "",
+
+    val selectedTab: Int = 0
+) {
+    val filteredOtherServices: List<HomeUiModel>
+        get() = otherServiceList.filter {
+            it.regNo.contains(searchQuery, ignoreCase = true)
+        }
+}

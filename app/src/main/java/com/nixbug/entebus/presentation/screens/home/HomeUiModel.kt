@@ -143,4 +143,13 @@ enum class CardType {
 
 sealed class HomeUiEvent {
     data object NavigateToTicketScreen : HomeUiEvent()
+    data object RequestBluetoothPermission : HomeUiEvent()
+    data object RequestEnableBluetooth : HomeUiEvent()
+}
+
+sealed class PendingServiceAction {
+    data class StartAssigned(val service: HomeUiModel) : PendingServiceAction()
+    data class StartDownloaded(val service: HomeUiModel) : PendingServiceAction()
+    data class RestartRecent(val service: HomeUiModel) : PendingServiceAction()
+    object Resume : PendingServiceAction()
 }

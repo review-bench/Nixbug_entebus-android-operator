@@ -1,7 +1,9 @@
 package com.nixbug.entebus.presentation.screens.home
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +27,25 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
 
     private val _events = MutableSharedFlow<HomeUiEvent>()
     val events: SharedFlow<HomeUiEvent> = _events.asSharedFlow()
+    private var pendingAction: PendingServiceAction? = null
+
+    private fun emitPermissionRequest() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.RequestBluetoothPermission)
+        }
+    }
+
+    private fun emitEnableBluetoothRequest() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.RequestEnableBluetooth)
+        }
+    }
+
+    private fun navigateToTicketScreen() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.NavigateToTicketScreen)
+        }
+    }
 
     private fun checkAndEmitIfServiceAlreadyRunning(): Boolean {
         return if (_uiState.value.ongoingService != null) {
@@ -38,30 +59,116 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun onResumeService() {
-        viewModelScope.launch {
-            _events.emit(HomeUiEvent.NavigateToTicketScreen)
-        }
+    //   UI State Updates
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
     }
 
-    fun onStartAssigned(service: HomeUiModel) {
+    fun onTabSelected(tab: Int) {
+        _uiState.update { it.copy(selectedTab = tab) }
+    }
+
+    fun onPermissionGranted(context: Context) {
+
+        val hasPermission = true
+        val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
+
+        when (val action = pendingAction) {
+
+            is PendingServiceAction.StartAssigned -> {
+                onStartAssigned(
+                    service = action.service,
+                    hasPermission = hasPermission,
+                    isBluetoothEnabled = isEnabled
+                )
+            }
+
+            is PendingServiceAction.StartDownloaded -> {
+                onStartDownloaded(
+                    service = action.service,
+                    hasPermission = hasPermission,
+                    isBluetoothEnabled = isEnabled
+                )
+            }
+
+            is PendingServiceAction.RestartRecent -> {
+                onRestartRecentService(
+                    service = action.service,
+                    hasPermission = hasPermission,
+                    isBluetoothEnabled = isEnabled
+                )
+            }
+
+            else -> {
+                onResumeService(hasPermission, isEnabled)
+            }
+        }
+
+        pendingAction = null
+    }
+
+    //    RESUME
+    fun onResumeService(hasPermission: Boolean, isBluetoothEnabled: Boolean) {
+        if (!hasPermission) {
+            emitPermissionRequest()
+            return
+        }
+        if (!isBluetoothEnabled) {
+            emitEnableBluetoothRequest()
+            return
+        }
+        navigateToTicketScreen()
+    }
+
+    //    START ASSIGNED
+    fun onStartAssigned(service: HomeUiModel, hasPermission: Boolean, isBluetoothEnabled: Boolean) {
         if (checkAndEmitIfServiceAlreadyRunning()) return
+        if (!hasPermission) {
+            pendingAction = PendingServiceAction.StartAssigned(service)
+            emitPermissionRequest()
+            return
+        }
+        if (!isBluetoothEnabled) {
+            pendingAction = PendingServiceAction.StartAssigned(service)
+            emitEnableBluetoothRequest()
+            return
+        }
+        startAssignedInternal(service)
+    }
+
+    private fun startAssignedInternal(service: HomeUiModel) {
 
         _uiState.update { state ->
-            val newAssigned = state.assignedServiceList.filter { it.id != service.id }
             state.copy(
                 ongoingService = service,
-                assignedServiceList = newAssigned,
+                assignedServiceList = state.assignedServiceList.filter { it.id != service.id }
             )
         }
-        viewModelScope.launch {
-            _events.emit(HomeUiEvent.NavigateToTicketScreen)
-        }
+
+        navigateToTicketScreen()
     }
 
-    fun onStartDownloaded(service: HomeUiModel) {
+    //    START DOWNLOADED
+    fun onStartDownloaded(
+        service: HomeUiModel,
+        hasPermission: Boolean,
+        isBluetoothEnabled: Boolean
+    ) {
         if (checkAndEmitIfServiceAlreadyRunning()) return
+        if (!hasPermission) {
+            pendingAction = PendingServiceAction.StartDownloaded(service)
+            emitPermissionRequest()
+            return
+        }
+        if (!isBluetoothEnabled) {
+            pendingAction = PendingServiceAction.StartDownloaded(service)
+            emitEnableBluetoothRequest()
+            return
+        }
+        startDownloadedInternal(service)
+    }
 
+    private fun startDownloadedInternal(service: HomeUiModel) {
         _uiState.update { state ->
             val newDownload = state.downloadedServiceList.filter { it.id != service.id }
             state.copy(
@@ -69,9 +176,38 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
                 downloadedServiceList = newDownload,
             )
         }
-        viewModelScope.launch {
-            _events.emit(HomeUiEvent.NavigateToTicketScreen)
+        navigateToTicketScreen()
+    }
+
+    //    RE-START RECENT
+    fun onRestartRecentService(
+        service: HomeUiModel,
+        hasPermission: Boolean,
+        isBluetoothEnabled: Boolean
+    ) {
+        if (checkAndEmitIfServiceAlreadyRunning()) return
+        if (!hasPermission) {
+            pendingAction = PendingServiceAction.RestartRecent(service)
+            emitPermissionRequest()
+            return
         }
+        if (!isBluetoothEnabled) {
+            pendingAction = PendingServiceAction.RestartRecent(service)
+            emitEnableBluetoothRequest()
+            return
+        }
+        restartRecentInternal(service)
+    }
+
+    private fun restartRecentInternal(service: HomeUiModel) {
+        _uiState.update { state ->
+            val newRecentServices = state.recentServiceList.filter { it.id != service.id }
+            state.copy(
+                ongoingService = service,
+                recentServiceList = newRecentServices,
+            )
+        }
+        navigateToTicketScreen()
     }
 
     fun onDownloadService(service: HomeUiModel) {
@@ -81,20 +217,6 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
                 downloadedServiceList = state.downloadedServiceList + service,
                 otherServiceList = newOtherServices,
             )
-        }
-    }
-
-    fun onRestartRecentService(service: HomeUiModel) {
-        if (checkAndEmitIfServiceAlreadyRunning()) return
-        _uiState.update { state ->
-            val newRecentServices = state.recentServiceList.filter { it.id != service.id }
-            state.copy(
-                ongoingService = service,
-                recentServiceList = newRecentServices,
-            )
-        }
-        viewModelScope.launch {
-            _events.emit(HomeUiEvent.NavigateToTicketScreen)
         }
     }
 
