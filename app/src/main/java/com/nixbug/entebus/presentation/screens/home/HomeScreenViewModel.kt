@@ -1,9 +1,11 @@
 package com.nixbug.entebus.presentation.screens.home
 
+import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
+import com.nixbug.entebus.utils.PrinterManager
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,30 +22,47 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeScreenViewModel @Inject constructor() : ViewModel() {
+class HomeScreenViewModel @Inject constructor(private val printerManager: PrinterManager) :
+    ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<HomeUiEvent>()
     val events: SharedFlow<HomeUiEvent> = _events.asSharedFlow()
+
     private var pendingAction: PendingServiceAction? = null
+    private var pendingService: HomeUiModel? = null
 
-    private fun emitPermissionRequest() {
-        viewModelScope.launch {
-            _events.emit(HomeUiEvent.RequestBluetoothPermission)
+    private fun confirmServiceStart() {
+        val service = pendingService ?: return
+
+        _uiState.update { state ->
+            state.copy(
+                ongoingService = service,
+                assignedServiceList = state.assignedServiceList.filter { it.id != service.id },
+                downloadedServiceList = state.downloadedServiceList.filter { it.id != service.id },
+                recentServiceList = state.recentServiceList.filter { it.id != service.id }
+            )
         }
+        pendingService = null
+        navigateToTicketScreen()
     }
 
-    private fun emitEnableBluetoothRequest() {
-        viewModelScope.launch {
-            _events.emit(HomeUiEvent.RequestEnableBluetooth)
-        }
-    }
+    fun onPrinterSelected(address: String) {
+        _uiState.update { it.copy(showPrinterPicker = false) }
 
-    private fun navigateToTicketScreen() {
         viewModelScope.launch {
-            _events.emit(HomeUiEvent.NavigateToTicketScreen)
+            val success = printerManager.connectToPrinter(address)
+            if (success) {
+                if (pendingService != null) {
+                    confirmServiceStart()
+                } else {
+                    navigateToTicketScreen()
+                }
+            } else {
+                SnackbarManager.show("Failed to connect to printer", SnackbarType.ERROR)
+            }
         }
     }
 
@@ -59,18 +78,15 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    //   UI State Updates
-    fun onSearchQueryChange(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
-    }
-
-    fun onTabSelected(tab: Int) {
-        _uiState.update { it.copy(selectedTab = tab) }
+    private fun emitPermissionRequest() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.RequestBluetoothPermission)
+        }
     }
 
     fun onPermissionGranted(context: Context) {
 
-        val hasPermission = true
+        val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
         val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
 
         when (val action = pendingAction) {
@@ -107,7 +123,48 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
         pendingAction = null
     }
 
-    //    RESUME
+    private fun emitEnableBluetoothRequest() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.RequestEnableBluetooth)
+        }
+    }
+
+    private fun emitOpenPrinterPicker() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.OpenPrinterPicker)
+        }
+    }
+
+    fun showPrinterPicker(devices: List<BluetoothDevice>) {
+        _uiState.update {
+            it.copy(
+                pairedPrinters = devices,
+                showPrinterPicker = true
+            )
+        }
+    }
+
+    private fun navigateToTicketScreen() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.NavigateToTicketScreen)
+        }
+    }
+
+    fun hidePrinterPicker() {
+        _uiState.update {
+            it.copy(showPrinterPicker = false)
+        }
+        pendingService = null
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+    }
+
+    fun onTabSelected(tab: Int) {
+        _uiState.update { it.copy(selectedTab = tab) }
+    }
+
     fun onResumeService(hasPermission: Boolean, isBluetoothEnabled: Boolean) {
         if (!hasPermission) {
             emitPermissionRequest()
@@ -117,12 +174,16 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
             emitEnableBluetoothRequest()
             return
         }
-        navigateToTicketScreen()
+        if (printerManager.isConnected()) {
+            navigateToTicketScreen()
+        } else {
+            emitOpenPrinterPicker()
+        }
     }
 
-    //    START ASSIGNED
     fun onStartAssigned(service: HomeUiModel, hasPermission: Boolean, isBluetoothEnabled: Boolean) {
         if (checkAndEmitIfServiceAlreadyRunning()) return
+        pendingService = service
         if (!hasPermission) {
             pendingAction = PendingServiceAction.StartAssigned(service)
             emitPermissionRequest()
@@ -133,28 +194,24 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
             emitEnableBluetoothRequest()
             return
         }
-        startAssignedInternal(service)
+        startAssignedInternal()
     }
 
-    private fun startAssignedInternal(service: HomeUiModel) {
-
-        _uiState.update { state ->
-            state.copy(
-                ongoingService = service,
-                assignedServiceList = state.assignedServiceList.filter { it.id != service.id }
-            )
+    private fun startAssignedInternal() {
+        if (printerManager.isConnected()) {
+            confirmServiceStart()
+        } else {
+            emitOpenPrinterPicker()
         }
-
-        navigateToTicketScreen()
     }
 
-    //    START DOWNLOADED
     fun onStartDownloaded(
         service: HomeUiModel,
         hasPermission: Boolean,
         isBluetoothEnabled: Boolean
     ) {
         if (checkAndEmitIfServiceAlreadyRunning()) return
+        pendingService = service
         if (!hasPermission) {
             pendingAction = PendingServiceAction.StartDownloaded(service)
             emitPermissionRequest()
@@ -165,27 +222,24 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
             emitEnableBluetoothRequest()
             return
         }
-        startDownloadedInternal(service)
+        startDownloadedInternal()
     }
 
-    private fun startDownloadedInternal(service: HomeUiModel) {
-        _uiState.update { state ->
-            val newDownload = state.downloadedServiceList.filter { it.id != service.id }
-            state.copy(
-                ongoingService = service,
-                downloadedServiceList = newDownload,
-            )
+    private fun startDownloadedInternal() {
+        if (printerManager.isConnected()) {
+            confirmServiceStart()
+        } else {
+            emitOpenPrinterPicker()
         }
-        navigateToTicketScreen()
     }
 
-    //    RE-START RECENT
     fun onRestartRecentService(
         service: HomeUiModel,
         hasPermission: Boolean,
         isBluetoothEnabled: Boolean
     ) {
         if (checkAndEmitIfServiceAlreadyRunning()) return
+        pendingService = service
         if (!hasPermission) {
             pendingAction = PendingServiceAction.RestartRecent(service)
             emitPermissionRequest()
@@ -196,18 +250,15 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
             emitEnableBluetoothRequest()
             return
         }
-        restartRecentInternal(service)
+        restartRecentInternal()
     }
 
-    private fun restartRecentInternal(service: HomeUiModel) {
-        _uiState.update { state ->
-            val newRecentServices = state.recentServiceList.filter { it.id != service.id }
-            state.copy(
-                ongoingService = service,
-                recentServiceList = newRecentServices,
-            )
+    private fun restartRecentInternal() {
+        if (printerManager.isConnected()) {
+            confirmServiceStart()
+        } else {
+            emitOpenPrinterPicker()
         }
-        navigateToTicketScreen()
     }
 
     fun onDownloadService(service: HomeUiModel) {
@@ -221,6 +272,7 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
     }
 
     fun onFinishDuty(service: HomeUiModel) {
+        printerManager.closeConnection()
         _uiState.update { state ->
             state.copy(
                 recentServiceList = state.recentServiceList + service,
