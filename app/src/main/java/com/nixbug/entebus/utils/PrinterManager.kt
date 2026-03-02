@@ -65,25 +65,6 @@ class PrinterManager @Inject constructor(
     }
 
     /**
-     * Sends raw bytes to the printer.
-     */
-    fun sendData(data: ByteArray) {
-        if (socket == null || !socket!!.isConnected) {
-            _isConnected.value = false
-            return
-        }
-
-        try {
-            val outputStream = socket?.outputStream
-            outputStream?.write(data)
-            outputStream?.flush()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            _isConnected.value = false
-        }
-    }
-
-    /**
      * Properly releases the socket resources.
      */
     fun closeConnection() {
@@ -125,42 +106,64 @@ class PrinterManager @Inject constructor(
     // --- ESC/POS COMMANDS ---
 
     object Commands {
+        /** Resets the printer to default settings */
         val INIT = byteArrayOf(0x1B, 0x40)
 
-        // Line Spacing
-        val LINE_SPACING_20 = byteArrayOf(0x1B, 0x33, 0x14)
-        val LINE_SPACING_30 = byteArrayOf(0x1B, 0x33, 0x1E)
-        val LINE_SPACING_DEFAULT = byteArrayOf(0x1B, 0x32)
+        /** Moves the print head to the next line */
+        val FEED_LINE = byteArrayOf(0x0A)
 
-        // Alignment
+        // --- Alignment ---
         val ALIGN_LEFT = byteArrayOf(0x1B, 0x61, 0x00)
         val ALIGN_CENTER = byteArrayOf(0x1B, 0x61, 0x01)
         val ALIGN_RIGHT = byteArrayOf(0x1B, 0x61, 0x02)
 
-        // Text Styles
+        // --- Text Weight (Pure Bold) ---
+        /** Bold without changing font size */
         val BOLD_ON = byteArrayOf(0x1B, 0x45, 0x01)
         val BOLD_OFF = byteArrayOf(0x1B, 0x45, 0x00)
 
-        // Font Sizes
-        val SIZE_NORMAL = byteArrayOf(0x1B, 0x21, 0x00)
-        val SIZE_LARGE = byteArrayOf(0x1B, 0x21, 0x30)
+        // --- Line Spacing (Vertical Space) ---
+        /** Sets line spacing to default (approx 3.75mm or 30 dots) */
+        val LINE_SPACE_DEFAULT = byteArrayOf(0x1B, 0x32)
 
-        val FEED_LINE = byteArrayOf(0x0A)
+        /** Sets line spacing to a very tight 2.5mm (20 dots). Change 0x14 (20) to adjust. */
+        val LINE_SPACE_TIGHT = byteArrayOf(0x1B, 0x33, 0x14)
+
+        // --- Font Selection (Size) ---
+        /** Standard Font A (12x24 dots) - Usually 32 chars/line */
+        val FONT_A = byteArrayOf(0x1B, 0x4D, 0x00)
+
+        /** Small Font B (9x17 dots) - Allows more text per line (approx 42 chars) */
+        val FONT_B = byteArrayOf(0x1B, 0x4D, 0x01)
+
+        // --- Scaling (Magnification) ---
+        /** Normal text scaling (1x1) */
+        val SIZE_NORMAL = byteArrayOf(0x1D, 0x21, 0x00)
+
+        /** Large text (2x2) */
+        val SIZE_BIG = byteArrayOf(0x1D, 0x21, 0x11)
+
+        // --- Character Sets ---
+        val CHAR_TABLE_PC858 = byteArrayOf(0x1B, 0x74, 0x13)
     }
 
-    /**
-     * Helper to print text with common formatting.
+    /** * Core function to send the data.
+     * Recommended: Call this from the TicketBuilder build() output.
      */
-    fun printStyledText(
-        text: String,
-        alignment: ByteArray = Commands.ALIGN_LEFT,
-        isBold: Boolean = false,
-        size: ByteArray = Commands.SIZE_NORMAL
-    ) {
-        sendData(Commands.INIT)
-        sendData(alignment)
-        sendData(size)
-        if (isBold) sendData(Commands.BOLD_ON) else sendData(Commands.BOLD_OFF)
-        sendData((text + "\n").toByteArray())
+    fun sendData(data: ByteArray) {
+        if (socket == null || !socket!!.isConnected) {
+            _isConnected.value = false
+            return
+        }
+        try {
+            socket?.outputStream?.let {
+                it.write(data)
+                it.flush()
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            _isConnected.value = false
+        }
     }
+
 }

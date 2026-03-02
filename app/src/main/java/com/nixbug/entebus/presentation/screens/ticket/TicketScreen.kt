@@ -219,7 +219,8 @@ fun TicketScreen(
                     startingLandmark = state.startingLandmark,
                     endingLandmark = state.endingLandmark,
                     totalDistanceKm = state.totalDistanceKm,
-                    passengers = state.passengers
+                    passengers = state.passengers,
+                    onPrintClick = { viewModel.printTicket() }
                 )
             }
         }
@@ -571,7 +572,8 @@ fun BottomSummaryCard(
     startingLandmark: Landmark?,
     endingLandmark: Landmark?,
     totalDistanceKm: Float,
-    passengers: List<Passenger>
+    passengers: List<Passenger>,
+    onPrintClick: () -> Unit
 ) {
     val isTicketValid = startingLandmark != null &&
             endingLandmark != null &&
@@ -638,7 +640,7 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        String.format(Locale.getDefault(), "%.1f \u20B9", totalDistanceKm * 5),
+                        String.format(Locale.getDefault(), "%.1f \u20B9", totalDistanceKm * 10),
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )
@@ -647,11 +649,7 @@ fun BottomSummaryCard(
             Spacer(Modifier.height(5.dp))
             Button(
                 onClick = {
-                    SnackbarManager.show(
-                        message = "Printing ticket...",
-                        type = SnackbarType.INFO
-                    )
-
+                    onPrintClick()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(13.dp),
