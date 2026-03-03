@@ -1,4 +1,4 @@
-package com.nixbug.entebus.utils
+package com.nixbug.entebus.utils.printer
 
 class TicketBuilder {
     private var bytes = byteArrayOf()

@@ -1,8 +1,8 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
 import androidx.lifecycle.ViewModel
-import com.nixbug.entebus.utils.PrinterManager
-import com.nixbug.entebus.utils.TicketBuilder
+import com.nixbug.entebus.utils.printer.PrinterManager
+import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -230,5 +230,4 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
             SnackbarManager.show("Printing failed: ${e.message}", SnackbarType.ERROR)
         }
     }
-
 }

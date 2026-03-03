@@ -3,8 +3,8 @@ package com.nixbug.entebus.presentation.screens.summary
 import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nixbug.entebus.utils.PrinterManager
-import com.nixbug.entebus.utils.TicketBuilder
+import com.nixbug.entebus.utils.printer.PrinterManager
+import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.utcToIstConverter
