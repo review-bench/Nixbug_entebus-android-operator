@@ -147,10 +147,6 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                HomeUiEvent.NavigateToTicketScreen -> {
-                    rootNavController.navigate(AppNavItem.TicketScreen.route)
-                }
-
                 HomeUiEvent.RequestBluetoothPermission -> {
                     permissionLauncher.launch(BluetoothPermissionHelper.REQUIRED_PERMISSIONS)
                 }
@@ -162,6 +158,10 @@ fun HomeScreen(
 
                 HomeUiEvent.OpenPrinterPicker -> {
                     openPrinterPicker()
+                }
+
+                HomeUiEvent.NavigateToTicketScreen -> {
+                    rootNavController.navigate(AppNavItem.TicketScreen.route)
                 }
             }
         }
@@ -191,7 +191,11 @@ fun HomeScreen(
                 onResumeService = {
                     val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
                     val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
-                    viewModel.onResumeService(hasPermission, isEnabled)
+                    viewModel.handleServiceAction(
+                        action = HomeScreenViewModel.ServiceAction.RESUME,
+                        hasPermission = hasPermission,
+                        isBluetoothEnabled = isEnabled
+                    )
                 },
                 onFinishDutyClick = { service -> finishDutyService = service },
                 extractRouteName = viewModel::extractRouteName,
@@ -212,17 +216,32 @@ fun HomeScreen(
                 onStartAssigned = { service ->
                     val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
                     val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
-                    viewModel.onStartAssigned(service, hasPermission, isEnabled)
+                    viewModel.handleServiceAction(
+                        action = HomeScreenViewModel.ServiceAction.START_ASSIGNED,
+                        service = service,
+                        hasPermission = hasPermission,
+                        isBluetoothEnabled = isEnabled
+                    )
                 },
                 onStartDownloaded = { service ->
                     val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
                     val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
-                    viewModel.onStartDownloaded(service, hasPermission, isEnabled)
+                    viewModel.handleServiceAction(
+                        action = HomeScreenViewModel.ServiceAction.START_DOWNLOADED,
+                        service = service,
+                        hasPermission = hasPermission,
+                        isBluetoothEnabled = isEnabled
+                    )
                 },
                 onRestartRecentService = { service ->
                     val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
                     val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
-                    viewModel.onRestartRecentService(service, hasPermission, isEnabled)
+                    viewModel.handleServiceAction(
+                        action = HomeScreenViewModel.ServiceAction.RESTART_RECENT,
+                        service = service,
+                        hasPermission = hasPermission,
+                        isBluetoothEnabled = isEnabled
+                    )
                 },
                 onDownload = viewModel::onDownloadService,
                 extractRouteName = viewModel::extractRouteName,

@@ -147,10 +147,3 @@ sealed class HomeUiEvent {
     data object RequestEnableBluetooth : HomeUiEvent()
     data object OpenPrinterPicker : HomeUiEvent()
 }
-
-sealed class PendingServiceAction {
-    data class StartAssigned(val service: HomeUiModel) : PendingServiceAction()
-    data class StartDownloaded(val service: HomeUiModel) : PendingServiceAction()
-    data class RestartRecent(val service: HomeUiModel) : PendingServiceAction()
-    data object Resume : PendingServiceAction()
-}
