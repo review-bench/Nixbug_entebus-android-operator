@@ -202,7 +202,6 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
                 .apply {
                     selectedPassengers.forEach { passenger ->
                         val lineFare = passenger.passengerCount * 10.0
-                        // Format each line individually so the printer gets separate commands
                         val line = "%-10s %2d x 10.00 = %6.2f".format(
                             passenger.name.take(10),
                             passenger.passengerCount,

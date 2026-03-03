@@ -152,5 +152,5 @@ sealed class PendingServiceAction {
     data class StartAssigned(val service: HomeUiModel) : PendingServiceAction()
     data class StartDownloaded(val service: HomeUiModel) : PendingServiceAction()
     data class RestartRecent(val service: HomeUiModel) : PendingServiceAction()
-    object Resume : PendingServiceAction()
+    data object Resume : PendingServiceAction()
 }

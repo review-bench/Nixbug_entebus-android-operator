@@ -156,14 +156,14 @@ data class HomeUiState(
     val searchQuery: String = "",
 
     val selectedTab: Int = 0,
-    
+
     val pairedPrinters: List<BluetoothDevice> = emptyList(),
 
     val showPrinterPicker: Boolean = false,
 
     val selectedPrinterAddress: String? = null,
 
-) {
+    ) {
     val filteredOtherServices: List<HomeUiModel>
         get() = otherServiceList.filter {
             it.regNo.contains(searchQuery, ignoreCase = true)

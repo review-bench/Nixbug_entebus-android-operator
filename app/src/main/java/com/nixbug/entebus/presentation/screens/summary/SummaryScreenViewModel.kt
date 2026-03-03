@@ -91,7 +91,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
             if (success) {
                 pendingPrintData?.let {
                     printCollection(it)
-                    pendingPrintData = null   // clear after use
+                    pendingPrintData = null
                 }
             } else {
                 SnackbarManager.show(
@@ -158,7 +158,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
 
                 builder.addCommand(PrinterManager.Commands.BOLD_ON)
                 builder.addCommand(PrinterManager.Commands.ALIGN_LEFT)
-                builder.text("${index +1}.${service.serviceName}")
+                builder.text("${index + 1}.${service.serviceName}")
                 builder.addCommand(PrinterManager.Commands.BOLD_OFF)
 
                 builder.addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
@@ -168,7 +168,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
                 builder.addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
                 builder.addCommand(PrinterManager.Commands.FONT_A)
                 service.operators.forEach {
-                    builder.rowLeftRight(it.first , "${it.second} Rs")
+                    builder.rowLeftRight(it.first, "${it.second} Rs")
                 }
 
                 builder.addCommand(PrinterManager.Commands.BOLD_ON)

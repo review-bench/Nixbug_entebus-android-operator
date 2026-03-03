@@ -566,7 +566,6 @@ fun CounterButton(
     }
 }
 
-
 @Composable
 fun BottomSummaryCard(
     startingLandmark: Landmark?,
