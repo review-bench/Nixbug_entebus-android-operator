@@ -1,5 +1,16 @@
 package com.nixbug.entebus.presentation.screens.summary
 
+import android.app.Activity
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,6 +62,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.nixbug.entebus.presentation.components.DialogBox
+import com.nixbug.entebus.presentation.components.PrinterPickerDialog
+import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.utcToIstConverter
@@ -59,12 +74,74 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun SummaryScreen(
-    viewModel: SummaryScreenViewModel = hiltViewModel()
-) {
+fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
 
+    //  UI STATE & CONTEXT SETUP
     val state by viewModel.uiState.collectAsState()
-    var showPrintDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val activity = context as Activity
+
+    //  UI FLAGS (Composable State)
+    var isPermanentDenial by remember { mutableStateOf(false) }
+    var showSummaryPreviewDialog by remember { mutableStateOf(false) }
+    var showPermissionDialog by remember { mutableStateOf(false) }
+
+    //  BLUETOOTH ENABLE LAUNCHER
+    val enableBluetoothLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                viewModel.resumePendingPrint()
+            }
+        }
+
+    //  PERMISSION REQUEST LAUNCHER
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.values.all { it }
+        if (allGranted) {
+            if (BluetoothPermissionHelper.isBluetoothEnabled(context)) {
+                viewModel.resumePendingPrint()
+            } else {
+                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                enableBluetoothLauncher.launch(enableBtIntent)
+            }
+        } else {
+            isPermanentDenial = BluetoothPermissionHelper.isPermanentlyDenied(activity)
+            showPermissionDialog = true
+        }
+    }
+
+    fun openPrinterPicker() {
+        val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
+        if (!hasPermission) {
+            return
+        }
+        try {
+            val bluetoothManager =
+                context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+            val adapter = bluetoothManager.adapter
+            val bondedDevices = adapter?.bondedDevices?.toList() ?: emptyList()
+            viewModel.showPrinterPicker(bondedDevices)
+        } catch (e: SecurityException) {
+            SnackbarManager.show(
+                "Permission denied to access Bluetooth",
+                SnackbarType.ERROR
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                SummaryUiEvent.OpenPrinterPicker -> {
+                    openPrinterPicker()
+                }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -72,7 +149,6 @@ fun SummaryScreen(
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -80,7 +156,6 @@ fun SummaryScreen(
                 .padding(bottom = 135.dp)
         ) {
             SummaryHeader()
-
             SummaryList(
                 summaryData = state.summary,
                 selectedIds = state.selectedServiceIds,
@@ -88,34 +163,76 @@ fun SummaryScreen(
                 modifier = Modifier.weight(1f)
             )
         }
-
-        PrintButton(
+        PreviewButton(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 80.dp)
                 .padding(horizontal = 30.dp),
             onClick = {
                 if (state.selectedServiceIds.isNotEmpty()) {
-                    showPrintDialog = true
+                    showSummaryPreviewDialog = true
                 } else {
                     SnackbarManager.show(
                         message = "Please select at least one service",
                         type = SnackbarType.WARNING
                     )
                 }
-            }
+            },
         )
-
     }
 
-    if (showPrintDialog) {
-        PrintSummaryDialog(
+    if (showSummaryPreviewDialog) {
+        SummaryPreviewDialog(
             summaryData = state.summary,
             selectedIds = state.selectedServiceIds,
-            onDismiss = { showPrintDialog = false }
+            onDismiss = { showSummaryPreviewDialog = false },
+            context = context,
+            permissionLauncher = permissionLauncher,
+            enableBluetoothLauncher = enableBluetoothLauncher,
+            onGenerateReceipt = viewModel::generateReceipt,
         )
     }
+    if (showPermissionDialog) {
+        DialogBox(
+            title = "Permission Required",
+            message = "Bluetooth permission is required to start or resume services. Without it, ticket printing and device connection will not work properly.",
+            confirmText = if (isPermanentDenial) "Open Settings" else "Retry",
+            dismissible = true,
+            onDismiss = { showPermissionDialog = false },
+            showExitButton = true,
+            exitText = "Cancel",
+            onExitClick = { showPermissionDialog = false },
+            onConfirmClick = {
+                showPermissionDialog = false
 
+                if (isPermanentDenial) {
+                    val intent = Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                    ).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                } else {
+                    permissionLauncher.launch(
+                        BluetoothPermissionHelper.REQUIRED_PERMISSIONS
+                    )
+                }
+            },
+            titleColor = MaterialTheme.colorScheme.primary,
+            confirmBtnColor = MaterialTheme.colorScheme.primary,
+            exitBtnBorderColor = MaterialTheme.colorScheme.primary
+        )
+    }
+    if (state.showPrinterPicker) {
+        PrinterPickerDialog(
+            pairedDevices = state.pairedPrinters,
+            onDismiss = { viewModel.hidePrinterPicker() },
+            onDeviceSelected = { deviceAddress ->
+                viewModel.onPrinterSelected(deviceAddress)
+            },
+            context = context
+        )
+    }
 }
 
 @Composable
@@ -168,9 +285,9 @@ fun SummaryList(
 }
 
 @Composable
-fun PrintButton(
+fun PreviewButton(
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
@@ -258,7 +375,7 @@ fun SummaryCardContent(
         Spacer(modifier = Modifier.height(8.dp))
         DividerLine()
         Spacer(modifier = Modifier.height(8.dp))
-        TotalRow(totalCollection)
+        TotalCollectionRow(totalCollection)
     }
 }
 
@@ -326,7 +443,7 @@ fun OperatorList(serviceGroup: List<SummaryUiModel>) {
 }
 
 @Composable
-fun TotalRow(total: Int) {
+fun TotalCollectionRow(total: Int) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
@@ -451,10 +568,46 @@ fun DividerLine() {
 }
 
 @Composable
-fun PrintSummaryDialog(
+fun ReceiptTextWithLine(text: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        HorizontalDivider(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp),
+            thickness = 1.dp,
+            color = Color.Black
+        )
+
+        Text(
+            text = text,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1
+        )
+
+        HorizontalDivider(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 8.dp),
+            thickness = 1.dp,
+            color = Color.Black
+        )
+    }
+}
+
+@Composable
+fun SummaryPreviewDialog(
     summaryData: List<SummaryUiModel>,
     selectedIds: Set<Int>,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    context: Activity,
+    permissionLauncher: ManagedActivityResultLauncher<Array<String>, Map<String, @JvmSuppressWildcards Boolean>>,
+    enableBluetoothLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
+    onGenerateReceipt: (PrintSummaryData) -> Unit,
 ) {
 
     val selectedServices = remember(summaryData, selectedIds) {
@@ -525,7 +678,6 @@ fun PrintSummaryDialog(
                             style = MaterialTheme.typography.headlineSmall
                         )
                     }
-
 
                     itemsIndexed(selectedServices.values.toList()) { index, serviceGroup ->
 
@@ -624,47 +776,64 @@ fun PrintSummaryDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // TODO: Replace onDismiss with actual printer implementation once printing logic is integrated.
-                // Currently dismissing the dialog because printer functionality is not yet implemented.
                 Button(
-                    onClick = onDismiss,
+                    onClick = {
+                        val hasPermission =
+                            BluetoothPermissionHelper.hasBluetoothPermissions(context)
+                        if (hasPermission) {
+                            val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
+                            if (isEnabled) {
+                                val currentDateTime =
+                                    ZonedDateTime.now(ZoneId.of("Asia/Kolkata"))
+                                val formattedDateTime = currentDateTime.format(
+                                    DateTimeFormatter.ofPattern("dd MMM yyyy,hh:mm a")
+                                )
+
+                                val printData = PrintSummaryData(
+                                    services = selectedServices.values.map { serviceGroup ->
+
+                                        val first = serviceGroup.first()
+                                        val total = serviceGroup.sumOf { it.collection }
+
+                                        val (startDate, startTime) = utcToIstConverter(first.startedOn)
+                                            ?: ("Invalid" to "Invalid")
+                                        val (finishDate, finishTime) = utcToIstConverter(first.finishedOn)
+                                            ?: ("Invalid" to "Invalid")
+
+                                        val dateRange =
+                                            if (startDate == finishDate) {
+                                                "$startDate, $startTime To $finishTime"
+                                            } else {
+                                                "$startDate, $startTime To $finishDate, $finishTime"
+                                            }
+
+                                        PrintServiceData(
+                                            serviceName = first.serviceName,
+                                            regNo = first.regNo,
+                                            dateTimeRange = dateRange,
+                                            operators = serviceGroup.map {
+                                                it.operatorName to it.collection
+                                            },
+                                            serviceTotal = total.toString()
+                                        )
+                                    },
+                                    grandTotal = grandTotal.toString(),
+                                    printedAt = formattedDateTime
+                                )
+                                onGenerateReceipt(printData)
+                            } else {
+                                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                                enableBluetoothLauncher.launch(enableBtIntent)
+                            }
+                        } else {
+                            permissionLauncher.launch(BluetoothPermissionHelper.REQUIRED_PERMISSIONS)
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Generate Receipt")
                 }
             }
         }
-    }
-}
-
-@Composable
-fun ReceiptTextWithLine(text: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        HorizontalDivider(
-            modifier = Modifier
-                .weight(1f)
-                .padding(end = 8.dp),
-            thickness = 1.dp,
-            color = Color.Black
-        )
-
-        Text(
-            text = text,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.labelMedium,
-            maxLines = 1
-        )
-
-        HorizontalDivider(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 8.dp),
-            thickness = 1.dp,
-            color = Color.Black
-        )
     }
 }

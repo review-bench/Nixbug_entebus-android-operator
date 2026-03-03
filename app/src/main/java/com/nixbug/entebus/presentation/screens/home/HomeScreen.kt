@@ -77,7 +77,6 @@ import com.nixbug.entebus.ui.theme.SelectedServiceColor
 import com.nixbug.entebus.utils.utcToIstConverter
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
@@ -85,10 +84,8 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.filled.Print
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.window.Dialog
+import com.nixbug.entebus.presentation.components.PrinterPickerDialog
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
@@ -300,137 +297,137 @@ fun HomeScreen(
     }
 }
 
-@Composable
-fun PrinterPickerDialog(
-    pairedDevices: List<BluetoothDevice>,
-    onDeviceSelected: (String) -> Unit,
-    onDismiss: () -> Unit,
-    context: Context
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxWidth()
-            ) {
-
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 250.dp)
-                ) {
-                    if (pairedDevices.isEmpty()) {
-                        item {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Icon(
-                                    Icons.Filled.Warning,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(30.dp),
-                                    tint = Color.Black
-                                )
-                                Text(
-                                    "No paired printers found",
-                                    style = MaterialTheme.typography.displayLarge,
-                                    color = Color.Black,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center
-                                )
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text(
-                                    "Please pair your printer with the device from bluetooth settings to continue",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Gray,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-
-                        }
-                    } else {
-                        items(pairedDevices) { device ->
-                            val deviceName = remember(device) {
-                                try {
-                                    device.name ?: "Unknown Device"
-                                } catch (e: SecurityException) {
-                                    "Permission Denied"
-                                }
-                            }
-
-                            val deviceAddress = device.address
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        onDeviceSelected(deviceAddress)
-                                    }
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Default.Print,
-                                    contentDescription = null,
-                                    tint = Color.DarkGray
-                                )
-                                Spacer(Modifier.width(16.dp))
-                                Column {
-                                    Text(
-                                        text = deviceName,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = deviceAddress,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.Gray
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(16.dp))
-                if (pairedDevices.isNotEmpty()) {
-                    Button(
-                        onClick = onDismiss,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    ) {
-                        Text("Close", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                } else {
-                    Button(
-                        onClick = {
-                            val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
-                            context.startActivity(intent)
-                            onDismiss()
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    ) {
-                        Text(
-                            "Open Bluetooth Settings",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
+//@Composable
+//fun PrinterPickerDialog(
+//    pairedDevices: List<BluetoothDevice>,
+//    onDeviceSelected: (String) -> Unit,
+//    onDismiss: () -> Unit,
+//    context: Context
+//) {
+//    Dialog(onDismissRequest = onDismiss) {
+//        Card(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(16.dp),
+//            shape = RoundedCornerShape(16.dp),
+//            colors = CardDefaults.cardColors(containerColor = Color.White),
+//            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+//        ) {
+//            Column(
+//                modifier = Modifier
+//                    .padding(20.dp)
+//                    .fillMaxWidth()
+//            ) {
+//
+//                LazyColumn(
+//                    modifier = Modifier.heightIn(max = 250.dp)
+//                ) {
+//                    if (pairedDevices.isEmpty()) {
+//                        item {
+//                            Column(
+//                                modifier = Modifier.fillMaxWidth(),
+//                                horizontalAlignment = Alignment.CenterHorizontally
+//                            ) {
+//                                Icon(
+//                                    Icons.Filled.Warning,
+//                                    contentDescription = null,
+//                                    modifier = Modifier.size(30.dp),
+//                                    tint = Color.Black
+//                                )
+//                                Text(
+//                                    "No paired printers found",
+//                                    style = MaterialTheme.typography.displayLarge,
+//                                    color = Color.Black,
+//                                    fontSize = 20.sp,
+//                                    fontWeight = FontWeight.Bold,
+//                                    textAlign = TextAlign.Center
+//                                )
+//                                Spacer(modifier = Modifier.height(10.dp))
+//                                Text(
+//                                    "Please pair your printer with the device from bluetooth settings to continue",
+//                                    style = MaterialTheme.typography.bodyMedium,
+//                                    color = Color.Gray,
+//                                    fontSize = 15.sp,
+//                                    fontWeight = FontWeight.Medium,
+//                                    textAlign = TextAlign.Center
+//                                )
+//                            }
+//
+//                        }
+//                    } else {
+//                        items(pairedDevices) { device ->
+//                            val deviceName = remember(device) {
+//                                try {
+//                                    device.name ?: "Unknown Device"
+//                                } catch (e: SecurityException) {
+//                                    "Permission Denied"
+//                                }
+//                            }
+//
+//                            val deviceAddress = device.address
+//
+//                            Row(
+//                                modifier = Modifier
+//                                    .fillMaxWidth()
+//                                    .clip(RoundedCornerShape(8.dp))
+//                                    .clickable {
+//                                        onDeviceSelected(deviceAddress)
+//                                    }
+//                                    .padding(12.dp),
+//                                verticalAlignment = Alignment.CenterVertically
+//                            ) {
+//                                Icon(
+//                                    Icons.Default.Print,
+//                                    contentDescription = null,
+//                                    tint = Color.DarkGray
+//                                )
+//                                Spacer(Modifier.width(16.dp))
+//                                Column {
+//                                    Text(
+//                                        text = deviceName,
+//                                        style = MaterialTheme.typography.bodyLarge,
+//                                        fontWeight = FontWeight.Medium
+//                                    )
+//                                    Text(
+//                                        text = deviceAddress,
+//                                        style = MaterialTheme.typography.bodySmall,
+//                                        color = Color.Gray
+//                                    )
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                Spacer(Modifier.height(16.dp))
+//                if (pairedDevices.isNotEmpty()) {
+//                    Button(
+//                        onClick = onDismiss,
+//                        modifier = Modifier.fillMaxWidth(),
+//                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+//                    ) {
+//                        Text("Close", color = MaterialTheme.colorScheme.onSurfaceVariant)
+//                    }
+//                } else {
+//                    Button(
+//                        onClick = {
+//                            val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
+//                            context.startActivity(intent)
+//                            onDismiss()
+//                        },
+//                        modifier = Modifier.fillMaxWidth(),
+//                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+//                    ) {
+//                        Text(
+//                            "Open Bluetooth Settings",
+//                            color = MaterialTheme.colorScheme.onSurfaceVariant
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 @Composable
 fun ServiceHeader() {

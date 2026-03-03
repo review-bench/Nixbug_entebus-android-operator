@@ -62,6 +62,29 @@ class TicketBuilder {
         return this
     }
 
+    /** Aligns [left] text to the left and [right] text to the right of the line */
+    fun rowLeftRight(left: String, right: String): TicketBuilder {
+        val total = currentLineWidth
+
+        // Calculate available space
+        val spaceCount = total - left.length - right.length
+
+        val line = if (spaceCount > 0) {
+            // Normal case: join with spaces
+            left + " ".repeat(spaceCount) + right
+        } else {
+            // Overflow case: clip the left text to make room for the right text
+            val availableForLeft = total - right.length - 1
+            val clippedLeft = if (availableForLeft > 0) clip(left, availableForLeft) else ""
+            val finalSpace = total - clippedLeft.length - right.length
+            clippedLeft + " ".repeat(finalSpace.coerceAtLeast(0)) + right
+        }
+
+        val formatted = line.replace("₹", 0x9F.toChar().toString())
+        bytes += (formatted + "\n").toByteArray(charset("ISO-8859-1"))
+        return this
+    }
+
     /** Helper to truncate text with ellipsis */
     private fun formatColumn(text: String, width: Int, isRightAligned: Boolean): String {
         return if (text.length > width) {

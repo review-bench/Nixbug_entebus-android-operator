@@ -139,7 +139,7 @@ class PrinterManager @Inject constructor(
         // --- Scaling (Magnification) ---
         /** Normal text scaling (1x1) */
         val SIZE_NORMAL = byteArrayOf(0x1D, 0x21, 0x00)
-
+        val SIZE_MEDIUM_TALL = byteArrayOf(0x1D, 0x21, 0x01)
         /** Large text (2x2) */
         val SIZE_BIG = byteArrayOf(0x1D, 0x21, 0x11)
 
