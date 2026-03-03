@@ -135,11 +135,7 @@ fun PrinterPickerDialog(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = Color.Gray
                                     )
-                                    Text(
-                                        text = device,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.Gray
-                                    )
+
                                 }
                             }
                         }
