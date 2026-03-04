@@ -7,9 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -68,6 +66,7 @@ import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.utcToIstConverter
+import com.nixbug.entebus.utils.utcToIstWithActualDate
 import kotlinx.coroutines.delay
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -92,7 +91,7 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
             contract = ActivityResultContracts.StartActivityForResult()
         ) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                viewModel.resumePendingPrint()
+                viewModel.onPermissionGranted(context)
             }
         }
 
@@ -102,12 +101,7 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
     ) { permissions ->
         val allGranted = permissions.values.all { it }
         if (allGranted) {
-            if (BluetoothPermissionHelper.isBluetoothEnabled(context)) {
-                viewModel.resumePendingPrint()
-            } else {
-                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                enableBluetoothLauncher.launch(enableBtIntent)
-            }
+            viewModel.onPermissionGranted(context)
         } else {
             isPermanentDenial = BluetoothPermissionHelper.isPermanentlyDenied(activity)
             showPermissionDialog = true
@@ -136,9 +130,20 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
+
                 SummaryUiEvent.OpenPrinterPicker -> {
                     openPrinterPicker()
                 }
+
+                SummaryUiEvent.RequestBluetoothPermission -> {
+                    permissionLauncher.launch(BluetoothPermissionHelper.REQUIRED_PERMISSIONS)
+                }
+
+                SummaryUiEvent.RequestEnableBluetooth -> {
+                    val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                    enableBluetoothLauncher.launch(enableBtIntent)
+                }
+
             }
         }
     }
@@ -187,8 +192,6 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
             selectedIds = state.selectedServiceIds,
             onDismiss = { showSummaryPreviewDialog = false },
             context = context,
-            permissionLauncher = permissionLauncher,
-            enableBluetoothLauncher = enableBluetoothLauncher,
             onGenerateReceipt = viewModel::generateReceipt,
         )
     }
@@ -605,9 +608,7 @@ fun SummaryPreviewDialog(
     selectedIds: Set<Int>,
     onDismiss: () -> Unit,
     context: Activity,
-    permissionLauncher: ManagedActivityResultLauncher<Array<String>, Map<String, @JvmSuppressWildcards Boolean>>,
-    enableBluetoothLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
-    onGenerateReceipt: (PrintSummaryData) -> Unit,
+    onGenerateReceipt: (PrintSummaryData, Boolean, Boolean) -> Unit,
 ) {
 
     val selectedServices = remember(summaryData, selectedIds) {
@@ -780,54 +781,13 @@ fun SummaryPreviewDialog(
                     onClick = {
                         val hasPermission =
                             BluetoothPermissionHelper.hasBluetoothPermissions(context)
-                        if (hasPermission) {
-                            val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
-                            if (isEnabled) {
-                                val currentDateTime =
-                                    ZonedDateTime.now(ZoneId.of("Asia/Kolkata"))
-                                val formattedDateTime = currentDateTime.format(
-                                    DateTimeFormatter.ofPattern("dd MMM yyyy,hh:mm a")
-                                )
+                        val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
+                        val printData = buildPrintSummaryData(
+                            selectedServices = selectedServices,
+                            grandTotal = grandTotal
+                        )
+                        onGenerateReceipt(printData, hasPermission, isEnabled)
 
-                                val printData = PrintSummaryData(
-                                    services = selectedServices.values.map { serviceGroup ->
-
-                                        val first = serviceGroup.first()
-                                        val total = serviceGroup.sumOf { it.collection }
-
-                                        val (startDate, startTime) = utcToIstConverter(first.startedOn)
-                                            ?: ("Invalid" to "Invalid")
-                                        val (finishDate, finishTime) = utcToIstConverter(first.finishedOn)
-                                            ?: ("Invalid" to "Invalid")
-
-                                        val dateRange =
-                                            if (startDate == finishDate) {
-                                                "$startDate, $startTime To $finishTime"
-                                            } else {
-                                                "$startDate, $startTime To $finishDate, $finishTime"
-                                            }
-
-                                        PrintServiceData(
-                                            serviceName = first.serviceName,
-                                            regNo = first.regNo,
-                                            dateTimeRange = dateRange,
-                                            operators = serviceGroup.map {
-                                                it.operatorName to it.collection
-                                            },
-                                            serviceTotal = total.toString()
-                                        )
-                                    },
-                                    grandTotal = grandTotal.toString(),
-                                    printedAt = formattedDateTime
-                                )
-                                onGenerateReceipt(printData)
-                            } else {
-                                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                                enableBluetoothLauncher.launch(enableBtIntent)
-                            }
-                        } else {
-                            permissionLauncher.launch(BluetoothPermissionHelper.REQUIRED_PERMISSIONS)
-                        }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -835,5 +795,58 @@ fun SummaryPreviewDialog(
                 }
             }
         }
+    }
+}
+
+private fun buildPrintSummaryData(
+    selectedServices: Map<Int, List<SummaryUiModel>>,
+    grandTotal: Int
+): PrintSummaryData {
+
+    val currentDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"))
+    val formattedDateTime =
+        currentDateTime.format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))
+
+    return PrintSummaryData(
+        services = selectedServices.values.map { serviceGroup ->
+
+            val first = serviceGroup.first()
+            val total = serviceGroup.sumOf { it.collection }
+
+            val dateRange = buildDateRange(
+                first.startedOn,
+                first.finishedOn
+            )
+
+            PrintServiceData(
+                serviceName = first.serviceName,
+                regNo = first.regNo,
+                dateTimeRange = dateRange,
+                operators = serviceGroup.map {
+                    it.operatorName to it.collection
+                },
+                serviceTotal = total.toString()
+            )
+        },
+        grandTotal = grandTotal.toString(),
+        printedAt = formattedDateTime
+    )
+}
+
+private fun buildDateRange(
+    startedOn: String?,
+    finishedOn: String?
+): String {
+
+    val (startDate, startTime) =
+        utcToIstWithActualDate(startedOn) ?: ("Invalid" to "Invalid")
+
+    val (finishDate, finishTime) =
+        utcToIstWithActualDate(finishedOn) ?: ("Invalid" to "Invalid")
+
+    return if (startDate == finishDate) {
+        "$startDate, $startTime To $finishTime"
+    } else {
+        "$startDate, $startTime To $finishDate, $finishTime"
     }
 }

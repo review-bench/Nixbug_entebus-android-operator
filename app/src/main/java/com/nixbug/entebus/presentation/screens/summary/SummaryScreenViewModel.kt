@@ -1,8 +1,10 @@
 package com.nixbug.entebus.presentation.screens.summary
 
 import android.bluetooth.BluetoothDevice
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
@@ -77,34 +79,77 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
         }
     }
 
+
+    fun generateReceipt(
+        data: PrintSummaryData,
+        hasPermission: Boolean,
+        isBluetoothEnabled: Boolean
+    ) {
+        pendingPrintData = data
+
+        if (!hasPermission) {
+            emitPermissionRequest()
+            return
+        }
+
+        if (!isBluetoothEnabled) {
+            emitEnableBluetoothRequest()
+            return
+        }
+
+        proceedAfterBluetoothReady()
+    }
+
+
+    // ----------------------------------------------------------------
+    // EVENTS
+    // ----------------------------------------------------------------
+
+    private fun emitPermissionRequest() {
+        viewModelScope.launch {
+            _events.emit(SummaryUiEvent.RequestBluetoothPermission)
+        }
+    }
+
+    private fun emitEnableBluetoothRequest() {
+        viewModelScope.launch {
+            _events.emit(SummaryUiEvent.RequestEnableBluetooth)
+        }
+    }
+
     private fun emitOpenPrinterPicker() {
         viewModelScope.launch {
             _events.emit(SummaryUiEvent.OpenPrinterPicker)
         }
     }
 
-    fun onPrinterSelected(address: String) {
-        _uiState.update { it.copy(showPrinterPicker = false) }
+    // ----------------------------------------------------------------
 
-        viewModelScope.launch {
-            val success = printerManager.connectToPrinter(address)
-            if (success) {
-                pendingPrintData?.let {
-                    printCollection(it)
-                    pendingPrintData = null
-                }
-            } else {
-                SnackbarManager.show(
-                    "Failed to connect to printer",
-                    SnackbarType.ERROR
-                )
-            }
+    // ----------------------------------------------------------------
+    // PERMISSION RESULT CALLBACK
+    // ----------------------------------------------------------------
+
+    fun onPermissionGranted(context: Context) {
+        val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
+        val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
+
+        if (hasPermission && isEnabled) {
+            proceedAfterBluetoothReady()
+        } else {
+            emitEnableBluetoothRequest()
+            return
         }
     }
 
-    fun hidePrinterPicker() {
-        _uiState.update {
-            it.copy(showPrinterPicker = false)
+    // ----------------------------------------------------------------
+    // CORE FLOW CONTINUATION
+    // ----------------------------------------------------------------
+
+    private fun proceedAfterBluetoothReady() {
+        if (printerManager.isConnected()) {
+            printCollection()
+        } else {
+            emitOpenPrinterPicker()
         }
     }
 
@@ -117,22 +162,31 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
         }
     }
 
-    fun resumePendingPrint() {
-        pendingPrintData?.let {
-            generateReceipt(it)
+    fun onPrinterSelected(address: String) {
+        _uiState.update { it.copy(showPrinterPicker = false) }
+
+        viewModelScope.launch {
+            val success = printerManager.connectToPrinter(address)
+            if (success) {
+                if (pendingPrintData != null) {
+                    printCollection()
+                }
+            } else {
+                SnackbarManager.show(
+                    "Failed to print",
+                    SnackbarType.ERROR
+                )
+            }
         }
     }
 
-    fun generateReceipt(data: PrintSummaryData) {
-        if (printerManager.isConnected()) {
-            printCollection(data)
-        } else {
-            pendingPrintData = data
-            emitOpenPrinterPicker()
+    fun hidePrinterPicker() {
+        _uiState.update {
+            it.copy(showPrinterPicker = false)
         }
     }
 
-    fun printCollection(data: PrintSummaryData) {
+    fun printCollection() {
 
         if (!printerManager.isConnected()) {
             SnackbarManager.show(
@@ -142,6 +196,8 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
             return
         }
 
+        val data = pendingPrintData ?: return
+
         try {
             val builder = TicketBuilder()
 
@@ -149,7 +205,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
             builder.text("------${data.printedAt}------")
             builder.addCommand(PrinterManager.Commands.BOLD_ON)
             builder.addCommand(PrinterManager.Commands.SIZE_MEDIUM_TALL)
-            builder.text("RKV ENTERPRISES")
+            builder.text("Krishna")
             builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
             builder.addCommand(PrinterManager.Commands.BOLD_OFF)
             builder.text("--------")
@@ -189,10 +245,9 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
             builder.text("--Nixbug Softwares OPC Pvt Ltd--")
 
             printerManager.sendData(builder.build())
-
+            pendingPrintData = null
         } catch (e: Exception) {
             SnackbarManager.show("Printing failed: ${e.message}", SnackbarType.ERROR)
         }
     }
-
 }

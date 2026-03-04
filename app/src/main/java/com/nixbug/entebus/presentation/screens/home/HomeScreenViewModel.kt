@@ -83,6 +83,9 @@ class HomeScreenViewModel @Inject constructor(
 
         if (hasPermission && isEnabled) {
             proceedAfterBluetoothReady()
+        } else {
+            emitEnableBluetoothRequest()
+            return
         }
     }
 

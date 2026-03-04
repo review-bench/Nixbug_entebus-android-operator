@@ -1,5 +1,7 @@
 package com.nixbug.entebus.presentation.screens.summary
 
+import com.nixbug.entebus.presentation.screens.home.HomeUiEvent
+
 data class SummaryUiModel(
     val id: Int,
     val serviceId: Int,
@@ -14,6 +16,8 @@ data class SummaryUiModel(
 
 sealed class SummaryUiEvent {
     data object OpenPrinterPicker : SummaryUiEvent()
+    data object RequestBluetoothPermission : SummaryUiEvent()
+    data object RequestEnableBluetooth : SummaryUiEvent()
 }
 
 data class PrintSummaryData(
