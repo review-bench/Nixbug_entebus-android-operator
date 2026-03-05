@@ -7,4 +7,6 @@ data class SummaryUiState(
     val selectedServiceIds: Set<Int> = emptySet(),
     val showPrinterPicker: Boolean = false,
     val pairedPrinters: List<BluetoothDevice> = emptyList(),
+    val isConnectingPrinter: Boolean = false,
+    val showSummaryPreviewDialog: Boolean = false
 )

@@ -12,7 +12,3 @@ data class TicketUiState(
 
     val totalDistanceKm: Float = 0f
 )
-
-sealed class TicketUiEvent {
-    data class ShowToast(val message: String) : TicketUiEvent()
-}

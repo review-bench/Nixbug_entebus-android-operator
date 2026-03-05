@@ -307,6 +307,7 @@ fun HomeScreen(
     if (state.showPrinterPicker) {
         PrinterPickerDialog(
             pairedDevices = state.pairedPrinters,
+            isConnecting = state.isConnectingPrinter,
             onDismiss = { viewModel.hidePrinterPicker() },
             onDeviceSelected = { deviceAddress ->
                 viewModel.onPrinterSelected(deviceAddress)

@@ -153,6 +153,22 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
         }
     }
 
+    fun showSummaryPreview() {
+        _uiState.update {
+            it.copy(
+                showSummaryPreviewDialog = true
+            )
+        }
+    }
+
+    fun hideSummaryPreview() {
+        _uiState.update {
+            it.copy(
+                showSummaryPreviewDialog = false
+            )
+        }
+    }
+
     fun showPrinterPicker(devices: List<BluetoothDevice>) {
         _uiState.update {
             it.copy(
@@ -163,19 +179,23 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
     }
 
     fun onPrinterSelected(address: String) {
-        _uiState.update { it.copy(showPrinterPicker = false) }
+        _uiState.update { it.copy(isConnectingPrinter = true) }
 
         viewModelScope.launch {
             val success = printerManager.connectToPrinter(address)
             if (success) {
+                _uiState.update { it.copy(isConnectingPrinter = false) }
+                _uiState.update { it.copy(showPrinterPicker = false) }
                 if (pendingPrintData != null) {
                     printCollection()
                 }
             } else {
                 SnackbarManager.show(
-                    "Failed to print",
+                    "Unable to connect to printer,make sure your printer is powered on",
                     SnackbarType.ERROR
                 )
+                _uiState.update { it.copy(isConnectingPrinter = false) }
+                _uiState.update { it.copy(showPrinterPicker = false) }
             }
         }
     }
@@ -187,6 +207,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
     }
 
     fun printCollection() {
+        hideSummaryPreview()
 
         if (!printerManager.isConnected()) {
             SnackbarManager.show(

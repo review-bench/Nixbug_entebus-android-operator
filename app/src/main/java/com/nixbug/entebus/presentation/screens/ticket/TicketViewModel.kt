@@ -1,15 +1,21 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
+import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val MAX_PASSENGER_COUNT = 99
@@ -22,6 +28,15 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
 
     private val _uiState = MutableStateFlow(TicketUiState(landmarks = SortedSampleLandmarks))
     val uiState: StateFlow<TicketUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<TicketUiEvent>()
+    val events: SharedFlow<TicketUiEvent> = _events.asSharedFlow()
+
+    private fun emitNavigateBack() {
+        viewModelScope.launch {
+            _events.emit(TicketUiEvent.EmitNavigateBack)
+        }
+    }
 
     private fun calculateDistanceKm(start: Landmark?, end: Landmark?): Float {
         return if (start != null && end != null) {
@@ -139,9 +154,11 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
     fun printTicket() {
         if (!printerManager.isConnected()) {
             SnackbarManager.show(
-                message = "Printer not connected. Please connect in settings.",
-                type = SnackbarType.ERROR
+                message = "Printer connection failed. Please reconnect the printer and resume the service.",
+                type = SnackbarType.ERROR,
+                SnackbarDuration.Long
             )
+            emitNavigateBack()
             return
         }
         val state = _uiState.value
@@ -227,7 +244,12 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
 
             printerManager.sendData(ticket)
         } catch (e: Exception) {
-            SnackbarManager.show("Printing failed: ${e.message}", SnackbarType.ERROR)
+            SnackbarManager.show(
+                "Printer connection failed. Please reconnect the printer and resume the service.",
+                SnackbarType.ERROR,
+                SnackbarDuration.Long
+            )
+            emitNavigateBack()
         }
     }
 }

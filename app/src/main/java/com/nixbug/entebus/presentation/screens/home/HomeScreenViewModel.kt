@@ -137,16 +137,19 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     fun onPrinterSelected(address: String) {
-        _uiState.update { it.copy(showPrinterPicker = false) }
+        _uiState.update { it.copy(isConnectingPrinter = true) }
 
         viewModelScope.launch {
             val success = printerManager.connectToPrinter(address)
-
             if (success) {
                 completeServiceFlow()
+                _uiState.update { it.copy(isConnectingPrinter = false) }
+                _uiState.update { it.copy(showPrinterPicker = false) }
             } else {
+                _uiState.update { it.copy(isConnectingPrinter = false) }
+                _uiState.update { it.copy(showPrinterPicker = false) }
                 SnackbarManager.show(
-                    "Failed to connect to printer",
+                    "Unable to connect to printer,make sure your printer is powered on",
                     SnackbarType.ERROR
                 )
             }

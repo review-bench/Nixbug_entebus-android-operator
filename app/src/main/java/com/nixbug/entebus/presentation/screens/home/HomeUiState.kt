@@ -163,6 +163,8 @@ data class HomeUiState(
 
     val selectedPrinterAddress: String? = null,
 
+    val isConnectingPrinter: Boolean = false
+
     ) {
     val filteredOtherServices: List<HomeUiModel>
         get() = otherServiceList.filter {

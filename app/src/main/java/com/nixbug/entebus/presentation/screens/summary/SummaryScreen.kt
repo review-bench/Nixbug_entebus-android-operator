@@ -82,7 +82,7 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
 
     //  UI FLAGS (Composable State)
     var isPermanentDenial by remember { mutableStateOf(false) }
-    var showSummaryPreviewDialog by remember { mutableStateOf(false) }
+//    var showSummaryPreviewDialog by remember { mutableStateOf(false) }
     var showPermissionDialog by remember { mutableStateOf(false) }
 
     //  BLUETOOTH ENABLE LAUNCHER
@@ -175,7 +175,7 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
                 .padding(horizontal = 30.dp),
             onClick = {
                 if (state.selectedServiceIds.isNotEmpty()) {
-                    showSummaryPreviewDialog = true
+                    viewModel.showSummaryPreview()
                 } else {
                     SnackbarManager.show(
                         message = "Please select at least one service",
@@ -186,11 +186,11 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
         )
     }
 
-    if (showSummaryPreviewDialog) {
+    if (state.showSummaryPreviewDialog) {
         SummaryPreviewDialog(
             summaryData = state.summary,
             selectedIds = state.selectedServiceIds,
-            onDismiss = { showSummaryPreviewDialog = false },
+            onDismiss = viewModel::hideSummaryPreview,
             context = context,
             onGenerateReceipt = viewModel::generateReceipt,
         )
@@ -229,11 +229,12 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
     if (state.showPrinterPicker) {
         PrinterPickerDialog(
             pairedDevices = state.pairedPrinters,
-            onDismiss = { viewModel.hidePrinterPicker() },
+            isConnecting = state.isConnectingPrinter,
             onDeviceSelected = { deviceAddress ->
                 viewModel.onPrinterSelected(deviceAddress)
             },
-            context = context
+            onDismiss = { viewModel.hidePrinterPicker() },
+            context = context,
         )
     }
 }
@@ -787,7 +788,6 @@ fun SummaryPreviewDialog(
                             grandTotal = grandTotal
                         )
                         onGenerateReceipt(printData, hasPermission, isEnabled)
-
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
