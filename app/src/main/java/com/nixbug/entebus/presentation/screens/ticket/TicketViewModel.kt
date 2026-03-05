@@ -203,11 +203,11 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
 
                 .addCommand(PrinterManager.Commands.SIZE_NORMAL)
                 .addCommand(PrinterManager.Commands.FONT_B)
-                .row3Column("000123", dateTimeCombined, "ORDINARY")
+                .threeColumnRow("000123", dateTimeCombined, "ORDINARY")
 
                 .addCommand(PrinterManager.Commands.FONT_A)
                 .addCommand(PrinterManager.Commands.BOLD_ON)
-                .rowLandmarks(
+                .routeRow(
                     formatText(startingLandmark.name),
                     "To",
                     formatText(endingLandmark.name)

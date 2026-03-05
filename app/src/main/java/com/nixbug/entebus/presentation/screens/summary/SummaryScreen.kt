@@ -61,7 +61,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.nixbug.entebus.presentation.components.DialogBox
-import com.nixbug.entebus.presentation.components.PrinterPickerDialog
+import com.nixbug.entebus.presentation.components.printer.PrinterPickerDialog
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
@@ -82,7 +82,6 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
 
     //  UI FLAGS (Composable State)
     var isPermanentDenial by remember { mutableStateOf(false) }
-//    var showSummaryPreviewDialog by remember { mutableStateOf(false) }
     var showPermissionDialog by remember { mutableStateOf(false) }
 
     //  BLUETOOTH ENABLE LAUNCHER

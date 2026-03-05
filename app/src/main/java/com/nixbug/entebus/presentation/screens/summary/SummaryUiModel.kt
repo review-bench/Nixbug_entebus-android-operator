@@ -1,7 +1,5 @@
 package com.nixbug.entebus.presentation.screens.summary
 
-import com.nixbug.entebus.presentation.screens.home.HomeUiEvent
-
 data class SummaryUiModel(
     val id: Int,
     val serviceId: Int,

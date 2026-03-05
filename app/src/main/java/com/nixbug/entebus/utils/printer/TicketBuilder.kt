@@ -3,7 +3,8 @@ package com.nixbug.entebus.utils.printer
 class TicketBuilder {
     private var bytes = byteArrayOf()
     private var currentLineWidth = 32
-    private fun clip(text: String, maxLength: Int): String {
+
+    private fun truncateWithEllipsis(text: String, maxLength: Int): String {
         return if (text.length > maxLength) {
             text.take(maxLength - 3) + "..."
         } else {
@@ -19,9 +20,8 @@ class TicketBuilder {
     }
 
     fun text(content: String, newLine: Boolean = true): TicketBuilder {
-        val clipped = clip(content, currentLineWidth)
-        val formatted = clipped.replace("₹", 0x9F.toChar().toString())
-        bytes += (if (newLine) "$formatted\n" else formatted).toByteArray(charset("ISO-8859-1"))
+        val clipped = truncateWithEllipsis(content, currentLineWidth)
+        bytes += (if (newLine) "$clipped\n" else clipped).toByteArray(charset("ISO-8859-1"))
         return this
     }
 
@@ -30,7 +30,7 @@ class TicketBuilder {
         return this
     }
 
-    fun row3Column(left: String, center: String, right: String): TicketBuilder {
+    fun threeColumnRow(left: String, center: String, right: String): TicketBuilder {
         val total = currentLineWidth
 
         val colLeftWidth = total / 4
@@ -46,20 +46,20 @@ class TicketBuilder {
         return this
     }
 
-    fun rowLandmarks(left: String, center: String, right: String): TicketBuilder {
+    fun routeRow(left: String, center: String, right: String): TicketBuilder {
         val total = currentLineWidth
         val centerW = 4
         val sideW = (total - centerW) / 2
 
-        val fLeft = formatColumn(left, sideW, false)
+        val fLeft = formatColumnJustified(left, sideW, false)
         val fCenter = center.padStart((centerW + center.length) / 2).padEnd(centerW)
-        val fRight = formatColumn(right, sideW, true)
+        val fRight = formatColumnJustified(right, sideW, true)
 
         bytes += (fLeft + fCenter + fRight + "\n").toByteArray(charset("ISO-8859-1"))
         return this
     }
 
-    fun rowLeftRight(left: String, right: String): TicketBuilder {
+    fun leftRightRow(left: String, right: String): TicketBuilder {
         val total = currentLineWidth
 
         val spaceCount = total - left.length - right.length
@@ -68,7 +68,8 @@ class TicketBuilder {
             left + " ".repeat(spaceCount) + right
         } else {
             val availableForLeft = total - right.length - 1
-            val clippedLeft = if (availableForLeft > 0) clip(left, availableForLeft) else ""
+            val clippedLeft =
+                if (availableForLeft > 0) truncateWithEllipsis(left, availableForLeft) else ""
             val finalSpace = total - clippedLeft.length - right.length
             clippedLeft + " ".repeat(finalSpace.coerceAtLeast(0)) + right
         }
@@ -78,7 +79,7 @@ class TicketBuilder {
         return this
     }
 
-    private fun formatColumn(text: String, width: Int, isRightAligned: Boolean): String {
+    private fun formatColumnJustified(text: String, width: Int, isRightAligned: Boolean): String {
         return if (text.length > width) {
             text.take(width - 3) + ".."
         } else {

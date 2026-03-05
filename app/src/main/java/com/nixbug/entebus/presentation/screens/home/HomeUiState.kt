@@ -165,7 +165,7 @@ data class HomeUiState(
 
     val isConnectingPrinter: Boolean = false
 
-    ) {
+) {
     val filteredOtherServices: List<HomeUiModel>
         get() = otherServiceList.filter {
             it.regNo.contains(searchQuery, ignoreCase = true)

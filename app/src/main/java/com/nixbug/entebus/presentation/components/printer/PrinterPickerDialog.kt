@@ -1,4 +1,4 @@
-package com.nixbug.entebus.presentation.components
+package com.nixbug.entebus.presentation.components.printer
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context

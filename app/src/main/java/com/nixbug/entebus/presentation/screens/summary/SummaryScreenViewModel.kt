@@ -32,7 +32,6 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
     private val _events = MutableSharedFlow<SummaryUiEvent>()
     val events: SharedFlow<SummaryUiEvent> = _events.asSharedFlow()
 
-
     private var pendingPrintData: PrintSummaryData? = null
 
     init {
@@ -101,9 +100,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
     }
 
 
-    // ----------------------------------------------------------------
     // EVENTS
-    // ----------------------------------------------------------------
 
     private fun emitPermissionRequest() {
         viewModelScope.launch {
@@ -123,11 +120,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
         }
     }
 
-    // ----------------------------------------------------------------
-
-    // ----------------------------------------------------------------
     // PERMISSION RESULT CALLBACK
-    // ----------------------------------------------------------------
 
     fun onPermissionGranted(context: Context) {
         val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
@@ -141,9 +134,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
         }
     }
 
-    // ----------------------------------------------------------------
     // CORE FLOW CONTINUATION
-    // ----------------------------------------------------------------
 
     private fun proceedAfterBluetoothReady() {
         if (printerManager.isConnected()) {
@@ -245,7 +236,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
                 builder.addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
                 builder.addCommand(PrinterManager.Commands.FONT_A)
                 service.operators.forEach {
-                    builder.rowLeftRight(it.first, "${it.second} Rs")
+                    builder.leftRightRow(it.first, "${it.second} Rs")
                 }
 
                 builder.addCommand(PrinterManager.Commands.BOLD_ON)

@@ -1,4 +1,4 @@
-package com.nixbug.entebus.presentation.components
+package com.nixbug.entebus.presentation.components.printer
 
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -39,9 +39,9 @@ import com.nixbug.entebus.ui.theme.DisabledButtonColor
 
 @Composable
 fun PrinterLoader(printerName: String?) {
-    val PrimaryGreen = Color(0xFF8BC34A)
-    val LightGreen = Color(0xFFE8F5E9)
-    val DarkGreen = Color(0xFF689F38)
+    val primaryGreen = Color(0xFF8BC34A)
+    val lightGreen = Color(0xFFE8F5E9)
+    val darkGreen = Color(0xFF689F38)
 
     Column(
         modifier = Modifier
@@ -50,7 +50,6 @@ fun PrinterLoader(printerName: String?) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // ICON ROW
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -59,14 +58,14 @@ fun PrinterLoader(printerName: String?) {
 
             IconBox(
                 icon = Icons.Default.PhoneAndroid,
-                iconColor = DarkGreen
+                iconColor = darkGreen
             )
 
-            ConnectingDots(color = PrimaryGreen)
+            ConnectingDots(color = primaryGreen)
 
             IconBox(
                 icon = Icons.Default.Print,
-                iconColor = DarkGreen
+                iconColor = darkGreen
             )
         }
 
@@ -85,15 +84,15 @@ fun PrinterLoader(printerName: String?) {
             Text(
                 text = printerName,
                 style = MaterialTheme.typography.bodyLarge,
-                color = PrimaryGreen
+                color = primaryGreen
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         AnimatedProgressBar(
-            color = PrimaryGreen,
-            backgroundColor = LightGreen
+            color = primaryGreen,
+            backgroundColor = lightGreen
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -105,7 +104,6 @@ fun PrinterLoader(printerName: String?) {
         )
     }
 }
-
 
 @Composable
 fun ConnectingDots(color: Color) {
@@ -178,7 +176,6 @@ fun IconBox(
         )
     }
 }
-
 
 @Composable
 fun AnimatedProgressBar(

@@ -20,9 +20,7 @@ class HomeScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager
 ) : ViewModel() {
 
-    // ----------------------------------------------------------------
     // STATE
-    // ----------------------------------------------------------------
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -30,9 +28,7 @@ class HomeScreenViewModel @Inject constructor(
     private val _events = MutableSharedFlow<HomeUiEvent>()
     val events: SharedFlow<HomeUiEvent> = _events.asSharedFlow()
 
-    // ----------------------------------------------------------------
     // SERVICE ACTION ENUM
-    // ----------------------------------------------------------------
 
     enum class ServiceAction {
         START_ASSIGNED,
@@ -44,9 +40,7 @@ class HomeScreenViewModel @Inject constructor(
     private var pendingAction: ServiceAction? = null
     private var pendingService: HomeUiModel? = null
 
-    // ----------------------------------------------------------------
     // MAIN UNIFIED ENTRY POINT
-    // ----------------------------------------------------------------
 
     fun handleServiceAction(
         action: ServiceAction,
@@ -73,9 +67,7 @@ class HomeScreenViewModel @Inject constructor(
         proceedAfterBluetoothReady()
     }
 
-    // ----------------------------------------------------------------
     // PERMISSION RESULT CALLBACK
-    // ----------------------------------------------------------------
 
     fun onPermissionGranted(context: Context) {
         val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
@@ -89,9 +81,7 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    // ----------------------------------------------------------------
     // CORE FLOW CONTINUATION
-    // ----------------------------------------------------------------
 
     private fun proceedAfterBluetoothReady() {
         if (printerManager.isConnected()) {
@@ -117,9 +107,7 @@ class HomeScreenViewModel @Inject constructor(
         pendingService = null
     }
 
-    // ----------------------------------------------------------------
     // PRINTER SELECTION
-    // ----------------------------------------------------------------
 
     fun showPrinterPicker(devices: List<BluetoothDevice>) {
         _uiState.update {
@@ -156,9 +144,7 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    // ----------------------------------------------------------------
     // SERVICE CONFIRMATION
-    // ----------------------------------------------------------------
 
     private fun confirmServiceStart() {
         val service = pendingService ?: return
@@ -185,9 +171,7 @@ class HomeScreenViewModel @Inject constructor(
         } else false
     }
 
-    // ----------------------------------------------------------------
     // EVENTS
-    // ----------------------------------------------------------------
 
     private fun emitPermissionRequest() {
         viewModelScope.launch {
@@ -213,9 +197,7 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    // ----------------------------------------------------------------
     // OTHER UI STATE HANDLERS
-    // ----------------------------------------------------------------
 
     fun onSearchQueryChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
@@ -245,9 +227,7 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    // ----------------------------------------------------------------
     // HELPERS
-    // ----------------------------------------------------------------
 
     /**
      * Extracts a clean route name from a service name string.

@@ -15,4 +15,3 @@ data class Passenger(
 sealed class TicketUiEvent {
     data object EmitNavigateBack : TicketUiEvent()
 }
-
