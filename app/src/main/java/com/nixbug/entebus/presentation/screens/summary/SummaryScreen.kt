@@ -660,14 +660,6 @@ fun SummaryPreviewDialog(
                 ) {
 
                     item {
-                        val currentDateTime =
-                            remember { ZonedDateTime.now(ZoneId.of("Asia/Kolkata")) }
-                        val formattedDateTime = remember(currentDateTime) {
-                            currentDateTime.format(
-                                DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
-                            )
-                        }
-                        ReceiptTextWithLine(formattedDateTime)
                         Text(
                             text = "Krishna",
                             modifier = Modifier
@@ -678,6 +670,8 @@ fun SummaryPreviewDialog(
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.headlineSmall
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider()
                     }
 
                     itemsIndexed(selectedServices.values.toList()) { index, serviceGroup ->
@@ -804,7 +798,7 @@ private fun buildPrintSummaryData(
 
     val currentDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"))
     val formattedDateTime =
-        currentDateTime.format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))
+        currentDateTime.format(DateTimeFormatter.ofPattern("dd MMM yyyy,hh:mm a"))
 
     return PrintSummaryData(
         services = selectedServices.values.map { serviceGroup ->
