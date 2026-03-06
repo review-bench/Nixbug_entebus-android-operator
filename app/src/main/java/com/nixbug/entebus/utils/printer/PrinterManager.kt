@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +14,8 @@ import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val TAG = "PrinterManager"
 
 @Singleton
 class PrinterManager @Inject constructor(
@@ -71,7 +74,7 @@ class PrinterManager @Inject constructor(
                 }
                 socket?.close()
             } catch (e: Exception) {
-                println("BT_LOG: Error closing socket")
+                Log.e(TAG, "Error closing Bluetooth printer socket", e)
             } finally {
                 socket = null
                 _isConnected.value = false

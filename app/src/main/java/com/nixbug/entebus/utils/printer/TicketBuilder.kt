@@ -42,7 +42,9 @@ class TicketBuilder {
         val colCenterWidth = total - colLeftWidth - colRightWidth
 
         val fLeft = left.take(colLeftWidth).padEnd(colLeftWidth)
-        val fCenter = center.take(colCenterWidth).padStart((colCenterWidth + center.length) / 2)
+        val clippedCenter = center.take(colCenterWidth)
+        val fCenter = clippedCenter
+            .padStart((colCenterWidth + clippedCenter.length) / 2)
             .padEnd(colCenterWidth)
         val fRight = right.take(colRightWidth).padStart(colRightWidth)
 
@@ -55,10 +57,11 @@ class TicketBuilder {
         val centerW = 4
         val sideW = (total - centerW) / 2
 
-        val fLeft = formatColumnJustified(left, sideW, false)
+        val fLeft = formatColumnJustified(left, sideW, false)// right align
         val fCenter = center.padStart((centerW + center.length) / 2).padEnd(centerW)
-        val fRight = formatColumnJustified(right, sideW, true)
+        val fRight = formatColumnJustified(right, sideW, true)// left align
 
+        // Intentionally align route text towards the center arrow
         outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(charset("ISO-8859-1")))
         return this
     }
