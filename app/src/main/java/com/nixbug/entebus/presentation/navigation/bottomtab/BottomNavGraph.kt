@@ -27,7 +27,12 @@ fun BottomNavGraph(
         popEnterTransition = { fadeIn(animationSpec = tween(0)) },
         popExitTransition = { fadeOut(animationSpec = tween(0)) }
     ) {
-        composable(BottomNavItem.Home.route) { HomeScreen(rootNavController = rootNavController,activity = activity) }
+        composable(BottomNavItem.Home.route) {
+            HomeScreen(
+                rootNavController = rootNavController,
+                activity = activity
+            )
+        }
         composable(BottomNavItem.History.route) { HistoryScreen() }
         composable(BottomNavItem.Summary.route) { SummaryScreen(activity = activity) }
         composable(BottomNavItem.Profile.route) { ProfileScreen(rootNavController = rootNavController) }

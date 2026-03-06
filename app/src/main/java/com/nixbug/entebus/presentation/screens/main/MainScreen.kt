@@ -23,7 +23,7 @@ fun MainScreen(rootNavController: NavHostController, activity: Activity) {
         }
     ) {
         Box {
-            BottomNavGraph(navController, rootNavController,activity = activity)
+            BottomNavGraph(navController, rootNavController, activity = activity)
         }
     }
 }

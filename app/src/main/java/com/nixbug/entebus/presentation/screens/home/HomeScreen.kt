@@ -98,7 +98,6 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-//    val activity = context as Activity
     val focusManager = LocalFocusManager.current
 
     var showPermissionDialog by remember { mutableStateOf(false) }

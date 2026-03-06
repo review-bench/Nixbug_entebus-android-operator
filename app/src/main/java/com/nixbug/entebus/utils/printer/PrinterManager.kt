@@ -37,7 +37,6 @@ class PrinterManager @Inject constructor(
         }
 
         return@withContext try {
-            // Test write to see if the socket is actually alive
             socket?.outputStream?.write(byteArrayOf(0x00))
             true
         } catch (e: IOException) {

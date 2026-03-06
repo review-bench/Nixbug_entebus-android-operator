@@ -3,7 +3,6 @@ package com.nixbug.entebus.utils.printer
 import java.io.ByteArrayOutputStream
 
 class TicketBuilder {
-    // 1. Use a stream instead of a growing ByteArray
     private val outputStream = ByteArrayOutputStream()
     private var currentLineWidth = 32
 
@@ -19,7 +18,6 @@ class TicketBuilder {
         if (command.contentEquals(PrinterManager.Commands.FONT_B)) currentLineWidth = 42
         if (command.contentEquals(PrinterManager.Commands.FONT_A)) currentLineWidth = 32
 
-        // 2. Use write() instead of +=
         outputStream.write(command)
         return this
     }
@@ -73,7 +71,8 @@ class TicketBuilder {
             left + " ".repeat(spaceCount) + right
         } else {
             val availableForLeft = total - right.length - 1
-            val clippedLeft = if (availableForLeft > 0) truncateWithEllipsis(left, availableForLeft) else ""
+            val clippedLeft =
+                if (availableForLeft > 0) truncateWithEllipsis(left, availableForLeft) else ""
             val finalSpace = total - clippedLeft.length - right.length
             clippedLeft + " ".repeat(finalSpace.coerceAtLeast(0)) + right
         }
@@ -92,7 +91,6 @@ class TicketBuilder {
     }
 
     fun build(): ByteArray {
-        // 3. Final assembly happens once at the very end
         val finalResult = ByteArrayOutputStream()
         finalResult.write(PrinterManager.Commands.INIT)
         finalResult.write(PrinterManager.Commands.CHAR_TABLE_PC858)
