@@ -93,11 +93,12 @@ import com.nixbug.entebus.utils.snackbar.SnackbarType
 @Composable
 fun HomeScreen(
     rootNavController: NavHostController,
-    viewModel: HomeScreenViewModel = hiltViewModel()
+    viewModel: HomeScreenViewModel = hiltViewModel(),
+    activity: Activity
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val activity = context as Activity
+//    val activity = context as Activity
     val focusManager = LocalFocusManager.current
 
     var showPermissionDialog by remember { mutableStateOf(false) }

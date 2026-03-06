@@ -84,10 +84,12 @@ class HomeScreenViewModel @Inject constructor(
     // CORE FLOW CONTINUATION
 
     private fun proceedAfterBluetoothReady() {
-        if (printerManager.isConnected()) {
-            completeServiceFlow()
-        } else {
-            emitOpenPrinterPicker()
+        viewModelScope.launch {
+            if (printerManager.checkConnection()) {
+                completeServiceFlow()
+            } else {
+                emitOpenPrinterPicker()
+            }
         }
     }
 

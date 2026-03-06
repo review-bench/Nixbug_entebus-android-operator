@@ -27,6 +27,24 @@ class PrinterManager @Inject constructor(
     private var socket: BluetoothSocket? = null
 
     private val _isConnected = MutableStateFlow(false)
+    val isConnectedFlow = _isConnected
+
+    suspend fun checkConnection(): Boolean = withContext(Dispatchers.IO) {
+        val isSocketActive = socket?.isConnected ?: false
+        if (!isSocketActive) {
+            _isConnected.value = false
+            return@withContext false
+        }
+
+        return@withContext try {
+            // Test write to see if the socket is actually alive
+            socket?.outputStream?.write(byteArrayOf(0x00))
+            true
+        } catch (e: IOException) {
+            closeConnection()
+            false
+        }
+    }
 
     @SuppressLint("MissingPermission")
     suspend fun connectToPrinter(deviceAddress: String): Boolean = withContext(Dispatchers.IO) {
@@ -62,19 +80,6 @@ class PrinterManager @Inject constructor(
         }
     }
 
-    fun isConnected(): Boolean {
-        val isSocketActive = socket?.isConnected ?: false
-        if (!isSocketActive) return false
-
-        return try {
-            socket?.outputStream?.write(byteArrayOf(0x00))
-            true
-        } catch (e: IOException) {
-            _isConnected.value = false
-            false
-        }
-    }
-
     object Commands {
         val INIT = byteArrayOf(0x1B, 0x40)
         val ALIGN_LEFT = byteArrayOf(0x1B, 0x61, 0x00)
@@ -91,19 +96,22 @@ class PrinterManager @Inject constructor(
         val CHAR_TABLE_PC858 = byteArrayOf(0x1B, 0x74, 0x13)
     }
 
-    fun sendData(data: ByteArray) {
-        if (socket == null || !socket!!.isConnected) {
+    suspend fun sendData(data: ByteArray): Result<Unit> = withContext(Dispatchers.IO) {
+        val currentSocket = socket
+        if (currentSocket == null || !currentSocket.isConnected) {
             _isConnected.value = false
-            return
+            return@withContext Result.failure(IOException("Printer not connected"))
         }
+
         try {
-            socket?.outputStream?.let {
-                it.write(data)
-                it.flush()
+            currentSocket.outputStream.apply {
+                write(data)
+                flush()
             }
+            Result.success(Unit)
         } catch (e: IOException) {
-            e.printStackTrace()
-            _isConnected.value = false
+            closeConnection()
+            Result.failure(e)
         }
     }
 }

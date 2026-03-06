@@ -11,6 +11,7 @@ import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.utcToIstConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import javax.inject.Inject
 
@@ -137,10 +139,12 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
     // CORE FLOW CONTINUATION
 
     private fun proceedAfterBluetoothReady() {
-        if (printerManager.isConnected()) {
-            printCollection()
-        } else {
-            emitOpenPrinterPicker()
+        viewModelScope.launch {
+            if (printerManager.checkConnection()) {
+                printCollection()
+            } else {
+                emitOpenPrinterPicker()
+            }
         }
     }
 
@@ -199,67 +203,81 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
 
     fun printCollection() {
         hideSummaryPreview()
-
-        if (!printerManager.isConnected()) {
-            SnackbarManager.show(
-                message = "Printer not connected. Please connect in settings.",
-                type = SnackbarType.ERROR
-            )
-            return
-        }
-
-        val data = pendingPrintData ?: return
-
-        try {
-            val builder = TicketBuilder()
-
-            builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
-            builder.text("-----${data.printedAt}-----")
-            builder.addCommand(PrinterManager.Commands.BOLD_ON)
-            builder.addCommand(PrinterManager.Commands.SIZE_MEDIUM_TALL)
-            builder.text("Krishna")
-            builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
-            builder.addCommand(PrinterManager.Commands.BOLD_OFF)
-            builder.text("--------")
-
-            data.services.forEachIndexed { index, service ->
-
-                builder.addCommand(PrinterManager.Commands.BOLD_ON)
-                builder.addCommand(PrinterManager.Commands.ALIGN_LEFT)
-                builder.text("${index + 1}.${service.serviceName}")
-                builder.addCommand(PrinterManager.Commands.BOLD_OFF)
-
-                builder.addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
-                builder.text(service.regNo)
-                builder.addCommand(PrinterManager.Commands.FONT_B)
-                builder.text(service.dateTimeRange)
-                builder.addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
-                builder.addCommand(PrinterManager.Commands.FONT_A)
-                service.operators.forEach {
-                    builder.leftRightRow(it.first, "${it.second} Rs")
-                }
-
-                builder.addCommand(PrinterManager.Commands.BOLD_ON)
-                builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
-                builder.text("Sub Total: ${service.serviceTotal} Rs")
-                builder.addCommand(PrinterManager.Commands.BOLD_OFF)
-
-                builder.divider()
+        viewModelScope.launch {
+            // 1. Check connection on IO thread
+            if (!printerManager.checkConnection()) {
+                SnackbarManager.show(
+                    message = "Printer not connected. Please connect in settings.",
+                    type = SnackbarType.ERROR
+                )
+                return@launch
             }
 
-            builder.addCommand(PrinterManager.Commands.FONT_A)
-            builder.addCommand(PrinterManager.Commands.SIZE_MEDIUM_TALL)
-            builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
-            builder.text("GRAND TOTAL : ${data.grandTotal} Rs")
-            builder.addCommand(PrinterManager.Commands.FONT_A)
-            builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
+            val data = pendingPrintData ?: return@launch
 
-            builder.text("--Nixbug Softwares OPC Pvt Ltd--")
+            try {
+                // 2. Build ticket on Default dispatcher (CPU intensive)
+                val receiptBytes = withContext(Dispatchers.Default) {
+                    val builder = TicketBuilder()
 
-            printerManager.sendData(builder.build())
-            pendingPrintData = null
-        } catch (e: Exception) {
-            SnackbarManager.show("Printing failed: ${e.message}", SnackbarType.ERROR)
+                    builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
+                    builder.text("-----${data.printedAt}-----")
+                    builder.addCommand(PrinterManager.Commands.BOLD_ON)
+                    builder.addCommand(PrinterManager.Commands.SIZE_MEDIUM_TALL)
+                    builder.text("Krishna")
+                    builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
+                    builder.addCommand(PrinterManager.Commands.BOLD_OFF)
+                    builder.text("--------")
+
+                    data.services.forEachIndexed { index, service ->
+                        builder.addCommand(PrinterManager.Commands.BOLD_ON)
+                        builder.addCommand(PrinterManager.Commands.ALIGN_LEFT)
+                        builder.text("${index + 1}.${service.serviceName}")
+                        builder.addCommand(PrinterManager.Commands.BOLD_OFF)
+
+                        builder.addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
+                        builder.text(service.regNo)
+                        builder.addCommand(PrinterManager.Commands.FONT_B)
+                        builder.text(service.dateTimeRange)
+                        builder.addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
+                        builder.addCommand(PrinterManager.Commands.FONT_A)
+
+                        service.operators.forEach {
+                            builder.leftRightRow(it.first, "${it.second} Rs")
+                        }
+
+                        builder.addCommand(PrinterManager.Commands.BOLD_ON)
+                        builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
+                        builder.text("Sub Total: ${service.serviceTotal} Rs")
+                        builder.addCommand(PrinterManager.Commands.BOLD_OFF)
+                        builder.divider()
+                    }
+
+                    builder.addCommand(PrinterManager.Commands.FONT_A)
+                    builder.addCommand(PrinterManager.Commands.SIZE_MEDIUM_TALL)
+                    builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
+                    builder.text("GRAND TOTAL : ${data.grandTotal} Rs")
+                    builder.addCommand(PrinterManager.Commands.FONT_A)
+                    builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
+                    builder.text("--Nixbug Softwares OPC Pvt Ltd--")
+
+                    builder.build() // Return the final ByteArray
+                }
+
+                // 3. Send data to printer and handle result
+                val result = printerManager.sendData(receiptBytes)
+
+                if (result.isSuccess) {
+                    SnackbarManager.show("Collection report printed!", SnackbarType.SUCCESS)
+                    pendingPrintData = null
+                } else {
+                    val error = result.exceptionOrNull()?.message ?: "Unknown printer error"
+                    SnackbarManager.show("Printing failed: $error", SnackbarType.ERROR)
+                }
+
+            } catch (e: Exception) {
+                SnackbarManager.show("Printing error: ${e.message}", SnackbarType.ERROR)
+            }
         }
     }
 }

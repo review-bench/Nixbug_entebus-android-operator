@@ -73,12 +73,12 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
+fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity: Activity) {
 
     //  UI STATE & CONTEXT SETUP
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val activity = context as Activity
+//    val activity = context as Activity
 
     //  UI FLAGS (Composable State)
     var isPermanentDenial by remember { mutableStateOf(false) }
@@ -190,7 +190,7 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel()) {
             summaryData = state.summary,
             selectedIds = state.selectedServiceIds,
             onDismiss = viewModel::hideSummaryPreview,
-            context = context,
+            context = activity,
             onGenerateReceipt = viewModel::generateReceipt,
         )
     }

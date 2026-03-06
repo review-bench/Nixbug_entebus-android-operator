@@ -8,6 +8,7 @@ import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val MAX_PASSENGER_COUNT = 99
@@ -152,104 +154,113 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
     }
 
     fun printTicket() {
-        if (!printerManager.isConnected()) {
-            SnackbarManager.show(
-                message = "Printer connection failed. Please reconnect the printer and resume the service.",
-                type = SnackbarType.ERROR,
-                SnackbarDuration.Long
-            )
-            emitNavigateBack()
-            return
-        }
-        val state = _uiState.value
-
-        val startingLandmark = state.startingLandmark
-        val endingLandmark = state.endingLandmark
-        val passengers = state.passengers
-        val totalDistanceKm = state.totalDistanceKm
-        if (startingLandmark == null || endingLandmark == null) {
-            SnackbarManager.show(
-                message = "Please select starting and ending points",
-                type = SnackbarType.ERROR
-            )
-            return
-        }
-
-        val selectedPassengers = passengers.filter { it.passengerCount > 0 }
-
-        if (selectedPassengers.isEmpty()) {
-            SnackbarManager.show(
-                message = "Please select at least one passenger",
-                type = SnackbarType.ERROR
-            )
-            return
-        }
-        val calendar = java.util.Calendar.getInstance()
-        val dateFormat = java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault())
-        val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
-
-        val dateStr = dateFormat.format(calendar.time)
-        val timeStr = timeFormat.format(calendar.time)
-        val dateTimeCombined = "$dateStr $timeStr"
-
-        val totalFare = totalDistanceKm * 10.0
-
-        try {
-            val ticket = TicketBuilder()
-                .addCommand(PrinterManager.Commands.ALIGN_CENTER)
-                .addCommand(PrinterManager.Commands.BOLD_ON)
-                .text("RKV")
-                .addCommand(PrinterManager.Commands.BOLD_OFF)
-
-                .addCommand(PrinterManager.Commands.SIZE_NORMAL)
-                .addCommand(PrinterManager.Commands.FONT_B)
-                .threeColumnRow("000123", dateTimeCombined, "ORDINARY")
-
-                .addCommand(PrinterManager.Commands.FONT_A)
-                .addCommand(PrinterManager.Commands.BOLD_ON)
-                .routeRow(
-                    formatText(startingLandmark.name),
-                    "To",
-                    formatText(endingLandmark.name)
+        viewModelScope.launch {
+            if (!printerManager.checkConnection()) {
+                SnackbarManager.show(
+                    message = "Printer connection failed. Please reconnect the printer and resume the service.",
+                    type = SnackbarType.ERROR,
+                    SnackbarDuration.Long
                 )
-                .addCommand(PrinterManager.Commands.BOLD_OFF)
+                emitNavigateBack()
+                return@launch
+            }
+            val state = _uiState.value
 
-                .addCommand(PrinterManager.Commands.FONT_B)
-                .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
-                .apply {
-                    selectedPassengers.forEach { passenger ->
-                        val lineFare = passenger.passengerCount * 10.0
-                        val line = "%-10s %2d x 10.00 = %6.2f".format(
-                            passenger.name.take(10),
-                            passenger.passengerCount,
-                            lineFare
+            val startingLandmark = state.startingLandmark
+            val endingLandmark = state.endingLandmark
+            val passengers = state.passengers
+            val totalDistanceKm = state.totalDistanceKm
+            if (startingLandmark == null || endingLandmark == null) {
+                SnackbarManager.show(
+                    message = "Please select starting and ending points",
+                    type = SnackbarType.ERROR
+                )
+                return@launch
+            }
+
+            val selectedPassengers = passengers.filter { it.passengerCount > 0 }
+
+            if (selectedPassengers.isEmpty()) {
+                SnackbarManager.show(
+                    message = "Please select at least one passenger",
+                    type = SnackbarType.ERROR
+                )
+                return@launch
+            }
+            val calendar = java.util.Calendar.getInstance()
+            val dateFormat = java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault())
+            val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+
+            val dateStr = dateFormat.format(calendar.time)
+            val timeStr = timeFormat.format(calendar.time)
+            val dateTimeCombined = "$dateStr $timeStr"
+
+            val totalFare = totalDistanceKm * 10.0
+
+            try {
+                val ticketData = withContext(Dispatchers.Default) {
+                    TicketBuilder()
+                        .addCommand(PrinterManager.Commands.ALIGN_CENTER)
+                        .addCommand(PrinterManager.Commands.BOLD_ON)
+                        .text("RKV")
+                        .addCommand(PrinterManager.Commands.BOLD_OFF)
+
+                        .addCommand(PrinterManager.Commands.SIZE_NORMAL)
+                        .addCommand(PrinterManager.Commands.FONT_B)
+                        .threeColumnRow("000123", dateTimeCombined, "ORDINARY")
+
+                        .addCommand(PrinterManager.Commands.FONT_A)
+                        .addCommand(PrinterManager.Commands.BOLD_ON)
+                        .routeRow(
+                            formatText(startingLandmark.name),
+                            "To",
+                            formatText(endingLandmark.name)
                         )
-                        text(line)
-                    }
+                        .addCommand(PrinterManager.Commands.BOLD_OFF)
+
+                        .addCommand(PrinterManager.Commands.FONT_B)
+                        .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
+                        .apply {
+                            selectedPassengers.forEach { passenger ->
+                                val lineFare = passenger.passengerCount * 10.0
+                                val line = "%-10s %2d x 10.00 = %6.2f".format(
+                                    passenger.name.take(10),
+                                    passenger.passengerCount,
+                                    lineFare
+                                )
+                                text(line)
+                            }
+                        }
+
+                        .addCommand(PrinterManager.Commands.SIZE_BIG)
+                        .text("RS .  %.2f".format(totalFare))
+                        .addCommand(PrinterManager.Commands.SIZE_NORMAL)
+
+                        .divider()
+
+                        .addCommand(PrinterManager.Commands.FONT_A)
+                        .addCommand(PrinterManager.Commands.ALIGN_CENTER)
+                        .text("Not Transferable")
+                        .text("Nixbug softwares")
+                        .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
+                        .addCommand(PrinterManager.Commands.BOLD_OFF)
+                        .build()
                 }
+                val result = printerManager.sendData(ticketData)
 
-                .addCommand(PrinterManager.Commands.SIZE_BIG)
-                .text("RS .  %.2f".format(totalFare))
-                .addCommand(PrinterManager.Commands.SIZE_NORMAL)
-
-                .divider()
-
-                .addCommand(PrinterManager.Commands.FONT_A)
-                .addCommand(PrinterManager.Commands.ALIGN_CENTER)
-                .text("Not Transferable")
-                .text("Nixbug softwares")
-                .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
-                .addCommand(PrinterManager.Commands.BOLD_OFF)
-                .build()
-
-            printerManager.sendData(ticket)
-        } catch (e: Exception) {
-            SnackbarManager.show(
-                "Printer connection failed. Please reconnect the printer and resume the service.",
-                SnackbarType.ERROR,
-                SnackbarDuration.Long
-            )
-            emitNavigateBack()
+                if (result.isSuccess) {
+                    SnackbarManager.show("Ticket printed successfully!", SnackbarType.SUCCESS)
+                } else {
+                    throw result.exceptionOrNull() ?: Exception("Unknown error")
+                }
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    "Printer connection failed. Please reconnect the printer and resume the service.",
+                    SnackbarType.ERROR,
+                    SnackbarDuration.Long
+                )
+                emitNavigateBack()
+            }
         }
     }
 }

@@ -59,7 +59,15 @@ fun PrinterPickerDialog(
     context: Context
 ) {
     var selectedAddress by remember { mutableStateOf<String?>(null) }
-    var selectedName by remember { mutableStateOf<String?>(null) }
+    val selectedName = remember(selectedAddress, pairedDevices) {
+        pairedDevices.find { it.address == selectedAddress }?.let {
+            try {
+                it.name
+            } catch (e: SecurityException) {
+                "Unknown"
+            }
+        } ?: "Unknown Device"
+    }
 
     Dialog(onDismissRequest = {
         if (!isConnecting) {
@@ -156,8 +164,6 @@ fun PrinterPickerDialog(
                                         .clickable {
                                             selectedAddress =
                                                 if (selectedAddress == deviceAddress) null else deviceAddress
-                                            selectedName =
-                                                if (selectedName == deviceName) null else deviceName
                                         },
                                     shape = RoundedCornerShape(20.dp),
                                     colors = CardDefaults.cardColors(
@@ -218,8 +224,6 @@ fun PrinterPickerDialog(
                                                 selectedAddress =
                                                     if (selectedAddress == deviceAddress) null
                                                     else deviceAddress
-                                                selectedName =
-                                                    if (selectedName == deviceName) null else deviceName
                                             },
                                             colors = RadioButtonDefaults.colors(
                                                 selectedColor = Color(0xFF7FA36C)

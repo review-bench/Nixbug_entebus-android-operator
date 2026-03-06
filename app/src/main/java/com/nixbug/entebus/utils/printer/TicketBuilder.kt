@@ -1,7 +1,10 @@
 package com.nixbug.entebus.utils.printer
 
+import java.io.ByteArrayOutputStream
+
 class TicketBuilder {
-    private var bytes = byteArrayOf()
+    // 1. Use a stream instead of a growing ByteArray
+    private val outputStream = ByteArrayOutputStream()
     private var currentLineWidth = 32
 
     private fun truncateWithEllipsis(text: String, maxLength: Int): String {
@@ -15,24 +18,27 @@ class TicketBuilder {
     fun addCommand(command: ByteArray): TicketBuilder {
         if (command.contentEquals(PrinterManager.Commands.FONT_B)) currentLineWidth = 42
         if (command.contentEquals(PrinterManager.Commands.FONT_A)) currentLineWidth = 32
-        bytes += command
+
+        // 2. Use write() instead of +=
+        outputStream.write(command)
         return this
     }
 
     fun text(content: String, newLine: Boolean = true): TicketBuilder {
         val clipped = truncateWithEllipsis(content, currentLineWidth)
-        bytes += (if (newLine) "$clipped\n" else clipped).toByteArray(charset("ISO-8859-1"))
+        val stringToWrite = if (newLine) "$clipped\n" else clipped
+        outputStream.write(stringToWrite.toByteArray(charset("ISO-8859-1")))
         return this
     }
 
     fun divider(): TicketBuilder {
-        bytes += ("-".repeat(currentLineWidth) + "\n").toByteArray()
+        val line = "-".repeat(currentLineWidth) + "\n"
+        outputStream.write(line.toByteArray())
         return this
     }
 
     fun threeColumnRow(left: String, center: String, right: String): TicketBuilder {
         val total = currentLineWidth
-
         val colLeftWidth = total / 4
         val colRightWidth = total / 4
         val colCenterWidth = total - colLeftWidth - colRightWidth
@@ -42,7 +48,7 @@ class TicketBuilder {
             .padEnd(colCenterWidth)
         val fRight = right.take(colRightWidth).padStart(colRightWidth)
 
-        bytes += (fLeft + fCenter + fRight + "\n").toByteArray(charset("ISO-8859-1"))
+        outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(charset("ISO-8859-1")))
         return this
     }
 
@@ -55,27 +61,25 @@ class TicketBuilder {
         val fCenter = center.padStart((centerW + center.length) / 2).padEnd(centerW)
         val fRight = formatColumnJustified(right, sideW, true)
 
-        bytes += (fLeft + fCenter + fRight + "\n").toByteArray(charset("ISO-8859-1"))
+        outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(charset("ISO-8859-1")))
         return this
     }
 
     fun leftRightRow(left: String, right: String): TicketBuilder {
         val total = currentLineWidth
-
         val spaceCount = total - left.length - right.length
 
         val line = if (spaceCount > 0) {
             left + " ".repeat(spaceCount) + right
         } else {
             val availableForLeft = total - right.length - 1
-            val clippedLeft =
-                if (availableForLeft > 0) truncateWithEllipsis(left, availableForLeft) else ""
+            val clippedLeft = if (availableForLeft > 0) truncateWithEllipsis(left, availableForLeft) else ""
             val finalSpace = total - clippedLeft.length - right.length
             clippedLeft + " ".repeat(finalSpace.coerceAtLeast(0)) + right
         }
 
         val formatted = line.replace("₹", 0x9F.toChar().toString())
-        bytes += (formatted + "\n").toByteArray(charset("ISO-8859-1"))
+        outputStream.write((formatted + "\n").toByteArray(charset("ISO-8859-1")))
         return this
     }
 
@@ -88,9 +92,13 @@ class TicketBuilder {
     }
 
     fun build(): ByteArray {
-        return PrinterManager.Commands.INIT +
-                PrinterManager.Commands.CHAR_TABLE_PC858 +
-                bytes +
-                byteArrayOf(0x0A, 0x0A)
+        // 3. Final assembly happens once at the very end
+        val finalResult = ByteArrayOutputStream()
+        finalResult.write(PrinterManager.Commands.INIT)
+        finalResult.write(PrinterManager.Commands.CHAR_TABLE_PC858)
+        finalResult.write(outputStream.toByteArray())
+        finalResult.write(byteArrayOf(0x0A, 0x0A))
+
+        return finalResult.toByteArray()
     }
 }
