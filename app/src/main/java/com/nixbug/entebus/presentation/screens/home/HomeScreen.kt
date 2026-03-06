@@ -287,7 +287,7 @@ fun HomeScreen(
                     ).apply {
                         data = Uri.fromParts("package", context.packageName, null)
                     }
-                    context.startActivity(intent)
+                    activity.startActivity(intent)
                 } else {
                     permissionLauncher.launch(
                         BluetoothPermissionHelper.REQUIRED_PERMISSIONS
