@@ -159,7 +159,7 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
                 SnackbarManager.show(
                     message = "Printer connection failed. Please reconnect the printer and resume the service.",
                     type = SnackbarType.ERROR,
-                    SnackbarDuration.Long
+                    duration = SnackbarDuration.Long
                 )
                 emitNavigateBack()
                 return@launch

@@ -3,6 +3,7 @@ package com.nixbug.entebus.utils
 import android.Manifest
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
@@ -78,6 +79,21 @@ object BluetoothPermissionHelper {
             bluetoothAdapter?.isEnabled == true
         } catch (e: SecurityException) {
             false
+        }
+    }
+
+    fun getBondedDevices(context: Context): Result<List<BluetoothDevice>> {
+        return try {
+            val bluetoothManager =
+                context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+
+            val adapter = bluetoothManager.adapter
+            val devices = adapter?.bondedDevices?.toList() ?: emptyList()
+
+            Result.success(devices)
+
+        } catch (e: SecurityException) {
+            Result.failure(e)
         }
     }
 }

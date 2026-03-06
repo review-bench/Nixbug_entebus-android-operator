@@ -127,16 +127,13 @@ fun HomeScreen(
 
     fun openPrinterPicker() {
         val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
-        if (!hasPermission) {
-            return
-        }
-        try {
-            val bluetoothManager =
-                context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-            val adapter = bluetoothManager.adapter
-            val bondedDevices = adapter?.bondedDevices?.toList() ?: emptyList()
-            viewModel.showPrinterPicker(bondedDevices)
-        } catch (e: SecurityException) {
+        if (!hasPermission) return
+
+        val result = BluetoothPermissionHelper.getBondedDevices(context)
+
+        result.onSuccess { devices ->
+            viewModel.showPrinterPicker(devices)
+        }.onFailure {
             SnackbarManager.show(
                 "Permission denied to access Bluetooth",
                 SnackbarType.ERROR
