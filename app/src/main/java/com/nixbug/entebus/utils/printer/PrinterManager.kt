@@ -95,7 +95,7 @@ class PrinterManager @Inject constructor(
         val FONT_A = byteArrayOf(0x1B, 0x4D, 0x00)
         val FONT_B = byteArrayOf(0x1B, 0x4D, 0x01)
         val SIZE_NORMAL = byteArrayOf(0x1D, 0x21, 0x00)
-        val SIZE_MEDIUM_TALL = byteArrayOf(0x1D, 0x21, 0x01)
+        val SIZE_DOUBLE_HEIGHT = byteArrayOf(0x1D, 0x21, 0x01)
         val SIZE_BIG = byteArrayOf(0x1D, 0x21, 0x11)
         val CHAR_TABLE_PC858 = byteArrayOf(0x1B, 0x74, 0x13)
     }

@@ -161,8 +161,6 @@ data class HomeUiState(
 
     val showPrinterPicker: Boolean = false,
 
-    val selectedPrinterAddress: String? = null,
-
     val isConnectingPrinter: Boolean = false
 
 ) {

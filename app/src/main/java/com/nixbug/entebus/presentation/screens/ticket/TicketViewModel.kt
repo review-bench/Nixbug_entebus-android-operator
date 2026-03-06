@@ -155,21 +155,14 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
 
     fun printTicket() {
         viewModelScope.launch {
-            if (!printerManager.checkConnection()) {
-                SnackbarManager.show(
-                    message = "Printer connection failed. Please reconnect the printer and resume the service.",
-                    type = SnackbarType.ERROR,
-                    duration = SnackbarDuration.Long
-                )
-                emitNavigateBack()
-                return@launch
-            }
+
             val state = _uiState.value
 
             val startingLandmark = state.startingLandmark
             val endingLandmark = state.endingLandmark
             val passengers = state.passengers
             val totalDistanceKm = state.totalDistanceKm
+
             if (startingLandmark == null || endingLandmark == null) {
                 SnackbarManager.show(
                     message = "Please select starting and ending points",
@@ -177,9 +170,7 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
                 )
                 return@launch
             }
-
             val selectedPassengers = passengers.filter { it.passengerCount > 0 }
-
             if (selectedPassengers.isEmpty()) {
                 SnackbarManager.show(
                     message = "Please select at least one passenger",
@@ -196,6 +187,16 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
             val dateTimeCombined = "$dateStr $timeStr"
 
             val totalFare = totalDistanceKm * 10.0
+
+            if (!printerManager.checkConnection()) {
+                SnackbarManager.show(
+                    message = "Printer connection failed. Please reconnect the printer and resume the service.",
+                    type = SnackbarType.ERROR,
+                    duration = SnackbarDuration.Long
+                )
+                emitNavigateBack()
+                return@launch
+            }
 
             try {
                 val ticketData = withContext(Dispatchers.Default) {

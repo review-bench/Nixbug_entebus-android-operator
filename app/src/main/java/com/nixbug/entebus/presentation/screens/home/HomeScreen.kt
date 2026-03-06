@@ -77,8 +77,6 @@ import com.nixbug.entebus.ui.theme.SelectedServiceColor
 import com.nixbug.entebus.utils.utcToIstConverter
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings

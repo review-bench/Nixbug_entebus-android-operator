@@ -223,7 +223,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
                     builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
                     builder.text("-----${data.printedAt}-----")
                     builder.addCommand(PrinterManager.Commands.BOLD_ON)
-                    builder.addCommand(PrinterManager.Commands.SIZE_MEDIUM_TALL)
+                    builder.addCommand(PrinterManager.Commands.SIZE_DOUBLE_HEIGHT)
                     builder.text("Krishna")
                     builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
                     builder.addCommand(PrinterManager.Commands.BOLD_OFF)
@@ -254,7 +254,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
                     }
 
                     builder.addCommand(PrinterManager.Commands.FONT_A)
-                    builder.addCommand(PrinterManager.Commands.SIZE_MEDIUM_TALL)
+                    builder.addCommand(PrinterManager.Commands.SIZE_DOUBLE_HEIGHT)
                     builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
                     builder.text("GRAND TOTAL : ${data.grandTotal} Rs")
                     builder.addCommand(PrinterManager.Commands.FONT_A)

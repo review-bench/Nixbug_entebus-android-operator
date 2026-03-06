@@ -2,8 +2,6 @@ package com.nixbug.entebus.presentation.screens.summary
 
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -78,7 +76,6 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
     //  UI STATE & CONTEXT SETUP
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-//    val activity = context as Activity
 
     //  UI FLAGS (Composable State)
     var isPermanentDenial by remember { mutableStateOf(false) }
