@@ -31,7 +31,7 @@ class TicketBuilder {
 
     fun divider(): TicketBuilder {
         val line = "-".repeat(currentLineWidth) + "\n"
-        outputStream.write(line.toByteArray())
+        outputStream.write(line.toByteArray(charset("ISO-8859-1")))
         return this
     }
 

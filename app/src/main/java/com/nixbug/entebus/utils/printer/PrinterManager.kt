@@ -33,14 +33,15 @@ class PrinterManager @Inject constructor(
     val isConnectedFlow = _isConnected
 
     suspend fun checkConnection(): Boolean = withContext(Dispatchers.IO) {
-        val isSocketActive = socket?.isConnected ?: false
-        if (!isSocketActive) {
+        val currentSocket = socket ?: return@withContext false
+
+        if (!currentSocket.isConnected) {
             _isConnected.value = false
             return@withContext false
         }
 
         return@withContext try {
-            socket?.outputStream?.write(byteArrayOf(0x00))
+            currentSocket.outputStream.write(byteArrayOf(0x00))
             true
         } catch (e: IOException) {
             closeConnection()
@@ -61,6 +62,7 @@ class PrinterManager @Inject constructor(
             _isConnected.value = true
             true
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to connect to printer at address $deviceAddress", e)
             closeConnection()
             false
         }
