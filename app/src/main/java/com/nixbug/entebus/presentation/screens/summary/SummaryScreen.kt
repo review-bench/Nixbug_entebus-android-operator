@@ -798,7 +798,7 @@ private fun buildPrintSummaryData(
 
     val currentDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"))
     val formattedDateTime =
-        currentDateTime.format(DateTimeFormatter.ofPattern("dd MMM yyyy,hh:mm a"))
+        currentDateTime.format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))
 
     return PrintSummaryData(
         services = selectedServices.values.map { serviceGroup ->

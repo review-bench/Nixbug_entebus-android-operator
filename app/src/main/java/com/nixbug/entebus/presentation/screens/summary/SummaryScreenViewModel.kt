@@ -182,7 +182,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
                 }
             } else {
                 SnackbarManager.show(
-                    "Unable to connect to printer,make sure your printer is powered on",
+                    "Unable to connect to printer, make sure your printer is powered on",
                     SnackbarType.ERROR
                 )
                 _uiState.update { it.copy(isConnectingPrinter = false) }
@@ -214,7 +214,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
             val builder = TicketBuilder()
 
             builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
-            builder.text("------${data.printedAt}------")
+            builder.text("-----${data.printedAt}-----")
             builder.addCommand(PrinterManager.Commands.BOLD_ON)
             builder.addCommand(PrinterManager.Commands.SIZE_MEDIUM_TALL)
             builder.text("Krishna")

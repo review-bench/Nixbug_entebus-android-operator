@@ -41,7 +41,6 @@ class PrinterManager @Inject constructor(
             _isConnected.value = true
             true
         } catch (e: Exception) {
-            e.printStackTrace()
             closeConnection()
             false
         }
@@ -55,7 +54,7 @@ class PrinterManager @Inject constructor(
                 }
                 socket?.close()
             } catch (e: Exception) {
-                println("BT_LOG: Error closing socket: ${e.message}")
+                println("BT_LOG: Error closing socket")
             } finally {
                 socket = null
                 _isConnected.value = false

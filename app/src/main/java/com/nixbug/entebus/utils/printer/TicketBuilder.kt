@@ -79,11 +79,11 @@ class TicketBuilder {
         return this
     }
 
-    private fun formatColumnJustified(text: String, width: Int, isRightAligned: Boolean): String {
+    private fun formatColumnJustified(text: String, width: Int, alignLeft: Boolean): String {
         return if (text.length > width) {
-            text.take(width - 3) + ".."
+            text.take(width - 2) + ".."
         } else {
-            if (isRightAligned) text.padEnd(width) else text.padStart(width)
+            if (alignLeft) text.padEnd(width) else text.padStart(width)
         }
     }
 

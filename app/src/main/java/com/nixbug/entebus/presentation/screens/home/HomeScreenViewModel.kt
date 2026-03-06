@@ -137,7 +137,7 @@ class HomeScreenViewModel @Inject constructor(
                 _uiState.update { it.copy(isConnectingPrinter = false) }
                 _uiState.update { it.copy(showPrinterPicker = false) }
                 SnackbarManager.show(
-                    "Unable to connect to printer,make sure your printer is powered on",
+                    "Unable to connect to printer, make sure your printer is powered on",
                     SnackbarType.ERROR
                 )
             }
