@@ -58,3 +58,25 @@ fun utcToIstConverter(utcTimestamp: String?): Pair<String, String>? {
     }
 }
 
+fun utcToIstWithActualDate(utcTimestamp: String?): Pair<String, String>? {
+    if (utcTimestamp == null) return null
+
+    return try {
+        val instant = Instant.parse(utcTimestamp)
+        val istZone = ZoneId.of("Asia/Kolkata")
+        val dateTime = instant.atZone(istZone)
+
+        val date = dateTime
+            .toLocalDate()
+            .format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+
+        val time = dateTime
+            .toLocalTime()
+            .format(DateTimeFormatter.ofPattern("hh:mm a"))
+
+        Pair(date, time)
+
+    } catch (e: Exception) {
+        null
+    }
+}

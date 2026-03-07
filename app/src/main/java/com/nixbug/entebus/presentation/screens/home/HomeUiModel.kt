@@ -143,4 +143,7 @@ enum class CardType {
 
 sealed class HomeUiEvent {
     data object NavigateToTicketScreen : HomeUiEvent()
+    data object RequestBluetoothPermission : HomeUiEvent()
+    data object RequestEnableBluetooth : HomeUiEvent()
+    data object OpenPrinterPicker : HomeUiEvent()
 }

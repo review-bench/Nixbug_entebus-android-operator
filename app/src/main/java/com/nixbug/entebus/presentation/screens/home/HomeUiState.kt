@@ -1,5 +1,7 @@
 package com.nixbug.entebus.presentation.screens.home
 
+import android.bluetooth.BluetoothDevice
+
 data class HomeUiState(
 
     val ongoingService: HomeUiModel? = null,
@@ -149,5 +151,21 @@ data class HomeUiState(
                 name = "04:30 PM Kollam to Karunagappally"
             )
         ),
-    )
-)
+    ),
+
+    val searchQuery: String = "",
+
+    val selectedTab: Int = 0,
+
+    val pairedPrinters: List<BluetoothDevice> = emptyList(),
+
+    val showPrinterPicker: Boolean = false,
+
+    val isConnectingPrinter: Boolean = false
+
+) {
+    val filteredOtherServices: List<HomeUiModel>
+        get() = otherServiceList.filter {
+            it.regNo.contains(searchQuery, ignoreCase = true)
+        }
+}

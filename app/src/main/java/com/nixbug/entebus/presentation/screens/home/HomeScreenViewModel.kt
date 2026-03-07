@@ -1,7 +1,11 @@
 package com.nixbug.entebus.presentation.screens.home
 
+import android.bluetooth.BluetoothDevice
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.utils.BluetoothPermissionHelper
+import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +22,11 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeScreenViewModel @Inject constructor() : ViewModel() {
+class HomeScreenViewModel @Inject constructor(
+    private val printerManager: PrinterManager
+) : ViewModel() {
+
+    // STATE
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -26,86 +34,208 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
     private val _events = MutableSharedFlow<HomeUiEvent>()
     val events: SharedFlow<HomeUiEvent> = _events.asSharedFlow()
 
-    private fun checkAndEmitIfServiceAlreadyRunning(): Boolean {
+    // SERVICE ACTION ENUM
+
+    enum class ServiceAction {
+        START_ASSIGNED,
+        START_DOWNLOADED,
+        RESTART_RECENT,
+        RESUME
+    }
+
+    private var pendingAction: ServiceAction? = null
+    private var pendingService: HomeUiModel? = null
+
+    // MAIN UNIFIED ENTRY POINT
+
+    fun handleServiceAction(
+        action: ServiceAction,
+        service: HomeUiModel? = null,
+        hasPermission: Boolean,
+        isBluetoothEnabled: Boolean
+    ) {
+
+        if (action != ServiceAction.RESUME && checkIfServiceAlreadyRunning()) return
+
+        pendingAction = action
+        pendingService = service
+
+        if (!hasPermission) {
+            emitPermissionRequest()
+            return
+        }
+
+        if (!isBluetoothEnabled) {
+            emitEnableBluetoothRequest()
+            return
+        }
+
+        proceedAfterBluetoothReady()
+    }
+
+    // PERMISSION RESULT CALLBACK
+
+    fun onPermissionGranted(context: Context) {
+        val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
+        val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
+
+        if (hasPermission && isEnabled) {
+            proceedAfterBluetoothReady()
+        } else {
+            emitEnableBluetoothRequest()
+            return
+        }
+    }
+
+    // CORE FLOW CONTINUATION
+
+    private fun proceedAfterBluetoothReady() {
+        viewModelScope.launch {
+            if (printerManager.checkConnection()) {
+                completeServiceFlow()
+            } else {
+                emitOpenPrinterPicker()
+            }
+        }
+    }
+
+    private fun completeServiceFlow() {
+        when (pendingAction) {
+
+            ServiceAction.START_ASSIGNED,
+            ServiceAction.START_DOWNLOADED,
+            ServiceAction.RESTART_RECENT -> confirmServiceStart()
+
+            ServiceAction.RESUME -> navigateToTicketScreen()
+
+            null -> {}
+        }
+
+        pendingAction = null
+        pendingService = null
+    }
+
+    // PRINTER SELECTION
+
+    fun showPrinterPicker(devices: List<BluetoothDevice>) {
+        _uiState.update {
+            it.copy(
+                pairedPrinters = devices,
+                showPrinterPicker = true
+            )
+        }
+    }
+
+    fun hidePrinterPicker() {
+        _uiState.update { it.copy(showPrinterPicker = false) }
+        pendingService = null
+        pendingAction = null
+    }
+
+    fun onPrinterSelected(address: String) {
+        _uiState.update { it.copy(isConnectingPrinter = true) }
+
+        viewModelScope.launch {
+            val success = printerManager.connectToPrinter(address)
+            if (success) {
+                completeServiceFlow()
+                _uiState.update { it.copy(isConnectingPrinter = false) }
+                _uiState.update { it.copy(showPrinterPicker = false) }
+            } else {
+                _uiState.update { it.copy(isConnectingPrinter = false) }
+                _uiState.update { it.copy(showPrinterPicker = false) }
+                SnackbarManager.show(
+                    "Unable to connect to printer, make sure your printer is powered on",
+                    SnackbarType.ERROR
+                )
+            }
+        }
+    }
+
+    // SERVICE CONFIRMATION
+
+    private fun confirmServiceStart() {
+        val service = pendingService ?: return
+
+        _uiState.update { state ->
+            state.copy(
+                ongoingService = service,
+                assignedServiceList = state.assignedServiceList.filter { it.id != service.id },
+                downloadedServiceList = state.downloadedServiceList.filter { it.id != service.id },
+                recentServiceList = state.recentServiceList.filter { it.id != service.id }
+            )
+        }
+
+        navigateToTicketScreen()
+    }
+
+    private fun checkIfServiceAlreadyRunning(): Boolean {
         return if (_uiState.value.ongoingService != null) {
             SnackbarManager.show(
-                message = "A service is already running",
-                type = SnackbarType.ERROR,
+                "A service is already running",
+                SnackbarType.ERROR
             )
             true
-        } else {
-            false
+        } else false
+    }
+
+    // EVENTS
+
+    private fun emitPermissionRequest() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.RequestBluetoothPermission)
         }
     }
 
-    fun onResumeService() {
+    private fun emitEnableBluetoothRequest() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.RequestEnableBluetooth)
+        }
+    }
+
+    private fun emitOpenPrinterPicker() {
+        viewModelScope.launch {
+            _events.emit(HomeUiEvent.OpenPrinterPicker)
+        }
+    }
+
+    private fun navigateToTicketScreen() {
         viewModelScope.launch {
             _events.emit(HomeUiEvent.NavigateToTicketScreen)
         }
     }
 
-    fun onStartAssigned(service: HomeUiModel) {
-        if (checkAndEmitIfServiceAlreadyRunning()) return
+    // OTHER UI STATE HANDLERS
 
-        _uiState.update { state ->
-            val newAssigned = state.assignedServiceList.filter { it.id != service.id }
-            state.copy(
-                ongoingService = service,
-                assignedServiceList = newAssigned,
-            )
-        }
-        viewModelScope.launch {
-            _events.emit(HomeUiEvent.NavigateToTicketScreen)
-        }
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
     }
 
-    fun onStartDownloaded(service: HomeUiModel) {
-        if (checkAndEmitIfServiceAlreadyRunning()) return
-
-        _uiState.update { state ->
-            val newDownload = state.downloadedServiceList.filter { it.id != service.id }
-            state.copy(
-                ongoingService = service,
-                downloadedServiceList = newDownload,
-            )
-        }
-        viewModelScope.launch {
-            _events.emit(HomeUiEvent.NavigateToTicketScreen)
-        }
+    fun onTabSelected(tab: Int) {
+        _uiState.update { it.copy(selectedTab = tab) }
     }
 
     fun onDownloadService(service: HomeUiModel) {
         _uiState.update { state ->
-            val newOtherServices = state.otherServiceList.filter { it.id != service.id }
             state.copy(
                 downloadedServiceList = state.downloadedServiceList + service,
-                otherServiceList = newOtherServices,
+                otherServiceList = state.otherServiceList.filter { it.id != service.id }
             )
-        }
-    }
-
-    fun onRestartRecentService(service: HomeUiModel) {
-        if (checkAndEmitIfServiceAlreadyRunning()) return
-        _uiState.update { state ->
-            val newRecentServices = state.recentServiceList.filter { it.id != service.id }
-            state.copy(
-                ongoingService = service,
-                recentServiceList = newRecentServices,
-            )
-        }
-        viewModelScope.launch {
-            _events.emit(HomeUiEvent.NavigateToTicketScreen)
         }
     }
 
     fun onFinishDuty(service: HomeUiModel) {
+        printerManager.closeConnection()
+
         _uiState.update { state ->
             state.copy(
                 recentServiceList = state.recentServiceList + service,
-                ongoingService = null,
+                ongoingService = null
             )
         }
     }
+
+    // HELPERS
 
     /**
      * Extracts a clean route name from a service name string.
@@ -147,14 +277,10 @@ class HomeScreenViewModel @Inject constructor() : ViewModel() {
      */
     fun canStartService(startingAtUtc: String): Boolean {
         val instant = Instant.parse(startingAtUtc)
-
         val istZone = ZoneId.of("Asia/Kolkata")
         val serviceTimeIst = instant.atZone(istZone)
-
         val nowIst = Instant.now().atZone(istZone)
-
         val diffMinutes = java.time.Duration.between(nowIst, serviceTimeIst).toMinutes()
-
         return diffMinutes <= 60
     }
 }

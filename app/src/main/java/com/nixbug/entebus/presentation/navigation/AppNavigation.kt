@@ -131,7 +131,7 @@ fun AppNavigation(
                 LocationRequestScreen(navController = navController, activity = activity)
             }
             composable(AppNavItem.MainScreen.route) {
-                MainScreen(rootNavController = navController)
+                MainScreen(rootNavController = navController, activity = activity)
             }
             composable(AppNavItem.TicketScreen.route) {
                 TicketScreen(navController = navController, activity = activity)

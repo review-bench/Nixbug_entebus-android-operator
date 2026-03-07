@@ -44,6 +44,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -102,6 +103,16 @@ fun TicketScreen(
                 message = "Camera permission is required to scan QR codes",
                 type = SnackbarType.ERROR,
             )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                TicketUiEvent.EmitNavigateBack -> {
+                    navController.popBackStack()
+                }
+            }
         }
     }
 
@@ -219,7 +230,8 @@ fun TicketScreen(
                     startingLandmark = state.startingLandmark,
                     endingLandmark = state.endingLandmark,
                     totalDistanceKm = state.totalDistanceKm,
-                    passengers = state.passengers
+                    passengers = state.passengers,
+                    onPrintClick = { viewModel.printTicket() }
                 )
             }
         }
@@ -565,13 +577,13 @@ fun CounterButton(
     }
 }
 
-
 @Composable
 fun BottomSummaryCard(
     startingLandmark: Landmark?,
     endingLandmark: Landmark?,
     totalDistanceKm: Float,
-    passengers: List<Passenger>
+    passengers: List<Passenger>,
+    onPrintClick: () -> Unit
 ) {
     val isTicketValid = startingLandmark != null &&
             endingLandmark != null &&
@@ -638,7 +650,7 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        String.format(Locale.getDefault(), "%.1f \u20B9", totalDistanceKm * 5),
+                        String.format(Locale.getDefault(), "%.1f \u20B9", totalDistanceKm * 10),
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )
@@ -647,11 +659,7 @@ fun BottomSummaryCard(
             Spacer(Modifier.height(5.dp))
             Button(
                 onClick = {
-                    SnackbarManager.show(
-                        message = "Printing ticket...",
-                        type = SnackbarType.INFO
-                    )
-
+                    onPrintClick()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(13.dp),

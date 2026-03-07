@@ -11,3 +11,7 @@ data class Passenger(
     val name: String,
     val passengerCount: Int
 )
+
+sealed class TicketUiEvent {
+    data object EmitNavigateBack : TicketUiEvent()
+}

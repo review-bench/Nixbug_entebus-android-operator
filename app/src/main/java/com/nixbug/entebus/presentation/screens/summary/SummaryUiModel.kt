@@ -11,3 +11,23 @@ data class SummaryUiModel(
     val operatorName: String,
     val collection: Int,
 )
+
+sealed class SummaryUiEvent {
+    data object OpenPrinterPicker : SummaryUiEvent()
+    data object RequestBluetoothPermission : SummaryUiEvent()
+    data object RequestEnableBluetooth : SummaryUiEvent()
+}
+
+data class PrintSummaryData(
+    val services: List<PrintServiceData>,
+    val grandTotal: String,
+    val printedAt: String
+)
+
+data class PrintServiceData(
+    val serviceName: String,
+    val regNo: String,
+    val dateTimeRange: String,
+    val operators: List<Pair<String, Int>>,
+    val serviceTotal: String
+)
