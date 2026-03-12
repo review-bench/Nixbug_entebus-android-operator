@@ -60,6 +60,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -92,6 +93,7 @@ fun AuthScreen(
     val state = viewModel.uiState.collectAsState().value
     var showLoader by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // The Launcher that handles the result of the System GPS Dialog
     val gpsLauncher = rememberLauncherForActivityResult(
@@ -283,6 +285,7 @@ fun AuthScreen(
 
             // Sign In
             SignInButton(isLoading = state.isLoading, onClick = {
+                keyboardController?.hide()
                 viewModel.login()
             })
 
@@ -502,6 +505,7 @@ fun PasswordField(
 
 @Composable
 fun SignInButton(isLoading: Boolean, onClick: () -> Unit) {
+
     Button(
         onClick = onClick,
         modifier = Modifier
