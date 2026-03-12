@@ -5,7 +5,7 @@ import com.nixbug.entebus.domain.model.CreateTokenModel
 import com.nixbug.entebus.domain.repository.TokenRepository
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.network.apiHelper
-import jakarta.inject.Inject
+import javax.inject.Inject
 import org.openapitools.client.apis.TokenApi
 import org.openapitools.client.models.PlatformType
 

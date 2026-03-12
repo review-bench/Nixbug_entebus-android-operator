@@ -180,7 +180,6 @@ fun AuthScreen(
     LaunchedEffect(state.loginError) {
 
         state.loginError?.let {
-
             SnackbarManager.show(
                 message = it,
                 type = SnackbarType.ERROR
@@ -190,12 +189,6 @@ fun AuthScreen(
 
     LaunchedEffect(state.loginSuccess) {
         if (state.loginSuccess) {
-
-            SnackbarManager.show(
-                "Login successful",
-                SnackbarType.SUCCESS
-            )
-
             navController.navigate(AppNavItem.MainScreen.route) {
                 popUpTo(AppNavItem.Auth.route) { inclusive = true }
                 launchSingleTop = true
@@ -514,13 +507,17 @@ fun SignInButton(isLoading: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(50.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8BC34A)),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF8BC34A),
+            disabledContainerColor = MaterialTheme.colorScheme.primary
+        ),
         shape = RoundedCornerShape(10.dp),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 6.dp,
-            pressedElevation = 10.dp,
+            pressedElevation = 7.dp,
             focusedElevation = 8.dp
-        )
+        ),
+        enabled = !isLoading
     ) {
         if (isLoading) {
             CircularProgressIndicator(

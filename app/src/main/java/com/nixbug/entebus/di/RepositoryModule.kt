@@ -6,7 +6,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import jakarta.inject.Singleton
+import javax.inject.Singleton
 import org.openapitools.client.apis.TokenApi
 
 @Module
@@ -16,7 +16,7 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(api: TokenApi): TokenRepository {
+    fun provideTokenRepository(api: TokenApi): TokenRepository {
         return TokenRepositoryImpl(api)
     }
 }

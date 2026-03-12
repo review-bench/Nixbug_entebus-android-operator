@@ -13,20 +13,13 @@ suspend fun <T, R> apiHelper(
     return try {
 
         val response = apiCall()
-
         if (response.isSuccessful) {
-
             val body = response.body()
-
-            println("Response Body: $body")
-
             if (body != null) {
                 Resource.Success(mapper(body))
 
             } else {
-                Resource.Error(
-                    message = "Empty response from server",
-                )
+                Resource.Error(message = "Empty response from server")
             }
 
         } else {
@@ -34,9 +27,7 @@ suspend fun <T, R> apiHelper(
             val errorBody = response.errorBody()?.string()
             val responseCode = response.code()
             var errorMessage: String? = ""
-
             if (responseCode == 422) {
-
                 errorMessage = try {
 
                     val jsonObject = Gson().fromJson(errorBody, JsonObject::class.java)
@@ -65,8 +56,6 @@ suspend fun <T, R> apiHelper(
                 } catch (e: Exception) {
                     errorBody
                 }
-
-
             } else {
                 errorMessage = try {
                     val jsonObject = Gson().fromJson(errorBody, JsonObject::class.java)
@@ -75,7 +64,6 @@ suspend fun <T, R> apiHelper(
                     errorBody
                 }
             }
-
             Resource.Error(
                 message = errorMessage,
                 statusCode = response.code()
@@ -83,14 +71,11 @@ suspend fun <T, R> apiHelper(
         }
 
     } catch (e: IOException) {
-
         Resource.Error(
             message = "Network error",
             statusCode = null
         )
-
     } catch (e: Exception) {
-
         Resource.Error(
             message = e.localizedMessage ?: "Unexpected error",
             statusCode = null

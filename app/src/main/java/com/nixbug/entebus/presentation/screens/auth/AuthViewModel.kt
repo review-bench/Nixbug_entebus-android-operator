@@ -117,8 +117,6 @@ class AuthViewModel @Inject constructor(
 
         val clientDetailsJson = Gson().toJson(clientDetails)
 
-        println("Client Details: $clientDetailsJson")
-
         var hasError = false
 
         if (username.isEmpty()) {

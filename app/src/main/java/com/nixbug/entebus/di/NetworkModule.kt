@@ -4,7 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import jakarta.inject.Singleton
+import javax.inject.Singleton
 import org.openapitools.client.apis.TokenApi
 import org.openapitools.client.infrastructure.Serializer.gson
 import retrofit2.Retrofit
