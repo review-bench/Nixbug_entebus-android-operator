@@ -21,6 +21,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "BASE_URL",
+                "\"https://dev-api.entebus.com/operator/\""
+            )
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -38,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -99,12 +107,19 @@ tasks.register<Exec>("generateApiClient") {
     val outputDir = "$projectDir/src/main/java/com/nixbug/entebus/data/remote"
 
     commandLine(
-        "openapi-generator-cli", "generate",
-        "-i", "$projectDir/src/main/openApiSpecification/openApiSpecification.json",
-        "-g", "kotlin",
-        "-o", outputDir,
-        "--library", "jvm-retrofit2",
-        "--additional-properties", "useCoroutines=true,serializationLibrary=gson",
-        "--global-property", "apiTests=false,modelTests=false"
+        "openapi-generator-cli",
+        "generate",
+        "-i",
+        "https://dev-api.entebus.com/operator/openapi.json",
+        "-g",
+        "kotlin",
+        "-o",
+        outputDir,
+        "--library",
+        "jvm-retrofit2",
+        "--additional-properties",
+        "useCoroutines=true,serializationLibrary=gson,dateLibrary=string",
+        "--global-property",
+        "apiTests=false,modelTests=false"
     )
 }

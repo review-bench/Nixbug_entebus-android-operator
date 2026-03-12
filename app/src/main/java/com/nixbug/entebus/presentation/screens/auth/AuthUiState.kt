@@ -7,6 +7,11 @@ data class AuthUiState(
     val password: String = "",
     val passwordVisible: Boolean = false,
     val expanded: Boolean = false,
+    val isLoading: Boolean = false,
+    val loginError: String? = null,
+    val loginSuccess: Boolean = false,
+    val userNameError: String? = null,
+    val passwordError: String? = null,
     val companyList: List<String> = listOf(
         "Company A",
         "Company B",

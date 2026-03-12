@@ -60,6 +60,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -92,6 +93,7 @@ fun AuthScreen(
     val state = viewModel.uiState.collectAsState().value
     var showLoader by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // The Launcher that handles the result of the System GPS Dialog
     val gpsLauncher = rememberLauncherForActivityResult(
@@ -177,6 +179,25 @@ fun AuthScreen(
         }
     }
 
+    LaunchedEffect(state.loginError) {
+
+        state.loginError?.let {
+            SnackbarManager.show(
+                message = it,
+                type = SnackbarType.ERROR
+            )
+        }
+    }
+
+    LaunchedEffect(state.loginSuccess) {
+        if (state.loginSuccess) {
+            navController.navigate(AppNavItem.MainScreen.route) {
+                popUpTo(AppNavItem.Auth.route) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -245,7 +266,8 @@ fun AuthScreen(
             UsernameField(
                 value = state.userName,
                 onChange = viewModel::onUserNameChange,
-                focusManager = focusManager
+                focusManager = focusManager,
+                error = state.userNameError
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -255,20 +277,16 @@ fun AuthScreen(
                 value = state.password,
                 onChange = viewModel::onPasswordChange,
                 visible = state.passwordVisible,
-                toggle = viewModel::onTogglePasswordVisibility
+                toggle = viewModel::onTogglePasswordVisibility,
+                error = state.passwordError
             )
 
             Spacer(modifier = Modifier.height(25.dp))
 
             // Sign In
-            SignInButton(onClick = {
-                // TODO(AUTH-SECURITY): Temporary bypass of authentication for testing only.
-                // This directly navigates to MainScreen without validating credentials.
-                // MUST be replaced with proper authentication validation before production.
-                navController.navigate(AppNavItem.MainScreen.route) {
-                    popUpTo(AppNavItem.Auth.route) { inclusive = true }
-                    launchSingleTop = true
-                }
+            SignInButton(isLoading = state.isLoading, onClick = {
+                keyboardController?.hide()
+                viewModel.login()
             })
 
             Spacer(modifier = Modifier.height(15.dp))
@@ -325,8 +343,7 @@ fun CompanyDropdown(
             },
             modifier = Modifier
                 .menuAnchor(MenuAnchorType.PrimaryEditable)
-                .fillMaxWidth()
-                .shadow(1.dp, RoundedCornerShape(12.dp)),
+                .fillMaxWidth(),
             trailingIcon = {
                 if (showLoader) {
                     CircularProgressIndicator(
@@ -382,7 +399,12 @@ fun CompanyDropdown(
 }
 
 @Composable
-fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: FocusManager) {
+fun UsernameField(
+    value: String,
+    onChange: (String) -> Unit,
+    focusManager: FocusManager,
+    error: String?
+) {
     Text(
         text = "Username",
         color = Color.Black,
@@ -402,10 +424,15 @@ fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: Focus
                 color = Color.Gray
             )
         },
+        isError = error != null,
+        supportingText = {
+            if (error != null) {
+                Text(error)
+            }
+        },
         singleLine = true,
         modifier = Modifier
-            .fillMaxWidth()
-            .shadow(1.dp, RoundedCornerShape(12.dp)),
+            .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
@@ -418,10 +445,17 @@ fun UsernameField(value: String, onChange: (String) -> Unit, focusManager: Focus
             unfocusedTextColor = Color.Black,
         )
     )
+
 }
 
 @Composable
-fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, toggle: () -> Unit) {
+fun PasswordField(
+    value: String,
+    onChange: (String) -> Unit,
+    visible: Boolean,
+    toggle: () -> Unit,
+    error: String?
+) {
     Text(
         text = "Password",
         color = Color.Black,
@@ -434,6 +468,10 @@ fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, t
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
+        isError = error != null,
+        supportingText = {
+            error?.let { Text(it) }
+        },
         placeholder = {
             Text(
                 "Enter your password",
@@ -452,8 +490,7 @@ fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, t
             }
         },
         modifier = Modifier
-            .fillMaxWidth()
-            .shadow(1.dp, RoundedCornerShape(12.dp)),
+            .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = Color.White,
@@ -467,20 +504,34 @@ fun PasswordField(value: String, onChange: (String) -> Unit, visible: Boolean, t
 }
 
 @Composable
-fun SignInButton(onClick: () -> Unit) {
+fun SignInButton(isLoading: Boolean, onClick: () -> Unit) {
+
     Button(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(50.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8BC34A)),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF8BC34A),
+            disabledContainerColor = MaterialTheme.colorScheme.primary
+        ),
         shape = RoundedCornerShape(10.dp),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 6.dp,
-            pressedElevation = 10.dp,
+            pressedElevation = 7.dp,
             focusedElevation = 8.dp
-        )
+        ),
+        enabled = !isLoading
     ) {
-        Text("Sign in", color = Color.White, style = MaterialTheme.typography.titleMedium)
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(22.dp),
+                strokeWidth = 2.dp,
+                color = Color.White
+            )
+        } else {
+            Text("Sign in", color = Color.White, style = MaterialTheme.typography.titleMedium)
+        }
+
     }
 }

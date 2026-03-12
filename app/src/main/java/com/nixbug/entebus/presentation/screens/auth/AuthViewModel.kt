@@ -2,7 +2,11 @@ package com.nixbug.entebus.presentation.screens.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.nixbug.entebus.BuildConfig
+import com.nixbug.entebus.domain.usecase.CreateTokenUseCase
 import com.nixbug.entebus.utils.LocationHelper
+import com.nixbug.entebus.utils.network.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +15,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class AuthViewModel @Inject constructor(private val locationHelper: LocationHelper) : ViewModel() {
+class AuthViewModel @Inject constructor(
+    private val locationHelper: LocationHelper,
+    private val createTokenUseCase: CreateTokenUseCase
+) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
@@ -72,11 +79,11 @@ class AuthViewModel @Inject constructor(private val locationHelper: LocationHelp
     }
 
     fun onUserNameChange(value: String) {
-        _uiState.update { it.copy(userName = value) }
+        _uiState.update { it.copy(userName = value, userNameError = null) }
     }
 
     fun onPasswordChange(value: String) {
-        _uiState.update { it.copy(password = value) }
+        _uiState.update { it.copy(password = value, passwordError = null) }
     }
 
     fun onTogglePasswordVisibility() {
@@ -95,4 +102,72 @@ class AuthViewModel @Inject constructor(private val locationHelper: LocationHelp
         _uiState.update { it.copy(selectedCompany = null) }
     }
 
+    fun login() {
+
+        val username = _uiState.value.userName.trim()
+        val password = _uiState.value.password
+        val clientDetails = ClientDetailsModel(
+            androidVersion = android.os.Build.VERSION.RELEASE,
+            apiLevel = android.os.Build.VERSION.SDK_INT,
+            apiVersion = BuildConfig.VERSION_NAME,
+            manufacturer = android.os.Build.MANUFACTURER,
+            brand = android.os.Build.BRAND,
+            model = android.os.Build.MODEL
+        )
+
+        val clientDetailsJson = Gson().toJson(clientDetails)
+
+        var hasError = false
+
+        if (username.isEmpty()) {
+            _uiState.update { it.copy(userNameError = "Username is required") }
+            hasError = true
+        } else {
+            _uiState.update { it.copy(userNameError = null) }
+        }
+
+        if (password.isEmpty()) {
+            _uiState.update { it.copy(passwordError = "Password is required") }
+            hasError = true
+        } else {
+            _uiState.update { it.copy(passwordError = null) }
+        }
+
+        if (hasError) return
+
+        viewModelScope.launch {
+
+            _uiState.update { it.copy(isLoading = true, loginError = null) }
+
+            val result = createTokenUseCase(
+                companyId = 1,
+                username = username,
+                password = password,
+                clientDetails = clientDetailsJson.toString()
+            )
+
+            when (result) {
+
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            loginSuccess = true,
+                            isLoading = false
+                        )
+                    }
+                }
+
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            loginError = result.message
+                        )
+                    }
+                }
+
+                is Resource.Loading -> {}
+            }
+        }
+    }
 }
