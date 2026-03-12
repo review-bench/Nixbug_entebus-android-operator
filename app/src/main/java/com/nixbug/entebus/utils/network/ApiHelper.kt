@@ -16,6 +16,7 @@ suspend fun <T, R> apiHelper(
         val response = apiCall()
         if (response.isSuccessful) {
             val body = response.body()
+            println("Response body: $body")
             if (body != null) {
                 Resource.Success(mapper(body))
 
@@ -28,16 +29,14 @@ suspend fun <T, R> apiHelper(
             val errorBody = response.errorBody()?.string()
             val responseCode = response.code()
             var errorMessage: String? = ""
+
             if (responseCode == 422) {
                 errorMessage = try {
-
                     val jsonObject = Gson().fromJson(errorBody, JsonObject::class.java)
                     val detailArray = jsonObject.getAsJsonArray("detail")
 
                     detailArray.mapNotNull { element ->
-
                         val obj = element.asJsonObject
-
                         val locArray = obj.getAsJsonArray("loc")
                         val field = if (locArray != null && locArray.size() > 1) {
                             locArray[1].asString
@@ -45,13 +44,11 @@ suspend fun <T, R> apiHelper(
                             null
                         }
                         val msg = obj.get("msg")?.asString
-
                         if (field != null && msg != null) {
                             "$field $msg"
                         } else {
                             msg
                         }
-
                     }.joinToString(", ")
 
                 } catch (e: Exception) {
@@ -65,8 +62,13 @@ suspend fun <T, R> apiHelper(
                     errorBody
                 }
             }
+            val finalMessage = if (errorMessage.isNullOrBlank()) {
+                "Request failed (HTTP ${response.code()})"
+            } else {
+                errorMessage
+            }
             Resource.Error(
-                message = errorMessage,
+                message = finalMessage,
                 statusCode = response.code()
             )
         }

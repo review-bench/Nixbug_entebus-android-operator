@@ -105,7 +105,7 @@ class AuthViewModel @Inject constructor(
     fun login() {
 
         val username = _uiState.value.userName.trim()
-        val password = _uiState.value.password.trim()
+        val password = _uiState.value.password
         val clientDetails = ClientDetailsModel(
             androidVersion = android.os.Build.VERSION.RELEASE,
             apiLevel = android.os.Build.VERSION.SDK_INT,
