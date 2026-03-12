@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import retrofit2.Response
 import java.io.IOException
+import kotlin.coroutines.cancellation.CancellationException
 
 suspend fun <T, R> apiHelper(
     apiCall: suspend () -> Response<T>,
@@ -75,6 +76,8 @@ suspend fun <T, R> apiHelper(
             message = "Network error",
             statusCode = null
         )
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Resource.Error(
             message = e.localizedMessage ?: "Unexpected error",
