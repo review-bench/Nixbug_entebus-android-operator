@@ -38,6 +38,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -100,11 +101,11 @@ tasks.register<Exec>("generateApiClient") {
 
     commandLine(
         "openapi-generator-cli", "generate",
-        "-i", "$projectDir/src/main/openApiSpecification/openApiSpecification.json",
+        "-i", "https://dev-api.entebus.com/operator/openapi.json",
         "-g", "kotlin",
         "-o", outputDir,
         "--library", "jvm-retrofit2",
-        "--additional-properties", "useCoroutines=true,serializationLibrary=gson",
+        "--additional-properties", "useCoroutines=true,serializationLibrary=gson,dateLibrary=string",
         "--global-property", "apiTests=false,modelTests=false"
     )
 }
