@@ -12,8 +12,12 @@ import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -29,6 +33,25 @@ class AuthViewModel @Inject constructor(
     val uiState: StateFlow<AuthUiState> = _uiState
 
     private var isFetching = false
+    private val searchQuery = MutableStateFlow("")
+    private var searchJob: Job? = null
+
+    private fun observeCompanySearch() {
+
+        searchJob?.cancel()
+
+        searchJob = viewModelScope.launch {
+            searchQuery
+                .debounce(500)
+                .distinctUntilChanged()
+                .collectLatest { query ->
+
+                    if (query.length < 2 && query.isNotEmpty()) return@collectLatest
+
+                    fetchPublicCompanies(name = query)
+                }
+        }
+    }
 
     fun fetchLocation(
         onSuccess: () -> Unit,
@@ -76,10 +99,10 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun fetchPublicCompanies(location: String? = null) {
+    fun fetchPublicCompanies(location: String? = null, name: String? = null) {
         viewModelScope.launch {
             _uiState.update { it.copy(companyListLoading = true) }
-            val result = fetchPublicCompanyUseCase(location)
+            val result = fetchPublicCompanyUseCase(location, name)
 
             when (result) {
                 is Resource.Success -> {
@@ -116,9 +139,18 @@ class AuthViewModel @Inject constructor(
     }
 
     fun onCompanyQueryChange(value: String) {
-        _uiState.update { it.copy(companySearchQuery = value, expanded = true) }
-        if (value.isBlank()) {
-            _uiState.update { it.copy(selectedCompany = null) }
+
+        _uiState.update {
+            it.copy(
+                companySearchQuery = value,
+                expanded = true
+            )
+        }
+
+        searchQuery.value = value
+
+        if (searchJob == null) {
+            observeCompanySearch()
         }
     }
 

@@ -18,10 +18,4 @@ data class AuthUiState(
     val passwordError: String? = null,
     val companyError: String? = null,
     val companyList: List<PublicCompanyModel> = emptyList()
-) {
-    val filteredCompanies: List<PublicCompanyModel>
-        get() = if (companySearchQuery.isBlank()) companyList
-        else companyList.filter {
-            it.name.contains(companySearchQuery, ignoreCase = true)
-        }
-}
+)

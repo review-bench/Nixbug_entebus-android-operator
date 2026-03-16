@@ -284,7 +284,6 @@ fun CompanyDropdown(
     showLocationLoader: Boolean,
     showCompanyLoader: Boolean,
     error: String?,
-
     ) {
     Text(
         text = "Company",
@@ -321,7 +320,7 @@ fun CompanyDropdown(
                 Text(
                     if (expanded) "Search your company"
                     else if (showLocationLoader) "Fetching your current location"
-                    else if (showCompanyLoader) "Fetching nearby companies"
+                    else if (showCompanyLoader) "Fetching companies"
                     else "Select your company",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray
@@ -367,7 +366,7 @@ fun CompanyDropdown(
                 .border(1.dp, Color(0xFF47C7FF), RoundedCornerShape(12.dp))
                 .heightIn(max = 160.dp)
         ) {
-            uiState.filteredCompanies.forEach { company ->
+            uiState.companyList.forEach { company ->
                 DropdownMenuItem(
                     text = { Text(company.name) },
                     modifier = Modifier
@@ -379,7 +378,7 @@ fun CompanyDropdown(
                     }
                 )
             }
-            if (uiState.filteredCompanies.isEmpty()) {
+            if (uiState.companyList.isEmpty()) {
                 DropdownMenuItem(
                     text = { Text("No results", color = Color.Gray) },
                     onClick = {}

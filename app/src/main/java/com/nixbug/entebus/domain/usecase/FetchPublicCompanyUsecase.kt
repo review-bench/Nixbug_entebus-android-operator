@@ -6,6 +6,9 @@ import com.nixbug.entebus.utils.network.Resource
 import javax.inject.Inject
 
 class FetchPublicCompanyUseCase @Inject constructor(private val repository: PublicCompanyRepository) {
-    suspend operator fun invoke(location: String?): Resource<List<PublicCompanyModel>> =
-        repository.fetchPublicCompany(location)
+    suspend operator fun invoke(
+        location: String? = null,
+        name: String?=null
+    ): Resource<List<PublicCompanyModel>> =
+        repository.fetchPublicCompany(location,name)
 }
