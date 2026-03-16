@@ -45,10 +45,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +71,7 @@ import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.SettingsClient
 import com.nixbug.entebus.R
+import com.nixbug.entebus.domain.model.PublicCompanyModel
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.utils.LocationPermissionHelper
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
@@ -91,7 +88,6 @@ fun AuthScreen(
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
-    var showLoader by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -100,24 +96,12 @@ fun AuthScreen(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            SnackbarManager.show("GPS Enabled successfully", SnackbarType.SUCCESS)
-            // User clicked "OK" in the GPS dialog
             viewModel.fetchLocation(
-                onSuccess = {
-                    showLoader = false
-                    SnackbarManager.show("Location updated!", SnackbarType.SUCCESS)
-                },
-                onError = { error ->
-                    showLoader = false
-                    SnackbarManager.show(
-                        message = error,
-                        type = SnackbarType.ERROR,
-                    )
-                }
+                onSuccess = {},
+                onError = {}
             )
         } else {
-            // User clicked "No Thanks"
-            showLoader = false
+            viewModel.fetchPublicCompanies()
             SnackbarManager.show(
                 "Location disabled. Company listings won’t be based on your current location.",
                 SnackbarType.WARNING
@@ -127,28 +111,17 @@ fun AuthScreen(
 
     // The Logic to check and trigger the System Modal
     val checkAndEnableGps = {
-        showLoader = true
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000).build()
         val builder = LocationSettingsRequest.Builder()
             .addLocationRequest(locationRequest)
             .setAlwaysShow(true)
-
         val client: SettingsClient = LocationServices.getSettingsClient(activity)
         val task = client.checkLocationSettings(builder.build())
 
         task.addOnSuccessListener {
             viewModel.fetchLocation(
-                onSuccess = {
-                    showLoader = false
-                    SnackbarManager.show("Location updated!", SnackbarType.SUCCESS)
-                },
-                onError = { error ->
-                    showLoader = false
-                    SnackbarManager.show(
-                        message = error,
-                        type = SnackbarType.ERROR,
-                    )
-                }
+                onSuccess = {},
+                onError = {}
             )
         }
 
@@ -159,14 +132,12 @@ fun AuthScreen(
                         IntentSenderRequest.Builder(exception.resolution.intentSender).build()
                     gpsLauncher.launch(intentSenderRequest)
                 } catch (sendEx: Exception) {
-                    showLoader = false
                     SnackbarManager.show(
                         message = "Unable to open GPS settings.",
                         type = SnackbarType.ERROR
                     )
                 }
             } else {
-                showLoader = false
                 SnackbarManager.show("Location services unavailable.", SnackbarType.ERROR)
             }
         }
@@ -176,6 +147,8 @@ fun AuthScreen(
     LaunchedEffect(Unit) {
         if (LocationPermissionHelper.isPermissionGranted(context)) {
             checkAndEnableGps()
+        } else {
+            viewModel.fetchPublicCompanies()
         }
     }
 
@@ -232,8 +205,6 @@ fun AuthScreen(
                 contentScale = ContentScale.Fit
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
             Text(
                 text = "Entebus Conductor",
                 color = Color.Black,
@@ -257,10 +228,12 @@ fun AuthScreen(
                 onSelect = viewModel::onCompanySelected,
                 clearSelectedCompany = viewModel::clearSelectedCompany,
                 clearSearchQuery = viewModel::clearSearchQuery,
-                showLoader = showLoader
+                showLocationLoader = state.locationFetchLoading,
+                showCompanyLoader = state.companyListLoading,
+                error = state.companyError
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             // Username
             UsernameField(
@@ -270,7 +243,7 @@ fun AuthScreen(
                 error = state.userNameError
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             // Password
             PasswordField(
@@ -281,16 +254,19 @@ fun AuthScreen(
                 error = state.passwordError
             )
 
-            Spacer(modifier = Modifier.height(25.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Sign In
-            SignInButton(isLoading = state.isLoading, onClick = {
-                keyboardController?.hide()
-                viewModel.login()
-            })
-
-            Spacer(modifier = Modifier.height(15.dp))
-
+            SignInButton(
+                isLoading = state.isLoading,
+                onClick = {
+                    keyboardController?.hide()
+                    viewModel.login()
+                },
+                isCompanyFetching = state.companyListLoading,
+                isLocationFetching = state.locationFetchLoading
+            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -302,11 +278,14 @@ fun CompanyDropdown(
     expanded: Boolean,
     onExpandChange: (Boolean) -> Unit,
     onQueryChange: (String) -> Unit,
-    onSelect: (String) -> Unit,
+    onSelect: (PublicCompanyModel) -> Unit,
     clearSelectedCompany: () -> Unit,
     clearSearchQuery: () -> Unit,
-    showLoader: Boolean
-) {
+    showLocationLoader: Boolean,
+    showCompanyLoader: Boolean,
+    error: String?,
+
+    ) {
     Text(
         text = "Company",
         color = Color.Black,
@@ -315,28 +294,35 @@ fun CompanyDropdown(
             .fillMaxWidth()
             .padding(bottom = 5.dp)
     )
+
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { if (!showLoader) onExpandChange(it) },
+        onExpandedChange = { if (!showLocationLoader && !showCompanyLoader) onExpandChange(it) },
         modifier = Modifier.fillMaxWidth()
     ) {
+
         LaunchedEffect(expanded, uiState.selectedCompany) {
             if (!expanded && uiState.selectedCompany == null) {
                 clearSearchQuery()
             }
-            if ((uiState.selectedCompany != uiState.companySearchQuery) && !expanded) {
+            if ((uiState.selectedCompany?.name != uiState.companySearchQuery) && !expanded) {
                 clearSelectedCompany()
             }
         }
+
         OutlinedTextField(
-            value = if (expanded) uiState.companySearchQuery else (uiState.selectedCompany ?: ""),
+            value = if (expanded) uiState.companySearchQuery else uiState.selectedCompany?.name
+                ?: "",
             onValueChange = { onQueryChange(it) },
             singleLine = true,
             readOnly = !expanded,
-            enabled = !showLoader,
+            enabled = !showLocationLoader,
             placeholder = {
                 Text(
-                    if (expanded) "Search your company" else if (showLoader) "Fetching nearby companies..." else "Select your company",
+                    if (expanded) "Search your company"
+                    else if (showLocationLoader) "Fetching your current location"
+                    else if (showCompanyLoader) "Fetching nearby companies"
+                    else "Select your company",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray
                 )
@@ -345,7 +331,7 @@ fun CompanyDropdown(
                 .menuAnchor(MenuAnchorType.PrimaryEditable)
                 .fillMaxWidth(),
             trailingIcon = {
-                if (showLoader) {
+                if (showLocationLoader || showCompanyLoader) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,
@@ -366,8 +352,13 @@ fun CompanyDropdown(
                 disabledContainerColor = Color.White,
                 disabledTextColor = Color.Black,
                 disabledBorderColor = Color(0xFFC0C0C0),
-            )
+            ),
+            isError = error != null,
+            supportingText = {
+                error?.let { Text(it) }
+            }
         )
+
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { onExpandChange(false) },
@@ -378,7 +369,7 @@ fun CompanyDropdown(
         ) {
             uiState.filteredCompanies.forEach { company ->
                 DropdownMenuItem(
-                    text = { Text(company) },
+                    text = { Text(company.name) },
                     modifier = Modifier
                         .padding(horizontal = 6.dp)
                         .clip(RoundedCornerShape(10.dp)),
@@ -504,7 +495,12 @@ fun PasswordField(
 }
 
 @Composable
-fun SignInButton(isLoading: Boolean, onClick: () -> Unit) {
+fun SignInButton(
+    isLoading: Boolean,
+    onClick: () -> Unit,
+    isCompanyFetching: Boolean,
+    isLocationFetching: Boolean
+) {
 
     Button(
         onClick = onClick,
@@ -521,7 +517,7 @@ fun SignInButton(isLoading: Boolean, onClick: () -> Unit) {
             pressedElevation = 7.dp,
             focusedElevation = 8.dp
         ),
-        enabled = !isLoading
+        enabled = !isLoading && !isCompanyFetching && !isLocationFetching
     ) {
         if (isLoading) {
             CircularProgressIndicator(

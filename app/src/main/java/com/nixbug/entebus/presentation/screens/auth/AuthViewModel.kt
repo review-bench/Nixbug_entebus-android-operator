@@ -4,9 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
+import com.nixbug.entebus.domain.model.PublicCompanyModel
 import com.nixbug.entebus.domain.usecase.CreateTokenUseCase
+import com.nixbug.entebus.domain.usecase.FetchPublicCompanyUseCase
 import com.nixbug.entebus.utils.LocationHelper
 import com.nixbug.entebus.utils.network.Resource
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,18 +21,14 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val locationHelper: LocationHelper,
-    private val createTokenUseCase: CreateTokenUseCase
+    private val createTokenUseCase: CreateTokenUseCase,
+    private val fetchPublicCompanyUseCase: FetchPublicCompanyUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
     private var isFetching = false
 
-    // TODO:
-    // Currently, the fetched location (lat/lng) is not used.
-    // This is intentionally kept for future enhancement.
-    // Once the backend company endpoint supports location parameters,
-    // these coordinates will be passed for location-based company filtering.
     fun fetchLocation(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
@@ -38,26 +38,76 @@ class AuthViewModel @Inject constructor(
             return
         }
         isFetching = true
+        _uiState.update {
+            it.copy(
+                locationFetchLoading = true
+            )
+        }
+
         try {
             locationHelper.fetchCurrentLocation(
                 onSuccess = { loc ->
                     val job = viewModelScope.launch {
                         try {
+                            _uiState.update { it.copy(locationFetchLoading = false) }
+                            fetchPublicCompanies(location = "POINT(${loc.longitude} ${loc.latitude})")
                             onSuccess()
                         } catch (e: Exception) {
-                            onError(e.message ?: "Failed to fetch location")
+                            _uiState.update { it.copy(locationFetchLoading = false) }
+                            SnackbarManager.show(
+                                message = "Failed to fetch location",
+                                type = SnackbarType.ERROR
+                            )
                         }
                     }
                     job.invokeOnCompletion { isFetching = false }
                 },
                 onError = { err ->
                     onError(err)
+                    _uiState.update { it.copy(locationFetchLoading = false) }
                     isFetching = false
                 }
             )
         } catch (e: Exception) {
+            _uiState.update { it.copy(locationFetchLoading = false) }
             isFetching = false
-            onError(e.message ?: "Failed to fetch location")
+            SnackbarManager.show(message = "Failed to fetch location", type = SnackbarType.ERROR)
+        }
+    }
+
+    fun fetchPublicCompanies(location: String? = null) {
+        viewModelScope.launch {
+
+            _uiState.update { it.copy(companyListLoading = true) }
+            val result = fetchPublicCompanyUseCase(location)
+            when (result) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            companyListLoading = false,
+                            companyList = result.data ?: emptyList()
+                        )
+                    }
+                }
+
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            companyListLoading = false,
+                            companyList = emptyList()
+                        )
+                    }
+                }
+
+                is Resource.Loading -> {
+                    _uiState.update {
+                        it.copy(
+                            companyListLoading = true,
+                            companyList = emptyList()
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -68,11 +118,12 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun onCompanySelected(company: String) {
+    fun onCompanySelected(company: PublicCompanyModel) {
         _uiState.update {
             it.copy(
                 selectedCompany = company,
-                companySearchQuery = company,
+                companySearchQuery = company.name,
+                companyError = null,
                 expanded = false
             )
         }
@@ -104,6 +155,7 @@ class AuthViewModel @Inject constructor(
 
     fun login() {
 
+        val companyId = _uiState.value.selectedCompany?.id
         val username = _uiState.value.userName.trim()
         val password = _uiState.value.password
         val clientDetails = ClientDetailsModel(
@@ -118,6 +170,13 @@ class AuthViewModel @Inject constructor(
         val clientDetailsJson = Gson().toJson(clientDetails)
 
         var hasError = false
+
+        if (companyId == null) {
+            _uiState.update { it.copy(companyError = "Company is required") }
+            hasError = true
+        } else {
+            _uiState.update { it.copy(companyError = null) }
+        }
 
         if (username.isEmpty()) {
             _uiState.update { it.copy(userNameError = "Username is required") }
@@ -138,9 +197,8 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
 
             _uiState.update { it.copy(isLoading = true, loginError = null) }
-
             val result = createTokenUseCase(
-                companyId = 1,
+                companyId = companyId!!,
                 username = username,
                 password = password,
                 clientDetails = clientDetailsJson.toString()
