@@ -7,21 +7,16 @@ data class AuthUiState(
     val companySearchQuery: String = "",
     val companyListLoading: Boolean = false,
     val locationFetchLoading: Boolean = false,
-
     val userName: String = "",
     val password: String = "",
-
     val passwordVisible: Boolean = false,
     val expanded: Boolean = false,
-
     val isLoading: Boolean = false,
     val loginError: String? = null,
     val loginSuccess: Boolean = false,
-
     val userNameError: String? = null,
     val passwordError: String? = null,
     val companyError: String? = null,
-
     val companyList: List<PublicCompanyModel> = emptyList()
 ) {
     val filteredCompanies: List<PublicCompanyModel>

@@ -24,6 +24,7 @@ class AuthViewModel @Inject constructor(
     private val createTokenUseCase: CreateTokenUseCase,
     private val fetchPublicCompanyUseCase: FetchPublicCompanyUseCase
 ) : ViewModel() {
+
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
@@ -77,9 +78,9 @@ class AuthViewModel @Inject constructor(
 
     fun fetchPublicCompanies(location: String? = null) {
         viewModelScope.launch {
-
             _uiState.update { it.copy(companyListLoading = true) }
             val result = fetchPublicCompanyUseCase(location)
+
             when (result) {
                 is Resource.Success -> {
                     _uiState.update {
@@ -102,8 +103,7 @@ class AuthViewModel @Inject constructor(
                 is Resource.Loading -> {
                     _uiState.update {
                         it.copy(
-                            companyListLoading = true,
-                            companyList = emptyList()
+                            companyListLoading = true
                         )
                     }
                 }
@@ -111,11 +111,23 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun expandedFunc(value: Boolean) {
+        _uiState.update { it.copy(expanded = value) }
+    }
+
     fun onCompanyQueryChange(value: String) {
         _uiState.update { it.copy(companySearchQuery = value, expanded = true) }
         if (value.isBlank()) {
             _uiState.update { it.copy(selectedCompany = null) }
         }
+    }
+
+    fun clearSearchQuery() {
+        _uiState.update { it.copy(companySearchQuery = "") }
+    }
+
+    fun clearSelectedCompany() {
+        _uiState.update { it.copy(selectedCompany = null) }
     }
 
     fun onCompanySelected(company: PublicCompanyModel) {
@@ -139,18 +151,6 @@ class AuthViewModel @Inject constructor(
 
     fun onTogglePasswordVisibility() {
         _uiState.update { it.copy(passwordVisible = !it.passwordVisible) }
-    }
-
-    fun expandedFunc(value: Boolean) {
-        _uiState.update { it.copy(expanded = value) }
-    }
-
-    fun clearSearchQuery() {
-        _uiState.update { it.copy(companySearchQuery = "") }
-    }
-
-    fun clearSelectedCompany() {
-        _uiState.update { it.copy(selectedCompany = null) }
     }
 
     fun login() {
@@ -197,11 +197,12 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
 
             _uiState.update { it.copy(isLoading = true, loginError = null) }
+
             val result = createTokenUseCase(
                 companyId = companyId!!,
                 username = username,
                 password = password,
-                clientDetails = clientDetailsJson.toString()
+                clientDetails = clientDetailsJson
             )
 
             when (result) {
@@ -210,7 +211,6 @@ class AuthViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             loginSuccess = true,
-                            isLoading = false
                         )
                     }
                 }
@@ -228,4 +228,5 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
 }
