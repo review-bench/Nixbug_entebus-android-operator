@@ -12,6 +12,7 @@ import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +37,7 @@ class AuthViewModel @Inject constructor(
     private val searchQuery = MutableStateFlow("")
     private var searchJob: Job? = null
 
+    @OptIn(FlowPreview::class)
     private fun observeCompanySearch() {
 
         searchJob?.cancel()
