@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,7 +62,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.google.android.gms.common.api.ResolvableApiException
@@ -230,7 +234,8 @@ fun AuthScreen(
                 clearSearchQuery = viewModel::clearSearchQuery,
                 showLocationLoader = state.locationFetchLoading,
                 showCompanyLoader = state.companyListLoading,
-                error = state.companyError
+                error = state.companyError,
+                onLoadMore = { viewModel.fetchPublicCompanies(isPagination = true) }
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -266,6 +271,7 @@ fun AuthScreen(
                 isCompanyFetching = state.companyListLoading,
                 isLocationFetching = state.locationFetchLoading
             )
+
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -284,7 +290,8 @@ fun CompanyDropdown(
     showLocationLoader: Boolean,
     showCompanyLoader: Boolean,
     error: String?,
-    ) {
+    onLoadMore: () -> Unit,
+) {
     Text(
         text = "Company",
         color = Color.Black,
@@ -297,7 +304,9 @@ fun CompanyDropdown(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { if (!showLocationLoader && !showCompanyLoader) onExpandChange(it) },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = if (error == null) 12.dp else 0.dp)
     ) {
 
         LaunchedEffect(expanded, uiState.selectedCompany) {
@@ -353,9 +362,11 @@ fun CompanyDropdown(
                 disabledBorderColor = Color(0xFFC0C0C0),
             ),
             isError = error != null,
-            supportingText = {
-                error?.let { Text(it) }
-            }
+            supportingText = if (error != null) {
+                {
+                    Text(error)
+                }
+            } else null
         )
 
         ExposedDropdownMenu(
@@ -364,7 +375,7 @@ fun CompanyDropdown(
             modifier = Modifier
                 .background(Color.White, RoundedCornerShape(12.dp))
                 .border(1.dp, Color(0xFF47C7FF), RoundedCornerShape(12.dp))
-                .heightIn(max = 160.dp)
+                .heightIn(max = 160.dp),
         ) {
             uiState.companyList.forEach { company ->
                 DropdownMenuItem(
@@ -377,6 +388,25 @@ fun CompanyDropdown(
                         onExpandChange(false)
                     }
                 )
+            }
+            if (uiState.hasMore && !showCompanyLoader && uiState.companyList.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 4.dp)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "View more...",
+                        fontSize = 15.sp,
+                        modifier = Modifier
+                            .clickable { onLoadMore() }
+                            .padding(horizontal = 10.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        textDecoration = TextDecoration.Underline,
+                        color = Color(0xFF3098DB)
+                    )
+                }
             }
             if (uiState.companyList.isEmpty()) {
                 DropdownMenuItem(

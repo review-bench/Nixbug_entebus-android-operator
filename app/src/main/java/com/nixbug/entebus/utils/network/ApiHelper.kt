@@ -61,7 +61,7 @@ suspend fun <T, R> apiHelper(
                 }
             }
             val finalMessage = if (errorMessage.isNullOrBlank()) {
-                "Request failed (HTTP ${response.code()})"
+                "Request failed"
             } else {
                 errorMessage
             }
@@ -72,8 +72,18 @@ suspend fun <T, R> apiHelper(
         }
 
     } catch (e: IOException) {
+        val message = when {
+            e.message?.contains("timeout", ignoreCase = true) == true ->
+                "Request timed out. Please try again."
+
+            e.message?.contains("Unable to resolve host", ignoreCase = true) == true ->
+                "No internet connection. Please check your network."
+
+            else ->
+                "You're offline. Please check your internet connection and try again."
+        }
         Resource.Error(
-            message = "Network error",
+            message = message,
             statusCode = null
         )
     } catch (e: CancellationException) {

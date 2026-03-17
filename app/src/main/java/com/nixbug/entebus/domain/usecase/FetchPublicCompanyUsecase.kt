@@ -8,7 +8,9 @@ import javax.inject.Inject
 class FetchPublicCompanyUseCase @Inject constructor(private val repository: PublicCompanyRepository) {
     suspend operator fun invoke(
         location: String? = null,
-        name: String?=null
+        name: String? = null,
+        offset: Int,
+        limit: Int
     ): Resource<List<PublicCompanyModel>> =
-        repository.fetchPublicCompany(location,name)
+        repository.fetchPublicCompany(location, name, offset, limit)
 }

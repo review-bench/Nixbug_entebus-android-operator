@@ -17,5 +17,10 @@ data class AuthUiState(
     val userNameError: String? = null,
     val passwordError: String? = null,
     val companyError: String? = null,
-    val companyList: List<PublicCompanyModel> = emptyList()
+    val companyList: List<PublicCompanyModel> = emptyList(),
+    val offset: Int = 0,
+    val limit: Int = 20,
+    val hasMore: Boolean = true,
+
+    val isPaginationLoading: Boolean = false,
 )

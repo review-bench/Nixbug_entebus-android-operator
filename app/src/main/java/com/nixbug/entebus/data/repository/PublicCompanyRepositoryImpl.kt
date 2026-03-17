@@ -14,12 +14,19 @@ class PublicCompanyRepositoryImpl @Inject constructor(
     private val companyApi: CompanyApi
 ) : PublicCompanyRepository {
 
-    override suspend fun fetchPublicCompany(location: String?, name: String?): Resource<List<PublicCompanyModel>> {
+    override suspend fun fetchPublicCompany(
+        location: String?,
+        name: String?,
+        offset: Int,
+        limit: Int
+    ): Resource<List<PublicCompanyModel>> {
         return apiHelper(
             apiCall = {
                 companyApi.fetchCompanyPublicCompanyGet(
                     name = name,
                     location = location,
+                    offset = offset,
+                    limit = limit,
                     orderBy = location?.let { AppApiCompanyOrderBy.location },
                     orderIn = location?.let { OrderIn.asc }
                 )
@@ -29,4 +36,5 @@ class PublicCompanyRepositoryImpl @Inject constructor(
             }
         )
     }
+
 }

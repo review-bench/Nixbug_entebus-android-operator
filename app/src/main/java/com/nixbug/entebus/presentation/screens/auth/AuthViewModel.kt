@@ -35,22 +35,18 @@ class AuthViewModel @Inject constructor(
 
     private var isFetching = false
     private val searchQuery = MutableStateFlow("")
+    private val location = MutableStateFlow("")
     private var searchJob: Job? = null
 
     @OptIn(FlowPreview::class)
     private fun observeCompanySearch() {
-
         searchJob?.cancel()
-
         searchJob = viewModelScope.launch {
             searchQuery
                 .debounce(500)
                 .distinctUntilChanged()
                 .collectLatest { query ->
-
-                    if (query.length < 2 && query.isNotEmpty()) return@collectLatest
-
-                    fetchPublicCompanies(name = query)
+                    fetchPublicCompanies()
                 }
         }
     }
@@ -75,8 +71,9 @@ class AuthViewModel @Inject constructor(
                 onSuccess = { loc ->
                     val job = viewModelScope.launch {
                         try {
+                            location.value = "POINT(${loc.longitude} ${loc.latitude})"
                             _uiState.update { it.copy(locationFetchLoading = false) }
-                            fetchPublicCompanies(location = "POINT(${loc.longitude} ${loc.latitude})")
+                            fetchPublicCompanies()
                             onSuccess()
                         } catch (e: Exception) {
                             _uiState.update { it.copy(locationFetchLoading = false) }
@@ -101,17 +98,54 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun fetchPublicCompanies(location: String? = null, name: String? = null) {
+    fun fetchPublicCompanies(isPagination: Boolean = false) {
+        val currentState = _uiState.value
+        if (isPagination && (currentState.isPaginationLoading || !currentState.hasMore)) return
+
+        val location= location.value.ifEmpty { null }
+
         viewModelScope.launch {
-            _uiState.update { it.copy(companyListLoading = true) }
-            val result = fetchPublicCompanyUseCase(location, name)
+
+            if (isPagination) {
+                _uiState.update { it.copy(isPaginationLoading = true) }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        companyListLoading = true,
+                        offset = 0,
+                        hasMore = true
+                    )
+                }
+            }
+
+            val result = fetchPublicCompanyUseCase(
+                location = location,
+                name = searchQuery.value,
+                offset = if (isPagination) currentState.offset else 0,
+                limit = currentState.limit
+            )
 
             when (result) {
+
                 is Resource.Success -> {
+                    val newList = result.data ?: emptyList()
+
                     _uiState.update {
                         it.copy(
                             companyListLoading = false,
-                            companyList = result.data ?: emptyList()
+                            isPaginationLoading = false,
+
+                            companyList = if (isPagination)
+                                it.companyList + newList
+                            else
+                                newList,
+
+                            offset = if (isPagination)
+                                it.offset + it.limit
+                            else
+                                it.limit,
+
+                            hasMore = newList.size == it.limit
                         )
                     }
                 }
@@ -120,18 +154,13 @@ class AuthViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             companyListLoading = false,
-                            companyList = emptyList()
+                            isPaginationLoading = false,
+                            loginError = result.message
                         )
                     }
                 }
 
-                is Resource.Loading -> {
-                    _uiState.update {
-                        it.copy(
-                            companyListLoading = true
-                        )
-                    }
-                }
+                is Resource.Loading -> {}
             }
         }
     }
@@ -145,7 +174,9 @@ class AuthViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 companySearchQuery = value,
-                expanded = true
+                expanded = true,
+                offset = 0,
+                hasMore = true
             )
         }
 
@@ -158,6 +189,7 @@ class AuthViewModel @Inject constructor(
 
     fun clearSearchQuery() {
         _uiState.update { it.copy(companySearchQuery = "") }
+        searchQuery.value = ""
     }
 
     fun clearSelectedCompany() {
