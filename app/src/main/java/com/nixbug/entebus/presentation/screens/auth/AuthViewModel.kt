@@ -102,7 +102,7 @@ class AuthViewModel @Inject constructor(
         val currentState = _uiState.value
         if (isPagination && (currentState.isPaginationLoading || !currentState.hasMore)) return
 
-        val location= location.value.ifEmpty { null }
+        val location = location.value.ifEmpty { null }
 
         viewModelScope.launch {
 

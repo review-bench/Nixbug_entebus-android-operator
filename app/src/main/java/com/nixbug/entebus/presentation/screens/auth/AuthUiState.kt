@@ -21,6 +21,5 @@ data class AuthUiState(
     val offset: Int = 0,
     val limit: Int = 20,
     val hasMore: Boolean = true,
-
     val isPaginationLoading: Boolean = false,
 )

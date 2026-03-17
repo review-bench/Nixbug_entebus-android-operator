@@ -13,7 +13,6 @@ import javax.inject.Inject
 class PublicCompanyRepositoryImpl @Inject constructor(
     private val companyApi: CompanyApi
 ) : PublicCompanyRepository {
-
     override suspend fun fetchPublicCompany(
         location: String?,
         name: String?,
@@ -36,5 +35,4 @@ class PublicCompanyRepositoryImpl @Inject constructor(
             }
         )
     }
-
 }

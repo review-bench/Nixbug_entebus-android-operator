@@ -106,7 +106,6 @@ dependencies {
     implementation(libs.mlkit.barcode)
 }
 
-//Task to generate and re-generate API client library
 tasks.register<Exec>("generateOperatorApiClient") {
     description = "Generates the Operator API client from OpenAPI spec"
     group = "openapi"

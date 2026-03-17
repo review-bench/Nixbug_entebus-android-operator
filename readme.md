@@ -60,7 +60,7 @@ sudo apt install openjdk-17-jdk -y
 npm install -g @openapitools/openapi-generator-cli@7.17.0
 
 # Run the command below to generate the client:
-./gradlew :app:generateApiClient
+./gradlew generateAllApis
 
 # The generated client files are placed inside app/src/main/java/com/nixbug/entebus/data/remote
 ```
