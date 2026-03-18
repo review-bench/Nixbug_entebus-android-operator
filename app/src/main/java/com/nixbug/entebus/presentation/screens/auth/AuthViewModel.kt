@@ -47,7 +47,7 @@ class AuthViewModel @Inject constructor(
                 .debounce(500)
                 .distinctUntilChanged()
                 .collectLatest { _ ->
-                    fetchPublicCompaniesInternal()
+                    fetchPublicCompaniesInternal(isPagination = false, isSearching = true)
                 }
         }
     }
@@ -113,19 +113,30 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    suspend fun fetchPublicCompaniesInternal(isPagination: Boolean = false) {
+    suspend fun fetchPublicCompaniesInternal(
+        isPagination: Boolean = false,
+        isSearching: Boolean = false
+    ) {
         val currentState = _uiState.value
         if (isPagination && (currentState.isPaginationLoading || !currentState.hasMore)) return
-
         val locationParam = location.value.ifEmpty { null }
 
         if (isPagination) {
             _uiState.update { it.copy(isPaginationLoading = true) }
+        } else if (isSearching) {
+            _uiState.update {
+                it.copy(
+                    offset = 0,
+                    hasMore = true,
+                    companyListError = null
+                )
+            }
+
         } else {
             _uiState.update {
                 it.copy(
-                    companyListLoading = true,
                     offset = 0,
+                    companyListLoading = true,
                     hasMore = true,
                     companyListError = null
                 )

@@ -205,7 +205,7 @@ fun AuthScreen(
                 .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo Section
+
             Image(
                 painter = painterResource(
                     id = R.drawable.entebus_logo
@@ -234,7 +234,6 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Company Dropdown
             CompanyDropdown(
                 uiState = state,
                 expanded = state.expanded,
@@ -251,7 +250,6 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(5.dp))
 
-            // Username
             UsernameField(
                 value = state.userName,
                 onChange = viewModel::onUserNameChange,
@@ -261,7 +259,6 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(5.dp))
 
-            // Password
             PasswordField(
                 value = state.password,
                 onChange = viewModel::onPasswordChange,
@@ -272,7 +269,6 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Sign In
             SignInButton(
                 isLoading = state.isLoading || state.isNavigating,
                 onClick = {
@@ -335,7 +331,7 @@ fun CompanyDropdown(
             onValueChange = { onQueryChange(it) },
             singleLine = true,
             readOnly = !expanded,
-            enabled = !showLocationLoader,
+            enabled = !showLocationLoader && !showCompanyLoader,
             placeholder = {
                 Text(
                     if (expanded) "Search your company"
