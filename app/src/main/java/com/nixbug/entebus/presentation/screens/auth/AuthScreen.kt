@@ -62,7 +62,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -263,7 +262,7 @@ fun AuthScreen(
 
             // Sign In
             SignInButton(
-                isLoading = state.isLoading,
+                isLoading = state.isLoading || state.isNavigating,
                 onClick = {
                     keyboardController?.hide()
                     viewModel.login()

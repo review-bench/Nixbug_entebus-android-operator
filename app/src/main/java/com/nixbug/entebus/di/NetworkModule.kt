@@ -1,8 +1,8 @@
 package com.nixbug.entebus.di
 
+import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.data.remote.operator.api.TokenApi
-import com.nixbug.entebus.data.remote.operator.infrastructure.Serializer.gson
 import com.nixbug.entebus.data.remote.publicapi.api.CompanyApi
 import dagger.Module
 import dagger.Provides
@@ -19,7 +19,7 @@ object NetworkModule {
     @OperatorApi
     @Provides
     @Singleton
-    fun provideOperatorRetrofit(): Retrofit {
+    fun provideOperatorRetrofit(gson: Gson): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BuildConfig.OPERATOR_BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(gson))
@@ -29,7 +29,7 @@ object NetworkModule {
     @PublicApi
     @Provides
     @Singleton
-    fun providePublicRetrofit(): Retrofit {
+    fun providePublicRetrofit(gson: Gson): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BuildConfig.PUBLIC_BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(gson))

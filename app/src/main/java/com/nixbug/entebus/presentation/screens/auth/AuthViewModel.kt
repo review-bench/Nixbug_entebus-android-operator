@@ -45,7 +45,7 @@ class AuthViewModel @Inject constructor(
             searchQuery
                 .debounce(500)
                 .distinctUntilChanged()
-                .collectLatest { query ->
+                .collectLatest { _ ->
                     fetchPublicCompanies()
                 }
         }
@@ -81,6 +81,9 @@ class AuthViewModel @Inject constructor(
                                 message = "Failed to fetch location",
                                 type = SnackbarType.ERROR
                             )
+                            onError("Failed to process location")
+                        } finally {
+                            isFetching = false
                         }
                     }
                     job.invokeOnCompletion { isFetching = false }
@@ -102,7 +105,7 @@ class AuthViewModel @Inject constructor(
         val currentState = _uiState.value
         if (isPagination && (currentState.isPaginationLoading || !currentState.hasMore)) return
 
-        val location = location.value.ifEmpty { null }
+        val locationParam = location.value.ifEmpty { null }
 
         viewModelScope.launch {
 
@@ -113,13 +116,14 @@ class AuthViewModel @Inject constructor(
                     it.copy(
                         companyListLoading = true,
                         offset = 0,
-                        hasMore = true
+                        hasMore = true,
+                        companyListError = null
                     )
                 }
             }
 
             val result = fetchPublicCompanyUseCase(
-                location = location,
+                location = locationParam,
                 name = searchQuery.value,
                 offset = if (isPagination) currentState.offset else 0,
                 limit = currentState.limit
@@ -155,7 +159,7 @@ class AuthViewModel @Inject constructor(
                         it.copy(
                             companyListLoading = false,
                             isPaginationLoading = false,
-                            loginError = result.message
+                            companyListError = result.message
                         )
                     }
                 }
@@ -276,7 +280,9 @@ class AuthViewModel @Inject constructor(
                 is Resource.Success -> {
                     _uiState.update {
                         it.copy(
+                            isLoading = false,
                             loginSuccess = true,
+                            isNavigating = true
                         )
                     }
                 }
