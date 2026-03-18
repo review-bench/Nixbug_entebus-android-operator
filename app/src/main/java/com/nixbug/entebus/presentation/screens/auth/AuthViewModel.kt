@@ -46,7 +46,7 @@ class AuthViewModel @Inject constructor(
                 .debounce(500)
                 .distinctUntilChanged()
                 .collectLatest { _ ->
-                    fetchPublicCompanies()
+                    fetchPublicCompaniesInternal()
                 }
         }
     }
@@ -102,70 +102,62 @@ class AuthViewModel @Inject constructor(
     }
 
     fun fetchPublicCompanies(isPagination: Boolean = false) {
+        viewModelScope.launch {
+            fetchPublicCompaniesInternal(isPagination)
+        }
+    }
+
+    suspend fun fetchPublicCompaniesInternal(isPagination: Boolean = false) {
         val currentState = _uiState.value
         if (isPagination && (currentState.isPaginationLoading || !currentState.hasMore)) return
 
-        val locationParam = location.value.ifEmpty { null }
+        val location = location.value.ifEmpty { null }
 
-        viewModelScope.launch {
+        if (isPagination) {
+            _uiState.update { it.copy(isPaginationLoading = true) }
+        } else {
+            _uiState.update {
+                it.copy(
+                    companyListLoading = true,
+                    offset = 0,
+                    hasMore = true,
+                )
+            }
+        }
 
-            if (isPagination) {
-                _uiState.update { it.copy(isPaginationLoading = true) }
-            } else {
+        val result = fetchPublicCompanyUseCase(
+            location = location,
+            name = searchQuery.value,
+            offset = if (isPagination) currentState.offset else 0,
+            limit = currentState.limit
+        )
+
+        when (result) {
+            is Resource.Success -> {
+                val newList = result.data ?: emptyList()
+
                 _uiState.update {
                     it.copy(
-                        companyListLoading = true,
-                        offset = 0,
-                        hasMore = true,
-                        companyListError = null
+                        companyListLoading = false,
+                        isPaginationLoading = false,
+                        companyList = if (isPagination) it.companyList + newList else newList,
+                        offset = if (isPagination) it.offset + it.limit else it.limit,
+                        hasMore = newList.size == it.limit
                     )
                 }
             }
 
-            val result = fetchPublicCompanyUseCase(
-                location = locationParam,
-                name = searchQuery.value,
-                offset = if (isPagination) currentState.offset else 0,
-                limit = currentState.limit
-            )
-
-            when (result) {
-
-                is Resource.Success -> {
-                    val newList = result.data ?: emptyList()
-
-                    _uiState.update {
-                        it.copy(
-                            companyListLoading = false,
-                            isPaginationLoading = false,
-
-                            companyList = if (isPagination)
-                                it.companyList + newList
-                            else
-                                newList,
-
-                            offset = if (isPagination)
-                                it.offset + it.limit
-                            else
-                                it.limit,
-
-                            hasMore = newList.size == it.limit
-                        )
-                    }
+            is Resource.Error -> {
+                _uiState.update {
+                    it.copy(
+                        companyListLoading = false,
+                        isPaginationLoading = false,
+                        loginError = result.message
+                    )
                 }
-
-                is Resource.Error -> {
-                    _uiState.update {
-                        it.copy(
-                            companyListLoading = false,
-                            isPaginationLoading = false,
-                            companyListError = result.message
-                        )
-                    }
-                }
-
-                is Resource.Loading -> {}
             }
+
+            else -> {}
         }
     }
 

@@ -388,7 +388,12 @@ fun CompanyDropdown(
                     }
                 )
             }
-            if (uiState.hasMore && !showCompanyLoader && uiState.companyList.isNotEmpty()) {
+            if (
+                uiState.hasMore &&
+                !showCompanyLoader &&
+                !uiState.isPaginationLoading &&
+                uiState.companyList.isNotEmpty()
+            ) {
                 Box(
                     modifier = Modifier
                         .padding(vertical = 4.dp)
