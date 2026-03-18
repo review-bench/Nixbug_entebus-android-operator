@@ -4,12 +4,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
+import com.nixbug.entebus.domain.model.PublicCompanyModel
 import com.nixbug.entebus.domain.usecase.CreateTokenUseCase
+import com.nixbug.entebus.domain.usecase.FetchPublicCompanyUseCase
 import com.nixbug.entebus.utils.LocationHelper
 import com.nixbug.entebus.utils.network.Resource
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -17,18 +26,32 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val locationHelper: LocationHelper,
-    private val createTokenUseCase: CreateTokenUseCase
+    private val createTokenUseCase: CreateTokenUseCase,
+    private val fetchPublicCompanyUseCase: FetchPublicCompanyUseCase,
+    private val gson: Gson
 ) : ViewModel() {
+
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
 
     private var isFetching = false
+    private val searchQuery = MutableStateFlow("")
+    private val location = MutableStateFlow("")
+    private var searchJob: Job? = null
 
-    // TODO:
-    // Currently, the fetched location (lat/lng) is not used.
-    // This is intentionally kept for future enhancement.
-    // Once the backend company endpoint supports location parameters,
-    // these coordinates will be passed for location-based company filtering.
+    @OptIn(FlowPreview::class)
+    private fun observeCompanySearch() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            searchQuery
+                .debounce(500)
+                .distinctUntilChanged()
+                .collectLatest { _ ->
+                    fetchPublicCompaniesInternal(isPagination = false, isSearching = true)
+                }
+        }
+    }
+
     fun fetchLocation(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
@@ -38,41 +61,162 @@ class AuthViewModel @Inject constructor(
             return
         }
         isFetching = true
+        _uiState.update {
+            it.copy(
+                locationFetchLoading = true
+            )
+        }
+
         try {
             locationHelper.fetchCurrentLocation(
                 onSuccess = { loc ->
                     val job = viewModelScope.launch {
                         try {
+                            location.value = "POINT(${loc.longitude} ${loc.latitude})"
+                            _uiState.update { it.copy(locationFetchLoading = false) }
+                            fetchPublicCompanies()
                             onSuccess()
                         } catch (e: Exception) {
-                            onError(e.message ?: "Failed to fetch location")
+                            _uiState.update { it.copy(locationFetchLoading = false) }
+                            SnackbarManager.show(
+                                message = "Failed to fetch location",
+                                type = SnackbarType.ERROR
+                            )
+                            onError("Failed to process location")
+                        } finally {
+                            isFetching = false
                         }
                     }
                     job.invokeOnCompletion { isFetching = false }
                 },
                 onError = { err ->
-                    onError(err)
+                    _uiState.update { it.copy(locationFetchLoading = false) }
                     isFetching = false
+                    SnackbarManager.show(
+                        message = "Failed to fetch location",
+                        type = SnackbarType.ERROR
+                    )
+                    onError("Failed to process location")
                 }
             )
         } catch (e: Exception) {
+            _uiState.update { it.copy(locationFetchLoading = false) }
             isFetching = false
-            onError(e.message ?: "Failed to fetch location")
+            SnackbarManager.show(message = "Failed to fetch location", type = SnackbarType.ERROR)
+            onError("Failed to process location")
         }
+    }
+
+    fun fetchPublicCompanies(isPagination: Boolean = false) {
+        viewModelScope.launch {
+            fetchPublicCompaniesInternal(isPagination)
+        }
+    }
+
+    suspend fun fetchPublicCompaniesInternal(
+        isPagination: Boolean = false,
+        isSearching: Boolean = false
+    ) {
+        val currentState = _uiState.value
+        if (isPagination && (currentState.isPaginationLoading || !currentState.hasMore)) return
+        val locationParam = location.value.ifEmpty { null }
+
+        if (isPagination) {
+            _uiState.update { it.copy(isPaginationLoading = true) }
+        } else if (isSearching) {
+            _uiState.update {
+                it.copy(
+                    offset = 0,
+                    hasMore = true,
+                    companyListError = null
+                )
+            }
+
+        } else {
+            _uiState.update {
+                it.copy(
+                    offset = 0,
+                    companyListLoading = true,
+                    hasMore = true,
+                    companyListError = null
+                )
+            }
+        }
+
+        val result = fetchPublicCompanyUseCase(
+            location = locationParam,
+            name = searchQuery.value,
+            offset = if (isPagination) currentState.offset else 0,
+            limit = currentState.limit
+        )
+
+        when (result) {
+            is Resource.Success -> {
+                val newList = result.data ?: emptyList()
+
+                _uiState.update {
+                    it.copy(
+                        companyListLoading = false,
+                        isPaginationLoading = false,
+                        companyList = if (isPagination) it.companyList + newList else newList,
+                        offset = if (isPagination) it.offset + it.limit else it.limit,
+                        hasMore = newList.size == it.limit,
+                        companyListError = null
+                    )
+                }
+            }
+
+            is Resource.Error -> {
+                _uiState.update {
+                    it.copy(
+                        companyListLoading = false,
+                        isPaginationLoading = false,
+                        companyListError = result.message
+                    )
+                }
+            }
+
+            else -> {}
+        }
+    }
+
+    fun expandedFunc(value: Boolean) {
+        _uiState.update { it.copy(expanded = value) }
     }
 
     fun onCompanyQueryChange(value: String) {
-        _uiState.update { it.copy(companySearchQuery = value, expanded = true) }
-        if (value.isBlank()) {
-            _uiState.update { it.copy(selectedCompany = null) }
+
+        _uiState.update {
+            it.copy(
+                companySearchQuery = value,
+                expanded = true,
+                offset = 0,
+                hasMore = true
+            )
+        }
+
+        searchQuery.value = value
+
+        if (searchJob == null) {
+            observeCompanySearch()
         }
     }
 
-    fun onCompanySelected(company: String) {
+    fun clearSearchQuery() {
+        _uiState.update { it.copy(companySearchQuery = "") }
+        searchQuery.value = ""
+    }
+
+    fun clearSelectedCompany() {
+        _uiState.update { it.copy(selectedCompany = null) }
+    }
+
+    fun onCompanySelected(company: PublicCompanyModel) {
         _uiState.update {
             it.copy(
                 selectedCompany = company,
-                companySearchQuery = company,
+                companySearchQuery = company.name,
+                companyError = null,
                 expanded = false
             )
         }
@@ -90,20 +234,9 @@ class AuthViewModel @Inject constructor(
         _uiState.update { it.copy(passwordVisible = !it.passwordVisible) }
     }
 
-    fun expandedFunc(value: Boolean) {
-        _uiState.update { it.copy(expanded = value) }
-    }
-
-    fun clearSearchQuery() {
-        _uiState.update { it.copy(companySearchQuery = "") }
-    }
-
-    fun clearSelectedCompany() {
-        _uiState.update { it.copy(selectedCompany = null) }
-    }
-
     fun login() {
 
+        val companyId = _uiState.value.selectedCompany?.id
         val username = _uiState.value.userName.trim()
         val password = _uiState.value.password
         val clientDetails = ClientDetailsModel(
@@ -115,9 +248,16 @@ class AuthViewModel @Inject constructor(
             model = android.os.Build.MODEL
         )
 
-        val clientDetailsJson = Gson().toJson(clientDetails)
+        val clientDetailsJson = gson.toJson(clientDetails)
 
         var hasError = false
+
+        if (companyId == null) {
+            _uiState.update { it.copy(companyError = "Company is required") }
+            hasError = true
+        } else {
+            _uiState.update { it.copy(companyError = null) }
+        }
 
         if (username.isEmpty()) {
             _uiState.update { it.copy(userNameError = "Username is required") }
@@ -140,10 +280,10 @@ class AuthViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, loginError = null) }
 
             val result = createTokenUseCase(
-                companyId = 1,
+                companyId = companyId!!,
                 username = username,
                 password = password,
-                clientDetails = clientDetailsJson.toString()
+                clientDetails = clientDetailsJson
             )
 
             when (result) {
@@ -151,8 +291,9 @@ class AuthViewModel @Inject constructor(
                 is Resource.Success -> {
                     _uiState.update {
                         it.copy(
+                            isLoading = false,
                             loginSuccess = true,
-                            isLoading = false
+                            isNavigating = true
                         )
                     }
                 }
@@ -170,4 +311,5 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
 }

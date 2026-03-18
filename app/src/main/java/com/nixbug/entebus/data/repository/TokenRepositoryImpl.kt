@@ -1,13 +1,14 @@
 package com.nixbug.entebus.data.repository
 
 import com.nixbug.entebus.data.mapper.toTokenDomain
+import com.nixbug.entebus.data.remote.operator.api.TokenApi
+import com.nixbug.entebus.data.remote.operator.model.PlatformType
 import com.nixbug.entebus.domain.model.CreateTokenModel
 import com.nixbug.entebus.domain.repository.TokenRepository
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.network.apiHelper
 import javax.inject.Inject
-import org.openapitools.client.apis.TokenApi
-import org.openapitools.client.models.PlatformType
+
 
 class TokenRepositoryImpl @Inject constructor(
     private val tokenApi: TokenApi

@@ -24,9 +24,16 @@ android {
         debug {
             buildConfigField(
                 "String",
-                "BASE_URL",
+                "OPERATOR_BASE_URL",
                 "\"https://dev-api.entebus.com/operator/\""
             )
+
+            buildConfigField(
+                "String",
+                "PUBLIC_BASE_URL",
+                "\"https://dev-api.entebus.com/public/\""
+            )
+
         }
         release {
             isMinifyEnabled = false
@@ -99,27 +106,50 @@ dependencies {
     implementation(libs.mlkit.barcode)
 }
 
-//Task to generate and re-generate API client library
-tasks.register<Exec>("generateApiClient") {
-    description = "Generates the API client from OpenAPI spec"
+tasks.register<Exec>("generateOperatorApiClient") {
+    description = "Generates the Operator API client from OpenAPI spec"
     group = "openapi"
 
-    val outputDir = "$projectDir/src/main/java/com/nixbug/entebus/data/remote"
+    val outputDir = "$projectDir/src/main/java/com/nixbug/entebus/data/remote/operator"
 
     commandLine(
         "openapi-generator-cli",
         "generate",
-        "-i",
-        "https://dev-api.entebus.com/operator/openapi.json",
-        "-g",
-        "kotlin",
-        "-o",
-        outputDir,
-        "--library",
-        "jvm-retrofit2",
+        "-i", "https://dev-api.entebus.com/operator/openapi.json",
+        "-g", "kotlin",
+        "-o", outputDir,
+        "--library", "jvm-retrofit2",
         "--additional-properties",
-        "useCoroutines=true,serializationLibrary=gson,dateLibrary=string",
-        "--global-property",
-        "apiTests=false,modelTests=false"
+        "useCoroutines=true,serializationLibrary=gson,dateLibrary=string,packageName=com.nixbug.entebus.data.remote.operator",
+        "--api-package", "com.nixbug.entebus.data.remote.operator.api",
+        "--model-package", "com.nixbug.entebus.data.remote.operator.model",
+        "--invoker-package", "com.nixbug.entebus.data.remote.operator.core",
+        "--global-property", "apiTests=false,modelTests=false"
     )
+}
+
+tasks.register<Exec>("generatePublicApiClient") {
+    description = "Generates the Public API client from OpenAPI spec"
+    group = "openapi"
+
+    val outputDir = "$projectDir/src/main/java/com/nixbug/entebus/data/remote/publicapi"
+
+    commandLine(
+        "openapi-generator-cli", "generate",
+        "-i", "https://dev-api.entebus.com/public/openapi.json",
+        "-g", "kotlin",
+        "-o", outputDir,
+        "--library", "jvm-retrofit2",
+        "--additional-properties",
+        "useCoroutines=true,serializationLibrary=gson,dateLibrary=string,packageName=com.nixbug.entebus.data.remote.publicapi",
+        "--api-package", "com.nixbug.entebus.data.remote.publicapi.api",
+        "--model-package", "com.nixbug.entebus.data.remote.publicapi.model",
+        "--invoker-package", "com.nixbug.entebus.data.remote.publicapi.core",
+        "--global-property", "apiTests=false,modelTests=false"
+    )
+}
+
+tasks.register("generateAllApis") {
+    group = "openapi"
+    dependsOn("generateOperatorApiClient", "generatePublicApiClient")
 }

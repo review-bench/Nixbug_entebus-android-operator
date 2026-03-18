@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,10 +46,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,7 +62,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.google.android.gms.common.api.ResolvableApiException
@@ -75,6 +74,7 @@ import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.SettingsClient
 import com.nixbug.entebus.R
+import com.nixbug.entebus.domain.model.PublicCompanyModel
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.utils.LocationPermissionHelper
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
@@ -91,7 +91,6 @@ fun AuthScreen(
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val state = viewModel.uiState.collectAsState().value
-    var showLoader by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -100,24 +99,12 @@ fun AuthScreen(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            SnackbarManager.show("GPS Enabled successfully", SnackbarType.SUCCESS)
-            // User clicked "OK" in the GPS dialog
             viewModel.fetchLocation(
-                onSuccess = {
-                    showLoader = false
-                    SnackbarManager.show("Location updated!", SnackbarType.SUCCESS)
-                },
-                onError = { error ->
-                    showLoader = false
-                    SnackbarManager.show(
-                        message = error,
-                        type = SnackbarType.ERROR,
-                    )
-                }
+                onSuccess = {},
+                onError = {}
             )
         } else {
-            // User clicked "No Thanks"
-            showLoader = false
+            viewModel.fetchPublicCompanies()
             SnackbarManager.show(
                 "Location disabled. Company listings won’t be based on your current location.",
                 SnackbarType.WARNING
@@ -127,28 +114,17 @@ fun AuthScreen(
 
     // The Logic to check and trigger the System Modal
     val checkAndEnableGps = {
-        showLoader = true
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000).build()
         val builder = LocationSettingsRequest.Builder()
             .addLocationRequest(locationRequest)
             .setAlwaysShow(true)
-
         val client: SettingsClient = LocationServices.getSettingsClient(activity)
         val task = client.checkLocationSettings(builder.build())
 
         task.addOnSuccessListener {
             viewModel.fetchLocation(
-                onSuccess = {
-                    showLoader = false
-                    SnackbarManager.show("Location updated!", SnackbarType.SUCCESS)
-                },
-                onError = { error ->
-                    showLoader = false
-                    SnackbarManager.show(
-                        message = error,
-                        type = SnackbarType.ERROR,
-                    )
-                }
+                onSuccess = {},
+                onError = {}
             )
         }
 
@@ -159,15 +135,15 @@ fun AuthScreen(
                         IntentSenderRequest.Builder(exception.resolution.intentSender).build()
                     gpsLauncher.launch(intentSenderRequest)
                 } catch (sendEx: Exception) {
-                    showLoader = false
                     SnackbarManager.show(
                         message = "Unable to open GPS settings.",
                         type = SnackbarType.ERROR
                     )
+                    viewModel.fetchPublicCompanies()
                 }
             } else {
-                showLoader = false
                 SnackbarManager.show("Location services unavailable.", SnackbarType.ERROR)
+                viewModel.fetchPublicCompanies()
             }
         }
     }
@@ -176,6 +152,8 @@ fun AuthScreen(
     LaunchedEffect(Unit) {
         if (LocationPermissionHelper.isPermissionGranted(context)) {
             checkAndEnableGps()
+        } else {
+            viewModel.fetchPublicCompanies()
         }
     }
 
@@ -198,6 +176,16 @@ fun AuthScreen(
         }
     }
 
+    LaunchedEffect(state.companyListError) {
+
+        state.companyListError?.let {
+            SnackbarManager.show(
+                message = it,
+                type = SnackbarType.ERROR
+            )
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -217,7 +205,7 @@ fun AuthScreen(
                 .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo Section
+
             Image(
                 painter = painterResource(
                     id = R.drawable.entebus_logo
@@ -231,8 +219,6 @@ fun AuthScreen(
                     .shadow(6.dp, CircleShape),
                 contentScale = ContentScale.Fit
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = "Entebus Conductor",
@@ -248,7 +234,6 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Company Dropdown
             CompanyDropdown(
                 uiState = state,
                 expanded = state.expanded,
@@ -257,12 +242,14 @@ fun AuthScreen(
                 onSelect = viewModel::onCompanySelected,
                 clearSelectedCompany = viewModel::clearSelectedCompany,
                 clearSearchQuery = viewModel::clearSearchQuery,
-                showLoader = showLoader
+                showLocationLoader = state.locationFetchLoading,
+                showCompanyLoader = state.companyListLoading,
+                error = state.companyError,
+                onLoadMore = { viewModel.fetchPublicCompanies(isPagination = true) }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
-            // Username
             UsernameField(
                 value = state.userName,
                 onChange = viewModel::onUserNameChange,
@@ -270,9 +257,8 @@ fun AuthScreen(
                 error = state.userNameError
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
-            // Password
             PasswordField(
                 value = state.password,
                 onChange = viewModel::onPasswordChange,
@@ -281,16 +267,19 @@ fun AuthScreen(
                 error = state.passwordError
             )
 
-            Spacer(modifier = Modifier.height(25.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Sign In
-            SignInButton(isLoading = state.isLoading, onClick = {
-                keyboardController?.hide()
-                viewModel.login()
-            })
+            SignInButton(
+                isLoading = state.isLoading || state.isNavigating,
+                onClick = {
+                    keyboardController?.hide()
+                    viewModel.login()
+                },
+                isCompanyFetching = state.companyListLoading,
+                isLocationFetching = state.locationFetchLoading
+            )
 
-            Spacer(modifier = Modifier.height(15.dp))
-
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -302,10 +291,13 @@ fun CompanyDropdown(
     expanded: Boolean,
     onExpandChange: (Boolean) -> Unit,
     onQueryChange: (String) -> Unit,
-    onSelect: (String) -> Unit,
+    onSelect: (PublicCompanyModel) -> Unit,
     clearSelectedCompany: () -> Unit,
     clearSearchQuery: () -> Unit,
-    showLoader: Boolean
+    showLocationLoader: Boolean,
+    showCompanyLoader: Boolean,
+    error: String?,
+    onLoadMore: () -> Unit,
 ) {
     Text(
         text = "Company",
@@ -315,28 +307,37 @@ fun CompanyDropdown(
             .fillMaxWidth()
             .padding(bottom = 5.dp)
     )
+
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { if (!showLoader) onExpandChange(it) },
-        modifier = Modifier.fillMaxWidth()
+        onExpandedChange = { if (!showLocationLoader && !showCompanyLoader) onExpandChange(it) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = if (error == null) 12.dp else 0.dp)
     ) {
+
         LaunchedEffect(expanded, uiState.selectedCompany) {
             if (!expanded && uiState.selectedCompany == null) {
                 clearSearchQuery()
             }
-            if ((uiState.selectedCompany != uiState.companySearchQuery) && !expanded) {
+            if ((uiState.selectedCompany?.name != uiState.companySearchQuery) && !expanded) {
                 clearSelectedCompany()
             }
         }
+
         OutlinedTextField(
-            value = if (expanded) uiState.companySearchQuery else (uiState.selectedCompany ?: ""),
+            value = if (expanded) uiState.companySearchQuery else uiState.selectedCompany?.name
+                ?: "",
             onValueChange = { onQueryChange(it) },
             singleLine = true,
             readOnly = !expanded,
-            enabled = !showLoader,
+            enabled = !showLocationLoader && !showCompanyLoader,
             placeholder = {
                 Text(
-                    if (expanded) "Search your company" else if (showLoader) "Fetching nearby companies..." else "Select your company",
+                    if (expanded) "Search your company"
+                    else if (showLocationLoader) "Fetching your current location"
+                    else if (showCompanyLoader) "Fetching companies"
+                    else "Select your company",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray
                 )
@@ -345,7 +346,7 @@ fun CompanyDropdown(
                 .menuAnchor(MenuAnchorType.PrimaryEditable)
                 .fillMaxWidth(),
             trailingIcon = {
-                if (showLoader) {
+                if (showLocationLoader || showCompanyLoader) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,
@@ -366,19 +367,26 @@ fun CompanyDropdown(
                 disabledContainerColor = Color.White,
                 disabledTextColor = Color.Black,
                 disabledBorderColor = Color(0xFFC0C0C0),
-            )
+            ),
+            isError = error != null,
+            supportingText = if (error != null) {
+                {
+                    Text(error)
+                }
+            } else null
         )
+
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { onExpandChange(false) },
             modifier = Modifier
                 .background(Color.White, RoundedCornerShape(12.dp))
                 .border(1.dp, Color(0xFF47C7FF), RoundedCornerShape(12.dp))
-                .heightIn(max = 160.dp)
+                .heightIn(max = 160.dp),
         ) {
-            uiState.filteredCompanies.forEach { company ->
+            uiState.companyList.forEach { company ->
                 DropdownMenuItem(
-                    text = { Text(company) },
+                    text = { Text(company.name) },
                     modifier = Modifier
                         .padding(horizontal = 6.dp)
                         .clip(RoundedCornerShape(10.dp)),
@@ -388,7 +396,32 @@ fun CompanyDropdown(
                     }
                 )
             }
-            if (uiState.filteredCompanies.isEmpty()) {
+            if (
+                uiState.hasMore &&
+                !showCompanyLoader &&
+                !uiState.isPaginationLoading &&
+                uiState.companyList.isNotEmpty()
+                && uiState.companyList.size >= uiState.limit
+            ) {
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 4.dp)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "View more...",
+                        fontSize = 15.sp,
+                        modifier = Modifier
+                            .clickable { onLoadMore() }
+                            .padding(horizontal = 10.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        textDecoration = TextDecoration.Underline,
+                        color = Color(0xFF3098DB)
+                    )
+                }
+            }
+            if (uiState.companyList.isEmpty()) {
                 DropdownMenuItem(
                     text = { Text("No results", color = Color.Gray) },
                     onClick = {}
@@ -504,7 +537,12 @@ fun PasswordField(
 }
 
 @Composable
-fun SignInButton(isLoading: Boolean, onClick: () -> Unit) {
+fun SignInButton(
+    isLoading: Boolean,
+    onClick: () -> Unit,
+    isCompanyFetching: Boolean,
+    isLocationFetching: Boolean
+) {
 
     Button(
         onClick = onClick,
@@ -521,7 +559,7 @@ fun SignInButton(isLoading: Boolean, onClick: () -> Unit) {
             pressedElevation = 7.dp,
             focusedElevation = 8.dp
         ),
-        enabled = !isLoading
+        enabled = !isLoading && !isCompanyFetching && !isLocationFetching
     ) {
         if (isLoading) {
             CircularProgressIndicator(

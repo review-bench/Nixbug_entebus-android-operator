@@ -1,31 +1,35 @@
 package com.nixbug.entebus.presentation.screens.auth
 
+import com.nixbug.entebus.domain.model.PublicCompanyModel
+
 data class AuthUiState(
-    val selectedCompany: String? = null,
-    val companySearchQuery: String = "",
+    val locationFetchLoading: Boolean = false,
+    val companyListLoading: Boolean = false,
+
+    val companyList: List<PublicCompanyModel> = emptyList(),
+
     val userName: String = "",
     val password: String = "",
+    val selectedCompany: PublicCompanyModel? = null,
+
+    val companySearchQuery: String = "",
+
     val passwordVisible: Boolean = false,
     val expanded: Boolean = false,
-    val isLoading: Boolean = false,
+
     val loginError: String? = null,
     val loginSuccess: Boolean = false,
+    val companyListError: String? = null,
+
     val userNameError: String? = null,
     val passwordError: String? = null,
-    val companyList: List<String> = listOf(
-        "Company A",
-        "Company B",
-        "Company C",
-        "Company D",
-        "Company E",
-        "Company F",
-        "Nixbug",
-        "krishna"
-    )
-) {
-    val filteredCompanies: List<String>
-        get() = if (companySearchQuery.isBlank()) companyList
-        else companyList.filter {
-            it.contains(companySearchQuery, ignoreCase = true)
-        }
-}
+    val companyError: String? = null,
+
+    val offset: Int = 0,
+    val limit: Int = 20,
+    val hasMore: Boolean = true,
+    val isPaginationLoading: Boolean = false,
+
+    val isLoading: Boolean = false,
+    val isNavigating: Boolean = false,
+)
