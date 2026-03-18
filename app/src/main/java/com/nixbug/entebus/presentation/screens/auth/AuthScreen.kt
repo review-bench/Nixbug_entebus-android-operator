@@ -139,9 +139,11 @@ fun AuthScreen(
                         message = "Unable to open GPS settings.",
                         type = SnackbarType.ERROR
                     )
+                    viewModel.fetchPublicCompanies()
                 }
             } else {
                 SnackbarManager.show("Location services unavailable.", SnackbarType.ERROR)
+                viewModel.fetchPublicCompanies()
             }
         }
     }
@@ -403,7 +405,7 @@ fun CompanyDropdown(
                 !showCompanyLoader &&
                 !uiState.isPaginationLoading &&
                 uiState.companyList.isNotEmpty()
-                && uiState.companyList.size < uiState.offset
+                && uiState.companyList.size >= uiState.limit
             ) {
                 Box(
                     modifier = Modifier

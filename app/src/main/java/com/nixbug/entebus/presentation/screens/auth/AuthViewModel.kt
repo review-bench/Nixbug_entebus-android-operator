@@ -127,6 +127,7 @@ class AuthViewModel @Inject constructor(
                     companyListLoading = true,
                     offset = 0,
                     hasMore = true,
+                    companyListError = null
                 )
             }
         }
@@ -148,7 +149,8 @@ class AuthViewModel @Inject constructor(
                         isPaginationLoading = false,
                         companyList = if (isPagination) it.companyList + newList else newList,
                         offset = if (isPagination) it.offset + it.limit else it.limit,
-                        hasMore = newList.size == it.limit
+                        hasMore = newList.size == it.limit,
+                        companyListError = null
                     )
                 }
             }
