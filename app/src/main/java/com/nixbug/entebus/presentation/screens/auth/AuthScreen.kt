@@ -174,6 +174,16 @@ fun AuthScreen(
         }
     }
 
+    LaunchedEffect(state.companyListError) {
+
+        state.companyListError?.let {
+            SnackbarManager.show(
+                message = it,
+                type = SnackbarType.ERROR
+            )
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -393,6 +403,7 @@ fun CompanyDropdown(
                 !showCompanyLoader &&
                 !uiState.isPaginationLoading &&
                 uiState.companyList.isNotEmpty()
+                && uiState.companyList.size < uiState.offset
             ) {
                 Box(
                     modifier = Modifier

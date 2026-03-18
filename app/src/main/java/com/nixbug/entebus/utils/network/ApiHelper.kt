@@ -26,7 +26,7 @@ suspend fun <T, R> apiHelper(
 
             val errorBody = response.errorBody()?.string()
             val responseCode = response.code()
-            var errorMessage: String? = ""
+            var errorMessage: String?
 
             if (responseCode == 422) {
                 errorMessage = try {
@@ -61,7 +61,7 @@ suspend fun <T, R> apiHelper(
                 }
             }
             val finalMessage = if (errorMessage.isNullOrBlank()) {
-                "Request failed"
+                "Request failed (HTTP $responseCode)"
             } else {
                 errorMessage
             }

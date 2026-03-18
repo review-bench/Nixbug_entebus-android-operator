@@ -27,7 +27,8 @@ import javax.inject.Inject
 class AuthViewModel @Inject constructor(
     private val locationHelper: LocationHelper,
     private val createTokenUseCase: CreateTokenUseCase,
-    private val fetchPublicCompanyUseCase: FetchPublicCompanyUseCase
+    private val fetchPublicCompanyUseCase: FetchPublicCompanyUseCase,
+    private val gson: Gson
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -89,15 +90,20 @@ class AuthViewModel @Inject constructor(
                     job.invokeOnCompletion { isFetching = false }
                 },
                 onError = { err ->
-                    onError(err)
                     _uiState.update { it.copy(locationFetchLoading = false) }
                     isFetching = false
+                    SnackbarManager.show(
+                        message = "Failed to fetch location",
+                        type = SnackbarType.ERROR
+                    )
+                    onError("Failed to process location")
                 }
             )
         } catch (e: Exception) {
             _uiState.update { it.copy(locationFetchLoading = false) }
             isFetching = false
             SnackbarManager.show(message = "Failed to fetch location", type = SnackbarType.ERROR)
+            onError("Failed to process location")
         }
     }
 
@@ -111,7 +117,7 @@ class AuthViewModel @Inject constructor(
         val currentState = _uiState.value
         if (isPagination && (currentState.isPaginationLoading || !currentState.hasMore)) return
 
-        val location = location.value.ifEmpty { null }
+        val locationParam = location.value.ifEmpty { null }
 
         if (isPagination) {
             _uiState.update { it.copy(isPaginationLoading = true) }
@@ -126,7 +132,7 @@ class AuthViewModel @Inject constructor(
         }
 
         val result = fetchPublicCompanyUseCase(
-            location = location,
+            location = locationParam,
             name = searchQuery.value,
             offset = if (isPagination) currentState.offset else 0,
             limit = currentState.limit
@@ -152,7 +158,7 @@ class AuthViewModel @Inject constructor(
                     it.copy(
                         companyListLoading = false,
                         isPaginationLoading = false,
-                        loginError = result.message
+                        companyListError = result.message
                     )
                 }
             }
@@ -229,7 +235,7 @@ class AuthViewModel @Inject constructor(
             model = android.os.Build.MODEL
         )
 
-        val clientDetailsJson = Gson().toJson(clientDetails)
+        val clientDetailsJson = gson.toJson(clientDetails)
 
         var hasError = false
 
