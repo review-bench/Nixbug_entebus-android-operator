@@ -7,6 +7,7 @@ import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.domain.model.PublicCompanyModel
 import com.nixbug.entebus.domain.usecase.CreateTokenUseCase
 import com.nixbug.entebus.domain.usecase.FetchPublicCompanyUseCase
+import com.nixbug.entebus.domain.usecase.SaveTokenUseCase
 import com.nixbug.entebus.utils.LocationHelper
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
@@ -28,6 +29,7 @@ class AuthViewModel @Inject constructor(
     private val locationHelper: LocationHelper,
     private val createTokenUseCase: CreateTokenUseCase,
     private val fetchPublicCompanyUseCase: FetchPublicCompanyUseCase,
+    private val saveTokenUseCase: SaveTokenUseCase,
     private val gson: Gson
 ) : ViewModel() {
 
@@ -289,6 +291,9 @@ class AuthViewModel @Inject constructor(
             when (result) {
 
                 is Resource.Success -> {
+                    result.data?.let {
+                        saveTokenUseCase(it)
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
