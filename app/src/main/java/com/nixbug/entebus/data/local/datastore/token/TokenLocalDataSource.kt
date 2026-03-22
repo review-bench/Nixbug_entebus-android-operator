@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class TokenLocalDataSource @Inject constructor(
-    private val authDataStore: AuthDataStore
+    private val authDataStore: TokenLocalDataStore
 ) {
 
     suspend fun saveToken(token: CreateTokenModel) {
@@ -31,8 +31,7 @@ class TokenLocalDataSource @Inject constructor(
                 prefs.operatorId != null
             ) {
 
-                val remainingTime =
-                    (prefs.expiryTime - System.currentTimeMillis()) / 1000
+                val remainingTime = (prefs.expiryTime - System.currentTimeMillis()) / 1000
 
                 CreateTokenModel(
                     operatorId = prefs.operatorId,

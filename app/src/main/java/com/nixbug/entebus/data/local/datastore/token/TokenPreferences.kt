@@ -4,7 +4,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 
-object AuthPreferences {
+object TokenPreferences {
     val OPERATOR_ID = intPreferencesKey("operator_id")
     val REFRESH_BEFORE = stringPreferencesKey("refresh_before")
     val CREATED_ON = stringPreferencesKey("created_on")

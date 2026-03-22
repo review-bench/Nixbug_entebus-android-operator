@@ -40,6 +40,7 @@ class TokenRepositoryImpl @Inject constructor(
             }
         )
     }
+
     override suspend fun saveToken(token: CreateTokenModel) {
         localDataSource.saveToken(token)
     }

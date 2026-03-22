@@ -23,21 +23,6 @@ import javax.inject.Singleton
 
 object RepositoryModule {
 
-    @Module
-    @InstallIn(SingletonComponent::class)
-    object DataStoreModule {
-
-        private val Context.dataStore by preferencesDataStore(name = "auth_prefs")
-
-        @Provides
-        @Singleton
-        fun provideDataStore(
-            @ApplicationContext context: Context
-        ): DataStore<Preferences> {
-            return context.dataStore
-        }
-    }
-
     @Provides
     @Singleton
     fun provideTokenRepository(

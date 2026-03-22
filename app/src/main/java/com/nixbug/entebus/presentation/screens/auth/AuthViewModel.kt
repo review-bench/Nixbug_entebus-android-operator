@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.domain.model.PublicCompanyModel
-import com.nixbug.entebus.domain.usecase.CreateTokenUseCase
+import com.nixbug.entebus.domain.usecase.token.CreateTokenUseCase
 import com.nixbug.entebus.domain.usecase.FetchPublicCompanyUseCase
-import com.nixbug.entebus.domain.usecase.SaveTokenUseCase
+import com.nixbug.entebus.domain.usecase.token.SaveTokenUseCase
 import com.nixbug.entebus.utils.LocationHelper
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
