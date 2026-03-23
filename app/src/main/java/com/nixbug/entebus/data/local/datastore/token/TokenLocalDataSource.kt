@@ -6,12 +6,12 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class TokenLocalDataSource @Inject constructor(
-    private val authDataStore: TokenLocalDataStore
+    private val tokenDataStore: TokenLocalDataStore
 ) {
 
     suspend fun saveToken(token: CreateTokenModel) {
         val expiryTime = System.currentTimeMillis() + (token.expiresIn * 1000L)
-        authDataStore.save(
+        tokenDataStore.save(
             operatorId = token.operatorId,
             refreshBefore = token.refreshBefore,
             createdOn = token.createdOn,
@@ -22,7 +22,7 @@ class TokenLocalDataSource @Inject constructor(
     }
 
     fun getToken(): Flow<CreateTokenModel?> {
-        return authDataStore.get().map { prefs ->
+        return tokenDataStore.get().map { prefs ->
 
             if (
                 prefs.accessToken != null &&
@@ -46,6 +46,6 @@ class TokenLocalDataSource @Inject constructor(
     }
 
     suspend fun clearToken() {
-        authDataStore.clear()
+        tokenDataStore.clear()
     }
 }
