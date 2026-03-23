@@ -5,11 +5,11 @@ import com.nixbug.entebus.domain.model.CreateTokenModel
 
 fun OperatorTokenSchema.toTokenDomain(): CreateTokenModel {
     return CreateTokenModel(
+        operatorId = operatorId,
+        expiresIn = expiresIn,
+        refreshBefore = refreshBefore,
+        createdOn = createdOn,
         accessToken = accessToken,
         refreshToken = refreshToken,
-        expiresIn = expiresIn,
-        operatorId = operatorId,
-        refreshBefore = refreshBefore,
-        createdOn = createdOn
     )
 }

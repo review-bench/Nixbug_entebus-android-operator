@@ -13,6 +13,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -39,29 +41,34 @@ import com.nixbug.entebus.utils.snackbar.SnackbarManager
 @Composable
 fun AppNavigation(
     activity: Activity,
+    viewModel: AppNavigationViewModel = hiltViewModel()
 ) {
+
+    val startDestination by viewModel.startDestination.collectAsState()
     val navController = rememberNavController()
     val context = LocalContext.current
-
-    val isLoggedIn = false
-    val hasPermission by remember {
-        mutableStateOf(
-            LocationPermissionHelper.isPermissionGranted(
-                context
-            )
-        )
-    }
-
-    val appStartDestination = if (isLoggedIn) {
-        AppNavItem.MainScreen.route
-    } else if (!hasPermission) {
-        AppNavItem.LocationRequest.route
-    } else {
-        AppNavItem.Auth.route
-    }
-
+    val hasPermission = LocationPermissionHelper.isPermissionGranted(context)
     val snackbarHostState = remember { SnackbarHostState() }
     var currentEvent by remember { mutableStateOf<SnackbarEvent?>(null) }
+
+    val finalStartDestination = when {
+        startDestination == AppNavItem.MainScreen.route -> {
+            AppNavItem.MainScreen.route
+        }
+
+        !hasPermission -> {
+            AppNavItem.LocationRequest.route
+        }
+
+        else -> {
+            AppNavItem.Auth.route
+        }
+    }
+    if (startDestination == null) {
+        return
+    }
+
+
     LaunchedEffect(Unit) {
         SnackbarManager.events.collect { event ->
             if (event == null) {
@@ -121,7 +128,7 @@ fun AppNavigation(
                     animationSpec = tween(300)
                 ) + fadeOut(animationSpec = tween(300))
             },
-            startDestination = appStartDestination
+            startDestination = finalStartDestination,
         )
         {
             composable(AppNavItem.Auth.route) {

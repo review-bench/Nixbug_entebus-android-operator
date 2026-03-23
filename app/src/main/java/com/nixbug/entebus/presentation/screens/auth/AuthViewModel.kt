@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.domain.model.PublicCompanyModel
-import com.nixbug.entebus.domain.usecase.CreateTokenUseCase
+import com.nixbug.entebus.domain.usecase.token.CreateTokenUseCase
 import com.nixbug.entebus.domain.usecase.FetchPublicCompanyUseCase
+import com.nixbug.entebus.domain.usecase.token.SaveTokenUseCase
+import com.nixbug.entebus.domain.usecase.user.SaveUserUseCase
 import com.nixbug.entebus.utils.LocationHelper
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
@@ -28,6 +30,8 @@ class AuthViewModel @Inject constructor(
     private val locationHelper: LocationHelper,
     private val createTokenUseCase: CreateTokenUseCase,
     private val fetchPublicCompanyUseCase: FetchPublicCompanyUseCase,
+    private val saveTokenUseCase: SaveTokenUseCase,
+    private val saveUserUseCase: SaveUserUseCase,
     private val gson: Gson
 ) : ViewModel() {
 
@@ -289,6 +293,19 @@ class AuthViewModel @Inject constructor(
             when (result) {
 
                 is Resource.Success -> {
+                    result.data?.let { token ->
+                        saveTokenUseCase(token)
+                        val company = _uiState.value.selectedCompany
+                        val persistedUsername = username
+
+                        if (company != null) {
+                            saveUserUseCase(
+                                companyId = company.id,
+                                companyName = company.name,
+                                username = persistedUsername
+                            )
+                        }
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
