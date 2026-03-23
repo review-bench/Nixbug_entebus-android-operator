@@ -296,13 +296,13 @@ class AuthViewModel @Inject constructor(
                     result.data?.let { token ->
                         saveTokenUseCase(token)
                         val company = _uiState.value.selectedCompany
-                        val username = _uiState.value.userName
+                        val persistedUsername = username
 
                         if (company != null) {
                             saveUserUseCase(
                                 companyId = company.id,
                                 companyName = company.name,
-                                username = username
+                                username = persistedUsername
                             )
                         }
                     }

@@ -34,6 +34,10 @@ class UserLocalDataStore @Inject constructor(
     }
 
     suspend fun clear() {
-        dataStore.edit { it.clear() }
+        dataStore.edit { prefs ->
+            prefs.remove(UserPreferences.COMPANY_ID)
+            prefs.remove(UserPreferences.COMPANY_NAME)
+            prefs.remove(UserPreferences.USERNAME)
+        }
     }
 }

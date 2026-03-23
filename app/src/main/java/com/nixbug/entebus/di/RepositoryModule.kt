@@ -1,9 +1,5 @@
 package com.nixbug.entebus.di
 
-import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
 import com.nixbug.entebus.data.remote.operator.api.TokenApi
@@ -17,7 +13,6 @@ import com.nixbug.entebus.domain.repository.UserRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 

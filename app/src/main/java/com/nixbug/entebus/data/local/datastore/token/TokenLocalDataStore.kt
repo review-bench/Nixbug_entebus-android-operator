@@ -43,6 +43,13 @@ class TokenLocalDataStore @Inject constructor(
     }
 
     suspend fun clear() {
-        dataStore.edit { it.clear() }
+        dataStore.edit { prefs ->
+            prefs.remove(TokenPreferences.OPERATOR_ID)
+            prefs.remove(TokenPreferences.REFRESH_BEFORE)
+            prefs.remove(TokenPreferences.CREATED_ON)
+            prefs.remove(TokenPreferences.EXPIRY_TIME)
+            prefs.remove(TokenPreferences.ACCESS_TOKEN)
+            prefs.remove(TokenPreferences.REFRESH_TOKEN)
+        }
     }
 }
