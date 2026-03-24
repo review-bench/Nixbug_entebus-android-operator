@@ -2,12 +2,14 @@ package com.nixbug.entebus.di
 
 import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
+import com.nixbug.entebus.data.interceptor.AuthInterceptor
 import com.nixbug.entebus.data.remote.operator.api.TokenApi
 import com.nixbug.entebus.data.remote.publicapi.api.CompanyApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
 import javax.inject.Singleton
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -19,9 +21,13 @@ object NetworkModule {
     @OperatorApi
     @Provides
     @Singleton
-    fun provideOperatorRetrofit(gson: Gson): Retrofit {
+    fun provideOperatorRetrofit(gson: Gson, authInterceptor: AuthInterceptor): Retrofit {
+        val client = OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
+            .build()
         return Retrofit.Builder()
             .baseUrl(BuildConfig.OPERATOR_BASE_URL)
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }

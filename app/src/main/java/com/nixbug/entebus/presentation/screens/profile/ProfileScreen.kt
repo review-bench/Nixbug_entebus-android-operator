@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +54,17 @@ fun ProfileScreen(
     viewModel: ProfileScreenViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val logoutEvent by viewModel.logoutEvent.collectAsState()
     var showLogOutDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(logoutEvent) {
+        if (logoutEvent) {
+            showLogOutDialog = false
+            rootNavController.navigate(AppNavItem.Auth.route) {
+                popUpTo(0)
+            }
+        }
+    }
 
     if (showLogOutDialog) {
         DialogBox(
@@ -61,8 +72,7 @@ fun ProfileScreen(
             message = "Are you sure you want to log out of your account?",
             confirmText = "Logout",
             onConfirmClick = {
-                // TODO: Implement actual logout logic. Currently only dismisses the modal.
-                showLogOutDialog = false
+                viewModel.logout()
             },
             dismissible = true,
             onDismiss = { showLogOutDialog = false },
