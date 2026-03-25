@@ -14,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -32,7 +33,7 @@ class ProfileScreenViewModel @Inject constructor(
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     private val _logoutEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val logoutEvent = _logoutEvent
+    val logoutEvent = _logoutEvent.asSharedFlow()
 
     fun logout() {
         viewModelScope.launch {

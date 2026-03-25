@@ -47,6 +47,7 @@ import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun ProfileScreen(
@@ -56,13 +57,11 @@ fun ProfileScreen(
     val state by viewModel.uiState.collectAsState()
     var showLogOutDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.logoutEvent.collect {
+    LaunchedEffect(viewModel.logoutEvent) {
+        viewModel.logoutEvent.collectLatest {
             showLogOutDialog = false
             rootNavController.navigate(AppNavItem.Auth.route) {
-                popUpTo(rootNavController.graph.startDestinationId) {
-                    inclusive = true
-                }
+                popUpTo(rootNavController.graph.startDestinationId) { inclusive = true }
             }
         }
     }

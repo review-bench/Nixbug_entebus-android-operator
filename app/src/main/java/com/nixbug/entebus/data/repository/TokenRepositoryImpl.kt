@@ -60,7 +60,7 @@ class TokenRepositoryImpl @Inject constructor(
                     token = token
                 )
             },
-            mapper = {}
+            mapper = {_-> Unit}
         )
     }
 

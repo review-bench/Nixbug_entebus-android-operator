@@ -23,7 +23,8 @@ class NullOnEmptyConverterFactory : Converter.Factory() {
 
                 val buffer = source.buffer
                 return if (buffer.size == 0L) {
-                    null
+                    buffer.close()
+                    return null
                 } else {
                     gsonConverter.convert(body)
                 }
