@@ -326,8 +326,7 @@ class AuthViewModel @Inject constructor(
                         )
                     }
                 }
-
-                is Resource.Loading -> {}
+                else -> {}
             }
         }
     }

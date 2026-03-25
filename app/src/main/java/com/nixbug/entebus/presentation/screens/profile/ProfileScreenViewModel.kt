@@ -7,6 +7,7 @@ import com.nixbug.entebus.domain.usecase.token.ClearTokenUseCase
 import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
 import com.nixbug.entebus.domain.usecase.token.RevokeTokenUseCase
 import com.nixbug.entebus.domain.usecase.user.ClearUserUseCase
+import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,15 +38,33 @@ class ProfileScreenViewModel @Inject constructor(
                 val token = getTokenUseCase().first()
                 val accessToken = token?.accessToken
                 if (!accessToken.isNullOrEmpty()) {
-                    revokeTokenUseCase(token = accessToken)
+                    val result = revokeTokenUseCase(token = accessToken)
+                    when (result) {
+                        is Resource.Empty -> {
+                            SnackbarManager.show(
+                                "You have been logged out successfully",
+                                SnackbarType.SUCCESS
+                            )
+                        }
+
+                        is Resource.Error -> {
+                            SnackbarManager.show(
+                                "Session expired. You’ve been logged out",
+                                SnackbarType.SUCCESS
+                            )
+                        }
+
+                        else -> {}
+                    }
                 }
-            } catch (e: Exception) {
-                SnackbarManager.show("Token not found.", SnackbarType.WARNING)
-            } finally {
                 clearTokenUseCase()
                 clearUserUseCase()
                 tokenManager.accessToken = null
                 _logoutEvent.value = true
+            } catch (e: Exception) {
+                SnackbarManager.show("Token not found.", SnackbarType.WARNING)
+            } finally {
+
             }
         }
     }

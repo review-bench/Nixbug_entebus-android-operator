@@ -19,7 +19,7 @@ suspend fun <T, R> apiHelper(
             if (body != null) {
                 Resource.Success(mapper(body))
             } else {
-                Resource.Error(message = "Empty response from server")
+                Resource.Empty(response.code())
             }
 
         } else {
