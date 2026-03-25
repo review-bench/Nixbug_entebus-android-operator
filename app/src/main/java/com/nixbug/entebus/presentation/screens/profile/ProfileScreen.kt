@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +47,7 @@ import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun ProfileScreen(
@@ -55,14 +57,22 @@ fun ProfileScreen(
     val state by viewModel.uiState.collectAsState()
     var showLogOutDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(viewModel.logoutEvent) {
+        viewModel.logoutEvent.collectLatest {
+            showLogOutDialog = false
+            rootNavController.navigate(AppNavItem.Auth.route) {
+                popUpTo(rootNavController.graph.startDestinationId) { inclusive = true }
+            }
+        }
+    }
+
     if (showLogOutDialog) {
         DialogBox(
             title = "Logout",
             message = "Are you sure you want to log out of your account?",
             confirmText = "Logout",
             onConfirmClick = {
-                // TODO: Implement actual logout logic. Currently only dismisses the modal.
-                showLogOutDialog = false
+                viewModel.logout()
             },
             dismissible = true,
             onDismiss = { showLogOutDialog = false },

@@ -17,4 +17,6 @@ interface TokenRepository {
     fun getToken(): Flow<CreateTokenModel?>
 
     suspend fun clearToken()
+
+    suspend fun revokeToken(token: String): Resource<Unit>
 }

@@ -17,9 +17,9 @@ suspend fun <T, R> apiHelper(
         if (response.isSuccessful) {
             val body = response.body()
             if (body != null) {
-                Resource.Success(mapper(body))
+                Resource.Success(data = mapper(body), statusCode = response.code())
             } else {
-                Resource.Error(message = "Empty response from server")
+                Resource.Empty(response.code())
             }
 
         } else {
