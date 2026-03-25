@@ -1,4 +1,4 @@
-package com.nixbug.entebus.utils
+package com.nixbug.entebus.utils.network
 
 import okhttp3.ResponseBody
 import retrofit2.Converter

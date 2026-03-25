@@ -2,7 +2,7 @@ package com.nixbug.entebus.presentation.screens.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nixbug.entebus.data.interceptor.TokenManager
+import com.nixbug.entebus.data.manger.TokenManager
 import com.nixbug.entebus.domain.usecase.token.ClearTokenUseCase
 import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
 import com.nixbug.entebus.domain.usecase.token.RevokeTokenUseCase

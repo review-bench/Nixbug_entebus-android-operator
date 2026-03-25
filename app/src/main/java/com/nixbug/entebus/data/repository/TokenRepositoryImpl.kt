@@ -60,9 +60,8 @@ class TokenRepositoryImpl @Inject constructor(
                     token = token
                 )
             },
-            mapper = {response->  response ?: Any()}
+            mapper = { response -> response ?: Any() }
         )
-
     }
 
 }

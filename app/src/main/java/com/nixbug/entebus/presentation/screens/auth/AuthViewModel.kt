@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
-import com.nixbug.entebus.data.interceptor.TokenManager
+import com.nixbug.entebus.data.manger.TokenManager
 import com.nixbug.entebus.domain.model.PublicCompanyModel
 import com.nixbug.entebus.domain.usecase.token.CreateTokenUseCase
 import com.nixbug.entebus.domain.usecase.FetchPublicCompanyUseCase
@@ -326,6 +326,7 @@ class AuthViewModel @Inject constructor(
                         )
                     }
                 }
+
                 else -> {}
             }
         }

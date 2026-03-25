@@ -1,4 +1,4 @@
-package com.nixbug.entebus.data.interceptor
+package com.nixbug.entebus.data.manger
 
 import javax.inject.Inject
 import javax.inject.Singleton
