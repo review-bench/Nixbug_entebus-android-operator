@@ -18,7 +18,11 @@ class NullOnEmptyConverterFactory : Converter.Factory() {
 
         return object : Converter<ResponseBody, Any?> {
             override fun convert(body: ResponseBody): Any? {
-                return if (body.contentLength() == 0L) {
+                val source = body.source()
+                source.request(Long.MAX_VALUE)
+
+                val buffer = source.buffer
+                return if (buffer.size == 0L) {
                     null
                 } else {
                     gsonConverter.convert(body)

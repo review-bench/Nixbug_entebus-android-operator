@@ -18,5 +18,5 @@ interface TokenRepository {
 
     suspend fun clearToken()
 
-    suspend fun revokeToken(token: String): Resource<Any>
+    suspend fun revokeToken(token: String): Resource<Unit>
 }

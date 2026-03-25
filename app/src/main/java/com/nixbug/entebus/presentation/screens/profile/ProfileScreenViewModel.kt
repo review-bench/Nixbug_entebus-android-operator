@@ -31,7 +31,7 @@ class ProfileScreenViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
-    private val _logoutEvent = MutableSharedFlow<Unit>()
+    private val _logoutEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val logoutEvent = _logoutEvent
 
     fun logout() {
@@ -50,10 +50,18 @@ class ProfileScreenViewModel @Inject constructor(
                         }
 
                         is Resource.Error -> {
-                            SnackbarManager.show(
-                                "Session expired. You’ve been logged out",
-                                SnackbarType.SUCCESS
-                            )
+                            val statusCode = result.statusCode
+                            if (statusCode == 401 || statusCode == 403) {
+                                SnackbarManager.show(
+                                    "Session expired. You’ve been logged out",
+                                    SnackbarType.SUCCESS
+                                )
+                            } else {
+                                SnackbarManager.show(
+                                    "Logged out locally. Couldn't reach server.",
+                                    SnackbarType.WARNING
+                                )
+                            }
                         }
 
                         else -> {}
@@ -69,7 +77,7 @@ class ProfileScreenViewModel @Inject constructor(
                 clearTokenUseCase()
                 clearUserUseCase()
                 tokenManager.accessToken = null
-                _logoutEvent.emit(Unit)
+                _logoutEvent.tryEmit(Unit)
             }
         }
     }

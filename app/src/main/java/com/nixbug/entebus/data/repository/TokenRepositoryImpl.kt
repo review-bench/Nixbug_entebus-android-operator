@@ -53,14 +53,14 @@ class TokenRepositoryImpl @Inject constructor(
         localDataSource.clearToken()
     }
 
-    override suspend fun revokeToken(token: String): Resource<Any> {
+    override suspend fun revokeToken(token: String): Resource<Unit> {
         return apiHelper(
             apiCall = {
                 tokenApi.revokeTokenCompanyAccountTokenRevokePost(
                     token = token
                 )
             },
-            mapper = { response -> response ?: Any() }
+            mapper = {}
         )
     }
 
