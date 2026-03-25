@@ -3,7 +3,9 @@ package com.nixbug.entebus
 import android.app.Application
 import com.nixbug.entebus.di.AppInitializer
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -14,8 +16,7 @@ class MyApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-
-        runBlocking {
+        CoroutineScope(Dispatchers.IO).launch {
             appInitializer.init()
         }
     }
