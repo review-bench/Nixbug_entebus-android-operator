@@ -75,9 +75,9 @@ class ProfileScreenViewModel @Inject constructor(
                     SnackbarType.WARNING
                 )
             } finally {
+                tokenManager.accessToken = null
                 clearTokenUseCase()
                 clearUserUseCase()
-                tokenManager.accessToken = null
                 _logoutEvent.tryEmit(Unit)
             }
         }
