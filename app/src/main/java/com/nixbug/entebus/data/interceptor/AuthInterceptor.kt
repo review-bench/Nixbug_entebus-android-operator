@@ -1,6 +1,6 @@
 package com.nixbug.entebus.data.interceptor
 
-import com.nixbug.entebus.data.manger.TokenManager
+import com.nixbug.entebus.data.manager.TokenManager
 import okhttp3.Interceptor
 import javax.inject.Inject
 

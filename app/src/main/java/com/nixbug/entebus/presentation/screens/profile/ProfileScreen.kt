@@ -54,14 +54,15 @@ fun ProfileScreen(
     viewModel: ProfileScreenViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
-    val logoutEvent by viewModel.logoutEvent.collectAsState()
     var showLogOutDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(logoutEvent) {
-        if (logoutEvent) {
+    LaunchedEffect(Unit) {
+        viewModel.logoutEvent.collect {
             showLogOutDialog = false
             rootNavController.navigate(AppNavItem.Auth.route) {
-                popUpTo(0)
+                popUpTo(rootNavController.graph.startDestinationId) {
+                    inclusive = true
+                }
             }
         }
     }
