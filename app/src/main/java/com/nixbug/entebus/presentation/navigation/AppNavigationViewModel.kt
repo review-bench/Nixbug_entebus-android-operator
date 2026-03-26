@@ -26,10 +26,11 @@ class AppNavigationViewModel @Inject constructor(
         viewModelScope.launch {
             val token = getTokenUseCase().first()
 
-            if (token != null && token.accessToken.isNotEmpty()) {
-                _startDestination.value = AppNavItem.MainScreen.route
-            } else {
+            if ( !token?.accessToken.isNullOrEmpty()) {
                 _startDestination.value = AppNavItem.Auth.route
+            } else {
+                _startDestination.value = AppNavItem.MainScreen.route
+
             }
         }
     }

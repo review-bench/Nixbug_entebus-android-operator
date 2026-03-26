@@ -1,14 +1,17 @@
 package com.nixbug.entebus.data.repository
 
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
+import com.nixbug.entebus.data.local.mapper.toDomain
 import com.nixbug.entebus.data.mapper.toTokenDomain
 import com.nixbug.entebus.data.remote.operator.api.TokenApi
 import com.nixbug.entebus.data.remote.operator.model.PlatformType
 import com.nixbug.entebus.domain.model.CreateTokenModel
+import com.nixbug.entebus.domain.model.local.AuthToken
 import com.nixbug.entebus.domain.repository.TokenRepository
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.network.apiHelper
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 
@@ -45,8 +48,10 @@ class TokenRepositoryImpl @Inject constructor(
         localDataSource.saveToken(token)
     }
 
-    override fun getToken(): Flow<CreateTokenModel?> {
-        return localDataSource.getToken()
+    override fun getToken(): Flow<AuthToken?> {
+        return localDataSource.getToken().map { localToken ->
+            localToken?.toDomain()
+        }
     }
 
     override suspend fun clearToken() {
