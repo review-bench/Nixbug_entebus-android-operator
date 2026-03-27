@@ -41,8 +41,7 @@ class AuthInterceptor @Inject constructor(
         val refreshToken = tokenManager.refreshToken
         val refreshBefore = tokenManager.refreshBefore
 
-        val shouldRefresh =
-            refreshBefore != null && now < refreshBefore && expiryTime != null && now >= expiryTime - (59 * 60 * 1000L)
+        val shouldRefresh = refreshBefore != null && now < refreshBefore && expiryTime != null && now >= expiryTime - (5 * 60 * 1000L)
 
         if (shouldRefresh && !refreshToken.isNullOrEmpty()) {
             refreshTokenSafe(refreshToken)
