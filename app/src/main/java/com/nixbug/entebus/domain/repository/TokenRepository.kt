@@ -15,7 +15,7 @@ interface TokenRepository {
 
     suspend fun saveToken(token: CreateTokenModel)
 
-    fun getToken(): Flow<AuthToken?>
+    fun getToken(): Flow<AuthToken>
 
     suspend fun clearToken()
 

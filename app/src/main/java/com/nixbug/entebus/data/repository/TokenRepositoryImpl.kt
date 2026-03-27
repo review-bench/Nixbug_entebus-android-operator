@@ -48,9 +48,9 @@ class TokenRepositoryImpl @Inject constructor(
         localDataSource.saveToken(token)
     }
 
-    override fun getToken(): Flow<AuthToken?> {
+    override fun getToken(): Flow<AuthToken> {
         return localDataSource.getToken().map { localToken ->
-            localToken?.toDomain()
+            localToken.toDomain()
         }
     }
 
@@ -65,7 +65,7 @@ class TokenRepositoryImpl @Inject constructor(
                     token = token
                 )
             },
-            mapper = {_-> Unit}
+            mapper = { _ -> Unit }
         )
     }
 

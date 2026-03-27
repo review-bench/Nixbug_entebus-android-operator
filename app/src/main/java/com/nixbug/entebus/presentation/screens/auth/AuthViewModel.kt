@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
-import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.domain.model.PublicCompanyModel
 import com.nixbug.entebus.domain.usecase.token.CreateTokenUseCase
 import com.nixbug.entebus.domain.usecase.FetchPublicCompanyUseCase
@@ -33,7 +32,6 @@ class AuthViewModel @Inject constructor(
     private val fetchPublicCompanyUseCase: FetchPublicCompanyUseCase,
     private val saveTokenUseCase: SaveTokenUseCase,
     private val saveUserUseCase: SaveUserUseCase,
-    private val tokenManager: TokenManager,
     private val gson: Gson
 ) : ViewModel() {
 
@@ -159,7 +157,6 @@ class AuthViewModel @Inject constructor(
         when (result) {
             is Resource.Success -> {
                 val newList = result.data ?: emptyList()
-
                 _uiState.update {
                     it.copy(
                         companyListLoading = false,
@@ -297,7 +294,6 @@ class AuthViewModel @Inject constructor(
                 is Resource.Success -> {
                     result.data?.let { token ->
                         saveTokenUseCase(token)
-                        tokenManager.accessToken = token.accessToken
                         val company = _uiState.value.selectedCompany
                         val persistedUsername = username
 
