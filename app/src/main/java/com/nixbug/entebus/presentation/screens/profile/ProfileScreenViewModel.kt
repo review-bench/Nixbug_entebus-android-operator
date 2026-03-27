@@ -39,7 +39,7 @@ class ProfileScreenViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val token = getTokenUseCase().first()
-                val accessToken = token?.accessToken
+                val accessToken = token.accessToken
                 if (!accessToken.isNullOrEmpty()) {
                     val result = revokeTokenUseCase(token = accessToken)
                     when (result) {
@@ -52,16 +52,25 @@ class ProfileScreenViewModel @Inject constructor(
 
                         is Resource.Error -> {
                             val statusCode = result.statusCode
-                            if (statusCode == 401 || statusCode == 403) {
-                                SnackbarManager.show(
-                                    "Session expired. You’ve been logged out",
-                                    SnackbarType.SUCCESS
-                                )
-                            } else {
-                                SnackbarManager.show(
-                                    "Logged out locally. Couldn't reach server.",
-                                    SnackbarType.WARNING
-                                )
+                            when (statusCode) {
+                                401 -> {
+                                    SnackbarManager.show(
+                                        "You have been signed out. Please sign in again.",
+                                        SnackbarType.ERROR
+                                    )
+                                }
+                                403 -> {
+                                    SnackbarManager.show(
+                                        "Session expired. You’ve been logged out",
+                                        SnackbarType.SUCCESS
+                                    )
+                                }
+                                else -> {
+                                    SnackbarManager.show(
+                                        "Logged out locally. Couldn't reach server.",
+                                        SnackbarType.WARNING
+                                    )
+                                }
                             }
                         }
 
@@ -75,7 +84,6 @@ class ProfileScreenViewModel @Inject constructor(
                     SnackbarType.WARNING
                 )
             } finally {
-                tokenManager.accessToken = null
                 clearTokenUseCase()
                 clearUserUseCase()
                 _logoutEvent.tryEmit(Unit)

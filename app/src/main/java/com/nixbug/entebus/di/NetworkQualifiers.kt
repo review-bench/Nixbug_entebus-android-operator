@@ -9,3 +9,7 @@ annotation class OperatorApi
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class PublicApi
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NoAuthApi

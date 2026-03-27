@@ -1,6 +1,7 @@
 package com.nixbug.entebus.data.local.datastore.token
 
 import com.nixbug.entebus.data.local.model.AuthTokenLocal
+import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.domain.model.CreateTokenModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -8,7 +9,8 @@ import java.time.Instant
 import javax.inject.Inject
 
 class TokenLocalDataSource @Inject constructor(
-    private val tokenDataStore: TokenLocalDataStore
+    private val tokenDataStore: TokenLocalDataStore,
+    private val tokenManager: TokenManager
 ) {
 
     suspend fun saveToken(token: CreateTokenModel) {
@@ -23,31 +25,29 @@ class TokenLocalDataSource @Inject constructor(
             accessToken = token.accessToken,
             refreshToken = token.refreshToken,
         )
+        tokenManager.accessToken = token.accessToken
+        tokenManager.refreshToken = token.refreshToken
+        tokenManager.operatorId = token.operatorId
+        tokenManager.expiryTime = expiryTime
+        tokenManager.refreshBefore = refreshBeforeMillis
+        tokenManager.createdOn = createdOnMillis
     }
 
-    fun getToken(): Flow<AuthTokenLocal?> {
+    fun getToken(): Flow<AuthTokenLocal> {
         return tokenDataStore.get().map { prefs ->
-
-            if (
-                prefs.accessToken != null &&
-                prefs.refreshToken != null &&
-                prefs.expiryTime != null &&
-                prefs.operatorId != null
-            ) {
-
-                AuthTokenLocal(
-                    operatorId = prefs.operatorId,
-                    expiryTime = prefs.expiryTime,
-                    refreshBefore = prefs.refreshBefore,
-                    createdOn = prefs.createdOn,
-                    accessToken = prefs.accessToken,
-                    refreshToken = prefs.refreshToken
-                )
-            } else null
+            AuthTokenLocal(
+                operatorId = prefs.operatorId,
+                expiryTime = prefs.expiryTime,
+                refreshBefore = prefs.refreshBefore,
+                createdOn = prefs.createdOn,
+                accessToken = prefs.accessToken,
+                refreshToken = prefs.refreshToken
+            )
         }
     }
 
     suspend fun clearToken() {
         tokenDataStore.clear()
+        tokenManager.clearToken()
     }
 }
