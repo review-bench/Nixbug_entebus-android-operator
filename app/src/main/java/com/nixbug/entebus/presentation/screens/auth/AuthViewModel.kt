@@ -159,6 +159,7 @@ class AuthViewModel @Inject constructor(
         when (result) {
             is Resource.Success -> {
                 val newList = result.data ?: emptyList()
+
                 _uiState.update {
                     it.copy(
                         companyListLoading = false,

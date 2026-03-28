@@ -16,7 +16,6 @@ suspend fun <T, R> apiHelper(
         val response = apiCall()
         if (response.isSuccessful) {
             val body = response.body()
-            println("Response body: $body")
             if (body != null) {
                 Resource.Success(data = mapper(body), statusCode = response.code())
             } else {
