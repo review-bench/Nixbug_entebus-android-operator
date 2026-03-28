@@ -75,7 +75,12 @@ suspend fun <T, R> apiHelper(
                 errorMessage = errorMessage ?: "Request failed (HTTP $responseCode)"
             }
 
-            val finalMessage = errorMessage
+            val finalMessage = if (errorMessage.isNullOrBlank()) {
+                "Request failed (HTTP $responseCode)"
+            } else {
+                errorMessage
+            }
+
             Resource.Error(
                 message = finalMessage,
                 statusCode = response.code()

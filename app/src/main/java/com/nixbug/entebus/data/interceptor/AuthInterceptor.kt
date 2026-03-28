@@ -9,7 +9,6 @@ import com.nixbug.entebus.domain.model.CreateTokenModel
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -45,8 +44,16 @@ class AuthInterceptor @Inject constructor(
         val refreshToken = tokenManager.refreshToken
         val refreshBefore = tokenManager.refreshBefore
 
+        val isAccessExpiring =
+            expiryTime != null &&
+                    now >= (expiryTime - 5 * 60 * 1000L)
+
+        val isRefreshTokenValid =
+            refreshBefore != null &&
+                    now < refreshBefore
+
         val shouldRefresh =
-            refreshBefore != null && now < refreshBefore && expiryTime != null && now >= expiryTime - (5 * 60 * 1000L)
+            isAccessExpiring && isRefreshTokenValid
 
         if (shouldRefresh && !refreshToken.isNullOrEmpty()) {
             refreshTokenSafe(refreshToken)
@@ -63,14 +70,25 @@ class AuthInterceptor @Inject constructor(
 
         val response = chain.proceed(requestWithToken)
 
-        val responseBody = response.body
-        val content = responseBody?.string()
+        if (response.code == 401 && request.header("X-Retry") != "true") {
 
-        val newResponse = response.newBuilder()
-            .body(content?.toResponseBody(responseBody.contentType()))
-            .build()
+            println("Check 401")
+            val refreshToken = tokenManager.refreshToken
+            if (!refreshToken.isNullOrEmpty()) {
+                val newToken = refreshTokenSafe(refreshToken)
 
-        return newResponse
+                if (!newToken.isNullOrEmpty()) {
+                    val newRequest = requestWithToken.newBuilder()
+                        .header("Authorization", "Bearer $newToken")
+                        .header("X-Retry", "true")
+                        .build()
+
+                    return chain.proceed(request = newRequest)
+                }
+            }
+        }
+
+        return response
     }
 
     @Synchronized
