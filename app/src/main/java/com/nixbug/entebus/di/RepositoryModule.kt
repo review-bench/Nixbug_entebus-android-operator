@@ -2,6 +2,7 @@ package com.nixbug.entebus.di
 
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
+import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
 import com.nixbug.entebus.data.remote.operator.api.TokenApi
 import com.nixbug.entebus.data.remote.publicapi.api.CompanyApi
 import com.nixbug.entebus.data.repository.PublicCompanyRepositoryImpl
@@ -25,22 +26,25 @@ object RepositoryModule {
     @Singleton
     fun provideTokenRepository(
         api: TokenApi,
-        localDataSource: TokenLocalDataSource
+        localDataSource: TokenLocalDataSource,
+        clearSessionUseCase: ClearSessionUseCase
     ): TokenRepository {
-        return TokenRepositoryImpl(api, localDataSource)
+        return TokenRepositoryImpl(api, localDataSource, clearSessionUseCase)
     }
 
     @Provides
     @Singleton
     fun provideUserRepository(
-        localDataSource: UserLocalDataSource
+        localDataSource: UserLocalDataSource,
     ): UserRepository {
         return UserRepositoryImpl(localDataSource)
     }
 
     @Provides
     @Singleton
-    fun providePublicCompanyRepository(api: CompanyApi): PublicCompanyRepository {
-        return PublicCompanyRepositoryImpl(api)
+    fun providePublicCompanyRepository(
+        api: CompanyApi, clearSessionUseCase: ClearSessionUseCase
+    ): PublicCompanyRepository {
+        return PublicCompanyRepositoryImpl(api, clearSessionUseCase)
     }
 }

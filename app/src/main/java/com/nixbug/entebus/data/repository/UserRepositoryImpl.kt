@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(
-    private val localDataSource: UserLocalDataSource
+    private val localDataSource: UserLocalDataSource,
 ) : UserRepository {
 
     override suspend fun saveUser(

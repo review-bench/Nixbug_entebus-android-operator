@@ -60,9 +60,6 @@ fun ProfileScreen(
     LaunchedEffect(viewModel.logoutEvent) {
         viewModel.logoutEvent.collectLatest {
             showLogOutDialog = false
-            rootNavController.navigate(AppNavItem.Auth.route) {
-                popUpTo(rootNavController.graph.startDestinationId) { inclusive = true }
-            }
         }
     }
 

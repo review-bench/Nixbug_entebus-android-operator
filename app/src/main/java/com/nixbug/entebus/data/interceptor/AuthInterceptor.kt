@@ -1,13 +1,11 @@
 package com.nixbug.entebus.data.interceptor
 
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
-import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
 import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.data.remote.operator.api.TokenApi
 import com.nixbug.entebus.data.remote.operator.model.GrantType
 import com.nixbug.entebus.di.NoAuthApi
 import com.nixbug.entebus.domain.model.CreateTokenModel
-import com.nixbug.entebus.domain.usecase.token.SaveTokenUseCase
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -19,8 +17,6 @@ import javax.inject.Provider
 class AuthInterceptor @Inject constructor(
     private val tokenManager: TokenManager,
     private val tokenLocalDataSource: TokenLocalDataSource,
-    private val userLocalDataSource: UserLocalDataSource,
-    private val saveTokenUseCase: Provider<SaveTokenUseCase>,
     @NoAuthApi private val tokenApiNoAuth: Provider<TokenApi>
 ) : Interceptor {
 
@@ -31,9 +27,17 @@ class AuthInterceptor @Inject constructor(
         val request = chain.request()
         val path = request.url.encodedPath
 
-        if (path == "/operator/company/account/token"
-        ) {
+        if (path == "/operator/company/account/token") {
             return chain.proceed(request)
+        }
+        if (path == "/operator/company/account/token/refresh") {
+            val accessToken = tokenManager.accessToken
+            if (!accessToken.isNullOrEmpty()) {
+                val req = request.newBuilder()
+                    .header("Authorization", "Bearer $accessToken")
+                    .build()
+                return chain.proceed(req)
+            }
         }
 
         val now = System.currentTimeMillis()
@@ -41,7 +45,8 @@ class AuthInterceptor @Inject constructor(
         val refreshToken = tokenManager.refreshToken
         val refreshBefore = tokenManager.refreshBefore
 
-        val shouldRefresh = refreshBefore != null && now < refreshBefore && expiryTime != null && now >= expiryTime - (5 * 60 * 1000L)
+        val shouldRefresh =
+            refreshBefore != null && now < refreshBefore && expiryTime != null && now >= expiryTime - (5 * 60 * 1000L)
 
         if (shouldRefresh && !refreshToken.isNullOrEmpty()) {
             refreshTokenSafe(refreshToken)
@@ -49,11 +54,12 @@ class AuthInterceptor @Inject constructor(
 
         val currentAuthToken = tokenManager.accessToken
 
-        val requestWithToken = if (!currentAuthToken.isNullOrEmpty()) {
-            request.newBuilder()
-                .header("Authorization", "Bearer $currentAuthToken")
-                .build()
-        } else request
+        val requestWithToken =
+            if (!currentAuthToken.isNullOrEmpty()) {
+                request.newBuilder()
+                    .header("Authorization", "Bearer $currentAuthToken")
+                    .build()
+            } else request
 
         val response = chain.proceed(requestWithToken)
 
@@ -63,14 +69,6 @@ class AuthInterceptor @Inject constructor(
         val newResponse = response.newBuilder()
             .body(content?.toResponseBody(responseBody.contentType()))
             .build()
-
-        if (response.code == 401) {
-            response.close()
-            runBlocking {
-                tokenLocalDataSource.clearToken()
-                userLocalDataSource.clearUser()
-            }
-        }
 
         return newResponse
     }
@@ -99,7 +97,7 @@ class AuthInterceptor @Inject constructor(
                             accessToken = body.accessToken,
                             refreshToken = body.refreshToken,
                         )
-                        saveTokenUseCase.get()(tokenToSave)
+                        tokenLocalDataSource.saveToken(tokenToSave)
                         body.accessToken
                     } else {
                         null
@@ -113,7 +111,6 @@ class AuthInterceptor @Inject constructor(
         } finally {
             isRefreshing = false
         }
-
         return newToken
     }
 }

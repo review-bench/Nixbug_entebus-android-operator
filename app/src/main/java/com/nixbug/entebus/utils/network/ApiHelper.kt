@@ -8,14 +8,15 @@ import kotlin.coroutines.cancellation.CancellationException
 
 suspend fun <T, R> apiHelper(
     apiCall: suspend () -> Response<T>,
-    mapper: (T) -> R
+    mapper: (T) -> R,
+    clearSession: suspend () -> Unit
 ): Resource<R> {
 
     return try {
-
         val response = apiCall()
         if (response.isSuccessful) {
             val body = response.body()
+            println("Response body: $body")
             if (body != null) {
                 Resource.Success(data = mapper(body), statusCode = response.code())
             } else {
@@ -23,12 +24,31 @@ suspend fun <T, R> apiHelper(
             }
 
         } else {
-
-            val errorBody = response.errorBody()?.string()
             val responseCode = response.code()
-            var errorMessage: String?
+            val errorBody = response.errorBody()?.string()
+            var errorMessage =
+                try {
+                    val jsonObject = Gson().fromJson(errorBody, JsonObject::class.java)
+                    jsonObject.get("detail")?.asString
+                } catch (e: Exception) {
+                    errorBody
+                }
 
-            if (responseCode == 422) {
+            if (responseCode == 401 && errorMessage?.contains(
+                    "Invalid token",
+                    ignoreCase = true
+                ) == true
+            ) {
+                clearSession()
+                errorMessage = "You have been signed out. Please sign in again."
+            } else if (responseCode == 403 && errorMessage?.contains(
+                    "Not authenticated",
+                    ignoreCase = true
+                ) == true
+            ) {
+                clearSession()
+                errorMessage = "Session expired. You’ve been logged out"
+            } else if (responseCode == 422) {
                 errorMessage = try {
                     val jsonObject = Gson().fromJson(errorBody, JsonObject::class.java)
                     val detailArray = jsonObject.getAsJsonArray("detail")
@@ -53,18 +73,10 @@ suspend fun <T, R> apiHelper(
                     errorBody
                 }
             } else {
-                errorMessage = try {
-                    val jsonObject = Gson().fromJson(errorBody, JsonObject::class.java)
-                    jsonObject.get("detail")?.asString
-                } catch (e: Exception) {
-                    errorBody
-                }
+                errorMessage = errorMessage ?: "Request failed (HTTP $responseCode)"
             }
-            val finalMessage = if (errorMessage.isNullOrBlank()) {
-                "Request failed (HTTP $responseCode)"
-            } else {
-                errorMessage
-            }
+
+            val finalMessage = errorMessage
             Resource.Error(
                 message = finalMessage,
                 statusCode = response.code()

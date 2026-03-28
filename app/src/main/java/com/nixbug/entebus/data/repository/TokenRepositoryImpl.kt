@@ -2,6 +2,7 @@ package com.nixbug.entebus.data.repository
 
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.local.mapper.toDomain
+import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
 import com.nixbug.entebus.data.mapper.toTokenDomain
 import com.nixbug.entebus.data.remote.operator.api.TokenApi
 import com.nixbug.entebus.data.remote.operator.model.PlatformType
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 class TokenRepositoryImpl @Inject constructor(
     private val tokenApi: TokenApi,
-    private val localDataSource: TokenLocalDataSource
+    private val localDataSource: TokenLocalDataSource,
+    private val clearSessionUseCase: ClearSessionUseCase
 ) : TokenRepository {
 
     override suspend fun createToken(
@@ -40,6 +42,9 @@ class TokenRepositoryImpl @Inject constructor(
             },
             mapper = { response ->
                 response.toTokenDomain()
+            },
+            clearSession = {
+                clearSessionUseCase()
             }
         )
     }
@@ -65,7 +70,10 @@ class TokenRepositoryImpl @Inject constructor(
                     token = token
                 )
             },
-            mapper = { _ -> Unit }
+            mapper = { _ -> Unit },
+            clearSession = {
+                clearSessionUseCase()
+            }
         )
     }
 

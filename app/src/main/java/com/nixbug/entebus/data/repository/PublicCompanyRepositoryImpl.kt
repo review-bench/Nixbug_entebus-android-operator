@@ -1,5 +1,6 @@
 package com.nixbug.entebus.data.repository
 
+import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
 import com.nixbug.entebus.data.mapper.toPublicCompanyDomain
 import com.nixbug.entebus.data.remote.publicapi.api.CompanyApi
 import com.nixbug.entebus.data.remote.publicapi.model.AppApiCompanyOrderBy
@@ -11,7 +12,8 @@ import com.nixbug.entebus.domain.model.PublicCompanyModel
 import javax.inject.Inject
 
 class PublicCompanyRepositoryImpl @Inject constructor(
-    private val companyApi: CompanyApi
+    private val companyApi: CompanyApi,
+    private val clearSessionUseCase: ClearSessionUseCase
 ) : PublicCompanyRepository {
     override suspend fun fetchPublicCompany(
         location: String?,
@@ -32,6 +34,9 @@ class PublicCompanyRepositoryImpl @Inject constructor(
             },
             mapper = { response ->
                 response.map { it.toPublicCompanyDomain() }
+            },
+            clearSession = {
+                clearSessionUseCase()
             }
         )
     }

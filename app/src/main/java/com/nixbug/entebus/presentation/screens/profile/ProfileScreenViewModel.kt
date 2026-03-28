@@ -2,7 +2,7 @@ package com.nixbug.entebus.presentation.screens.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nixbug.entebus.data.manager.TokenManager
+import com.nixbug.entebus.data.manager.SessionManager
 import com.nixbug.entebus.domain.usecase.token.ClearTokenUseCase
 import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
 import com.nixbug.entebus.domain.usecase.token.RevokeTokenUseCase
@@ -26,8 +26,8 @@ class ProfileScreenViewModel @Inject constructor(
     private val revokeTokenUseCase: RevokeTokenUseCase,
     private val getTokenUseCase: GetTokenUseCase,
     private val clearTokenUseCase: ClearTokenUseCase,
-    private val tokenManager: TokenManager,
-    private val clearUserUseCase: ClearUserUseCase
+    private val clearUserUseCase: ClearUserUseCase,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -51,27 +51,11 @@ class ProfileScreenViewModel @Inject constructor(
                         }
 
                         is Resource.Error -> {
-                            val statusCode = result.statusCode
-                            when (statusCode) {
-                                401 -> {
-                                    SnackbarManager.show(
-                                        "You have been signed out. Please sign in again.",
-                                        SnackbarType.ERROR
-                                    )
-                                }
-                                403 -> {
-                                    SnackbarManager.show(
-                                        "Session expired. You’ve been logged out",
-                                        SnackbarType.SUCCESS
-                                    )
-                                }
-                                else -> {
-                                    SnackbarManager.show(
-                                        "Logged out locally. Couldn't reach server.",
-                                        SnackbarType.WARNING
-                                    )
-                                }
-                            }
+                            SnackbarManager.show(
+                                result.message
+                                    ?: "Logged out locally. Couldn't reach server.",
+                                SnackbarType.ERROR
+                            )
                         }
 
                         else -> {}
@@ -86,6 +70,7 @@ class ProfileScreenViewModel @Inject constructor(
             } finally {
                 clearTokenUseCase()
                 clearUserUseCase()
+                sessionManager.notifySessionExpired()
                 _logoutEvent.tryEmit(Unit)
             }
         }

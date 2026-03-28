@@ -68,6 +68,16 @@ fun AppNavigation(
         return
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.sessionExpired.collect {
+            navController.navigate(AppNavItem.Auth.route) {
+                popUpTo(navController.graph.id) {
+                    inclusive = true
+                }
+                launchSingleTop = true
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         SnackbarManager.events.collect { event ->
