@@ -2,34 +2,57 @@ package com.nixbug.entebus.presentation.navigation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.repository.SessionRepository
+import com.nixbug.entebus.domain.usecase.token.ClearTokenUseCase
 import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
+import com.nixbug.entebus.domain.usecase.user.ClearUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class AppNavigationViewModel @Inject constructor(
-    private val getTokenUseCase: GetTokenUseCase
+    private val getTokenUseCase: GetTokenUseCase,
+    private val sessionRepository: SessionRepository,
+    private val clearTokenUseCase: ClearTokenUseCase,
+    private val clearUserUseCase: ClearUserUseCase
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow<String?>(null)
     val startDestination: StateFlow<String?> = _startDestination
 
+    private val _navigateToAuth = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val navigateToAuth = _navigateToAuth.asSharedFlow()
+    val sessionExpired = sessionRepository.sessionExpired
+
     init {
         checkLogin()
+        observeSession()
     }
 
     private fun checkLogin() {
         viewModelScope.launch {
             val token = getTokenUseCase().first()
 
-            if (token != null && token.accessToken.isNotEmpty()) {
+            if (!token.accessToken.isNullOrEmpty()) {
                 _startDestination.value = AppNavItem.MainScreen.route
             } else {
                 _startDestination.value = AppNavItem.Auth.route
+            }
+        }
+    }
+
+    private fun observeSession() {
+        viewModelScope.launch {
+            sessionExpired.collect {
+                clearTokenUseCase()
+                clearUserUseCase()
+                _navigateToAuth.tryEmit(Unit)
             }
         }
     }

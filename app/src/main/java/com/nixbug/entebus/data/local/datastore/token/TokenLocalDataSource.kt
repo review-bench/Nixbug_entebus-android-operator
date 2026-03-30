@@ -1,51 +1,43 @@
 package com.nixbug.entebus.data.local.datastore.token
 
+import com.nixbug.entebus.data.local.model.AuthTokenLocal
+import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.domain.model.CreateTokenModel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import java.time.Instant
 import javax.inject.Inject
 
 class TokenLocalDataSource @Inject constructor(
-    private val tokenDataStore: TokenLocalDataStore
+    private val tokenDataStore: TokenLocalDataStore,
+    private val tokenManager: TokenManager
 ) {
 
     suspend fun saveToken(token: CreateTokenModel) {
-        val expiryTime = System.currentTimeMillis() + (token.expiresIn * 1000L)
+        val createdOnMillis = Instant.parse(token.createdOn).toEpochMilli()
+        val refreshBeforeMillis = Instant.parse(token.refreshBefore).toEpochMilli()
+        val expiryTime = createdOnMillis + token.expiresIn.toLong() * 1000L
         tokenDataStore.save(
             operatorId = token.operatorId,
-            refreshBefore = token.refreshBefore,
-            createdOn = token.createdOn,
+            refreshBefore = refreshBeforeMillis,
+            createdOn = createdOnMillis,
             expiryTime = expiryTime,
             accessToken = token.accessToken,
             refreshToken = token.refreshToken,
         )
+        tokenManager.accessToken = token.accessToken
+        tokenManager.refreshToken = token.refreshToken
+        tokenManager.operatorId = token.operatorId
+        tokenManager.expiryTime = expiryTime
+        tokenManager.refreshBefore = refreshBeforeMillis
+        tokenManager.createdOn = createdOnMillis
     }
 
-    fun getToken(): Flow<CreateTokenModel?> {
-        return tokenDataStore.get().map { prefs ->
-
-            if (
-                prefs.accessToken != null &&
-                prefs.refreshToken != null &&
-                prefs.expiryTime != null &&
-                prefs.operatorId != null
-            ) {
-
-                val remainingTime = (prefs.expiryTime - System.currentTimeMillis()) / 1000
-
-                CreateTokenModel(
-                    operatorId = prefs.operatorId,
-                    expiresIn = remainingTime.toInt(),
-                    refreshBefore = prefs.refreshBefore ?: "",
-                    createdOn = prefs.createdOn ?: "",
-                    accessToken = prefs.accessToken,
-                    refreshToken = prefs.refreshToken
-                )
-            } else null
-        }
+    fun getToken(): Flow<AuthTokenLocal> {
+        return tokenDataStore.get()
     }
 
     suspend fun clearToken() {
         tokenDataStore.clear()
+        tokenManager.clearToken()
     }
 }

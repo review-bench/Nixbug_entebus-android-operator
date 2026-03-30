@@ -19,6 +19,21 @@ import retrofit2.converter.gson.GsonConverterFactory
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
+    @NoAuthApi
+    @Provides
+    @Singleton
+    fun provideNoAuthRetrofit(gson: Gson): Retrofit {
+        val client = OkHttpClient.Builder()
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl(BuildConfig.OPERATOR_BASE_URL)
+            .client(client)
+            .addConverterFactory(NullOnEmptyConverterFactory())
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+    }
+
     @OperatorApi
     @Provides
     @Singleton
@@ -54,4 +69,9 @@ object NetworkModule {
         return retrofit.create(CompanyApi::class.java)
     }
 
+    @Provides
+    @NoAuthApi
+    fun provideTokenApiNoAuth(@NoAuthApi retrofit: Retrofit): TokenApi {
+        return retrofit.create(TokenApi::class.java)
+    }
 }

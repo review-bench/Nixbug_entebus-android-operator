@@ -11,7 +11,7 @@ import com.nixbug.entebus.domain.model.PublicCompanyModel
 import javax.inject.Inject
 
 class PublicCompanyRepositoryImpl @Inject constructor(
-    private val companyApi: CompanyApi
+    private val companyApi: CompanyApi,
 ) : PublicCompanyRepository {
     override suspend fun fetchPublicCompany(
         location: String?,

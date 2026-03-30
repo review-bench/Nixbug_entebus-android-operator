@@ -3,6 +3,7 @@ package com.nixbug.entebus.data.local.datastore.token
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import com.nixbug.entebus.data.local.model.AuthTokenLocal
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -13,8 +14,8 @@ class TokenLocalDataStore @Inject constructor(
 
     suspend fun save(
         operatorId: Int,
-        refreshBefore: String,
-        createdOn: String,
+        refreshBefore: Long,
+        createdOn: Long,
         expiryTime: Long,
         accessToken: String,
         refreshToken: String,
@@ -29,9 +30,9 @@ class TokenLocalDataStore @Inject constructor(
         }
     }
 
-    fun get(): Flow<TokenLocalModel> {
+    fun get(): Flow<AuthTokenLocal> {
         return dataStore.data.map { prefs ->
-            TokenLocalModel(
+            AuthTokenLocal(
                 operatorId = prefs[TokenPreferences.OPERATOR_ID],
                 refreshBefore = prefs[TokenPreferences.REFRESH_BEFORE],
                 createdOn = prefs[TokenPreferences.CREATED_ON],
