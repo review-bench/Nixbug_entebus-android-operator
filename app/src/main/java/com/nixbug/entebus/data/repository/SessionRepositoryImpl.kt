@@ -5,6 +5,8 @@ import com.nixbug.entebus.domain.repository.SessionRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 @Singleton
 class SessionRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager
@@ -12,17 +14,15 @@ class SessionRepositoryImpl @Inject constructor(
 
     override val sessionExpired = sessionManager.sessionExpired
 
-    @Volatile
-    private var isSessionExpiredHandled = false
+    private val isSessionExpiredHandled = AtomicBoolean(false)
 
     override fun notifySessionExpired() {
-        if (!isSessionExpiredHandled) {
-            isSessionExpiredHandled = true
+        if (isSessionExpiredHandled.compareAndSet(false, true)) {
             sessionManager.notifySessionExpired()
         }
     }
 
     override fun resetSession() {
-        isSessionExpiredHandled = false
+        isSessionExpiredHandled.set(false)
     }
 }

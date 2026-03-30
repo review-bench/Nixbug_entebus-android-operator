@@ -106,7 +106,7 @@ suspend fun <T, R> apiHelper(
                 "You have been signed out. Please sign in again."
 
             else ->
-                "Unexpected error Please try again."
+                "Unexpected error, Please try again."
         }
         Resource.Error(
             message = message,

@@ -49,12 +49,9 @@ class AppNavigationViewModel @Inject constructor(
 
     private fun observeSession() {
         viewModelScope.launch {
-            sessionRepository.sessionExpired.collect {
-                if (!handled) {
-                    handled = true
-                    clearSessionUseCase()
-                    _navigateToAuth.tryEmit(Unit)
-                }
+            sessionExpired.collect {
+                clearSessionUseCase()
+                _navigateToAuth.tryEmit(Unit)
             }
         }
     }

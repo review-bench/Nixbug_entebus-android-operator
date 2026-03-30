@@ -1,6 +1,5 @@
 package com.nixbug.entebus.data.repository
 
-import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
 import com.nixbug.entebus.data.mapper.toPublicCompanyDomain
 import com.nixbug.entebus.data.remote.publicapi.api.CompanyApi
 import com.nixbug.entebus.data.remote.publicapi.model.AppApiCompanyOrderBy
