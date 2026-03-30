@@ -1,18 +1,18 @@
 package com.nixbug.entebus.domain.usecase
 
-import com.nixbug.entebus.data.manager.SessionManager
-import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
-import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
+import com.nixbug.entebus.domain.repository.SessionRepository
+import com.nixbug.entebus.domain.repository.TokenRepository
+import com.nixbug.entebus.domain.repository.UserRepository
 import javax.inject.Inject
 
 class ClearSessionUseCase @Inject constructor(
-    private val tokenLocalDataSource: TokenLocalDataSource,
-    private val userLocalDataSource: UserLocalDataSource,
-    private val sessionManager: SessionManager
+    private val tokenRepository: TokenRepository,
+    private val userRepository: UserRepository,
+    private val sessionRepository: SessionRepository
 ) {
     suspend operator fun invoke() {
-        tokenLocalDataSource.clearToken()
-        userLocalDataSource.clearUser()
-        sessionManager.notifySessionExpired()
+        tokenRepository.clearToken()
+        userRepository.clearUser()
+        sessionRepository.notifySessionExpired()
     }
 }

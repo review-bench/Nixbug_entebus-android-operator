@@ -69,7 +69,7 @@ fun AppNavigation(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.sessionExpired.collect {
+        viewModel.navigateToAuth.collect {
             navController.navigate(AppNavItem.Auth.route) {
                 popUpTo(navController.graph.id) {
                     inclusive = true

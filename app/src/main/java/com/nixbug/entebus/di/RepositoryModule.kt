@@ -2,13 +2,15 @@ package com.nixbug.entebus.di
 
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
-import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
+import com.nixbug.entebus.data.manager.SessionManager
 import com.nixbug.entebus.data.remote.operator.api.TokenApi
 import com.nixbug.entebus.data.remote.publicapi.api.CompanyApi
 import com.nixbug.entebus.data.repository.PublicCompanyRepositoryImpl
+import com.nixbug.entebus.data.repository.SessionRepositoryImpl
 import com.nixbug.entebus.data.repository.TokenRepositoryImpl
 import com.nixbug.entebus.data.repository.UserRepositoryImpl
 import com.nixbug.entebus.domain.repository.PublicCompanyRepository
+import com.nixbug.entebus.domain.repository.SessionRepository
 import com.nixbug.entebus.domain.repository.TokenRepository
 import com.nixbug.entebus.domain.repository.UserRepository
 import dagger.Module
@@ -27,9 +29,8 @@ object RepositoryModule {
     fun provideTokenRepository(
         api: TokenApi,
         localDataSource: TokenLocalDataSource,
-        clearSessionUseCase: ClearSessionUseCase
     ): TokenRepository {
-        return TokenRepositoryImpl(api, localDataSource, clearSessionUseCase)
+        return TokenRepositoryImpl(api, localDataSource)
     }
 
     @Provides
@@ -43,8 +44,16 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun providePublicCompanyRepository(
-        api: CompanyApi, clearSessionUseCase: ClearSessionUseCase
+        api: CompanyApi
     ): PublicCompanyRepository {
-        return PublicCompanyRepositoryImpl(api, clearSessionUseCase)
+        return PublicCompanyRepositoryImpl(api)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSessionRepository(
+        sessionManager: SessionManager
+    ): SessionRepository {
+        return SessionRepositoryImpl(sessionManager)
     }
 }

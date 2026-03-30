@@ -4,7 +4,6 @@ import com.nixbug.entebus.data.local.model.AuthTokenLocal
 import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.domain.model.CreateTokenModel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.time.Instant
 import javax.inject.Inject
 
@@ -16,7 +15,7 @@ class TokenLocalDataSource @Inject constructor(
     suspend fun saveToken(token: CreateTokenModel) {
         val createdOnMillis = Instant.parse(token.createdOn).toEpochMilli()
         val refreshBeforeMillis = Instant.parse(token.refreshBefore).toEpochMilli()
-        val expiryTime = createdOnMillis + token.expiresIn * 1000
+        val expiryTime = createdOnMillis + token.expiresIn.toLong() * 1000L
         tokenDataStore.save(
             operatorId = token.operatorId,
             refreshBefore = refreshBeforeMillis,
@@ -34,16 +33,7 @@ class TokenLocalDataSource @Inject constructor(
     }
 
     fun getToken(): Flow<AuthTokenLocal> {
-        return tokenDataStore.get().map { prefs ->
-            AuthTokenLocal(
-                operatorId = prefs.operatorId,
-                expiryTime = prefs.expiryTime,
-                refreshBefore = prefs.refreshBefore,
-                createdOn = prefs.createdOn,
-                accessToken = prefs.accessToken,
-                refreshToken = prefs.refreshToken
-            )
-        }
+        return tokenDataStore.get()
     }
 
     suspend fun clearToken() {

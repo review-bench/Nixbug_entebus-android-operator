@@ -13,7 +13,6 @@ import javax.inject.Inject
 
 class PublicCompanyRepositoryImpl @Inject constructor(
     private val companyApi: CompanyApi,
-    private val clearSessionUseCase: ClearSessionUseCase
 ) : PublicCompanyRepository {
     override suspend fun fetchPublicCompany(
         location: String?,
@@ -34,9 +33,6 @@ class PublicCompanyRepositoryImpl @Inject constructor(
             },
             mapper = { response ->
                 response.map { it.toPublicCompanyDomain() }
-            },
-            clearSession = {
-                clearSessionUseCase()
             }
         )
     }

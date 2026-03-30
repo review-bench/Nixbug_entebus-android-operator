@@ -9,7 +9,6 @@ import kotlin.coroutines.cancellation.CancellationException
 suspend fun <T, R> apiHelper(
     apiCall: suspend () -> Response<T>,
     mapper: (T) -> R,
-    clearSession: suspend () -> Unit
 ): Resource<R> {
 
     return try {
@@ -32,20 +31,17 @@ suspend fun <T, R> apiHelper(
                 } catch (e: Exception) {
                     errorBody
                 }
-
             if (responseCode == 401 && errorMessage?.contains(
                     "Invalid token",
                     ignoreCase = true
                 ) == true
             ) {
-                clearSession()
                 errorMessage = "You have been signed out. Please sign in again."
             } else if (responseCode == 403 && errorMessage?.contains(
                     "Not authenticated",
                     ignoreCase = true
                 ) == true
             ) {
-                clearSession()
                 errorMessage = "Session expired. You’ve been logged out"
             } else if (responseCode == 422) {
                 errorMessage = try {
@@ -105,8 +101,15 @@ suspend fun <T, R> apiHelper(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
+        val message = when {
+            e.message?.contains("closed", ignoreCase = true) == true ->
+                "You have been signed out. Please sign in again."
+
+            else ->
+                "Unexpected error Please try again."
+        }
         Resource.Error(
-            message = e.localizedMessage ?: "Unexpected error",
+            message = message,
             statusCode = null
         )
     }
