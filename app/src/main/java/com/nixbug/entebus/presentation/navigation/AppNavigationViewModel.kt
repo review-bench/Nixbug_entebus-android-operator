@@ -3,8 +3,9 @@ package com.nixbug.entebus.presentation.navigation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.repository.SessionRepository
-import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
+import com.nixbug.entebus.domain.usecase.token.ClearTokenUseCase
 import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
+import com.nixbug.entebus.domain.usecase.user.ClearUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,8 @@ import javax.inject.Inject
 class AppNavigationViewModel @Inject constructor(
     private val getTokenUseCase: GetTokenUseCase,
     private val sessionRepository: SessionRepository,
-    private val clearSessionUseCase: ClearSessionUseCase
+    private val clearTokenUseCase: ClearTokenUseCase,
+    private val clearUserUseCase: ClearUserUseCase
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow<String?>(null)
@@ -48,7 +50,8 @@ class AppNavigationViewModel @Inject constructor(
     private fun observeSession() {
         viewModelScope.launch {
             sessionExpired.collect {
-                clearSessionUseCase()
+                clearTokenUseCase()
+                clearUserUseCase()
                 _navigateToAuth.tryEmit(Unit)
             }
         }
