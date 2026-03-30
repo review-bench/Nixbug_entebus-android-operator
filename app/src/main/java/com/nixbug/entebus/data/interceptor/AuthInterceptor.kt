@@ -7,11 +7,13 @@ import com.nixbug.entebus.data.remote.operator.model.GrantType
 import com.nixbug.entebus.di.NoAuthApi
 import com.nixbug.entebus.domain.model.CreateTokenModel
 import com.nixbug.entebus.domain.repository.SessionRepository
+import com.nixbug.entebus.utils.network.RefreshResult
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.Interceptor
 import okhttp3.Response
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -32,7 +34,7 @@ class AuthInterceptor @Inject constructor(
         if (path == "/operator/company/account/token") {
             return chain.proceed(request)
         }
-        if (path == "/operator/company/account/token/refresh") {
+        if (path == "/operator/company/account/token/revoke") {
             val accessToken = tokenManager.accessToken
             if (!accessToken.isNullOrEmpty()) {
                 val req = request.newBuilder()
@@ -59,7 +61,15 @@ class AuthInterceptor @Inject constructor(
             isAccessExpiring && isRefreshTokenValid
 
         if (shouldRefresh && !refreshToken.isNullOrEmpty()) {
-            refreshTokenSafe(refreshToken)
+            when (val result = refreshTokenSafe(refreshToken)) {
+                is RefreshResult.Success -> {}
+
+                is RefreshResult.InvalidRefreshToken -> {
+                    sessionRepository.notifySessionExpired()
+                }
+
+                else -> {}
+            }
         }
 
         val currentAuthToken = tokenManager.accessToken
@@ -76,24 +86,40 @@ class AuthInterceptor @Inject constructor(
         if (response.code == 401 && request.header("X-Retry") != "true") {
             val refreshToken = tokenManager.refreshToken
             if (!refreshToken.isNullOrEmpty()) {
-                val newToken = refreshTokenSafe(refreshToken, forceRefresh = true)
-                if (!newToken.isNullOrEmpty() && newToken != currentAuthToken) {
-                    response.close()
-                    val newRequest = request.newBuilder()
-                        .header("Authorization", "Bearer $newToken")
-                        .header("X-Retry", "true")
-                        .build()
-                    return chain.proceed(request = newRequest)
+                when (val result = refreshTokenSafe(refreshToken, forceRefresh = true)) {
+
+                    is RefreshResult.Success -> {
+                        response.close()
+
+                        val newRequest = request.newBuilder()
+                            .header("Authorization", "Bearer ${result.token}")
+                            .header("X-Retry", "true")
+                            .build()
+
+                        return chain.proceed(newRequest)
+                    }
+
+                    is RefreshResult.InvalidRefreshToken -> {
+                        sessionRepository.notifySessionExpired()
+                    }
+
+                    is RefreshResult.NetworkError,
+                    is RefreshResult.UnknownError -> {
+                        return response
+                    }
                 }
+            } else {
+                sessionRepository.notifySessionExpired()
             }
-            sessionRepository.notifySessionExpired()
         }
 
         return response
     }
 
-
-    private fun refreshTokenSafe(refreshToken: String, forceRefresh: Boolean = false): String? =
+    private fun refreshTokenSafe(
+        refreshToken: String,
+        forceRefresh: Boolean = false
+    ): RefreshResult =
         runBlocking {
             refreshTokenMutex.withLock {
                 val currentToken = tokenManager.accessToken
@@ -102,36 +128,53 @@ class AuthInterceptor @Inject constructor(
 
                 if (!forceRefresh) {
                     val isStillStale = expiryTime == null || now >= (expiryTime - 5 * 60 * 1000L)
-                    if (!isStillStale) return@runBlocking currentToken
+                    if (!isStillStale && !currentToken.isNullOrEmpty()) return@runBlocking RefreshResult.Success(
+                        currentToken
+                    )
                 }
                 try {
+                    val response = tokenApiNoAuth.get()
+                        .refreshTokenCompanyAccountTokenRefreshPost(
+                            refreshToken = refreshToken,
+                            grantType = GrantType.refresh_token
+                        )
 
-                    val response = tokenApiNoAuth.get().refreshTokenCompanyAccountTokenRefreshPost(
-                        refreshToken = refreshToken,
-                        grantType = GrantType.refresh_token
-                    )
+                    when {
+                        response.isSuccessful -> {
+                            val body = response.body()
 
-                    if (response.isSuccessful) {
-                        val body = response.body()
-                        if (body != null && body.accessToken.isNotEmpty()) {
-                            val tokenToSave = CreateTokenModel(
-                                operatorId = body.operatorId,
-                                expiresIn = body.expiresIn,
-                                refreshBefore = body.refreshBefore,
-                                createdOn = body.createdOn,
-                                accessToken = body.accessToken,
-                                refreshToken = body.refreshToken,
-                            )
-                            tokenLocalDataSource.saveToken(tokenToSave)
-                            body.accessToken
-                        } else {
-                            null
+                            if (body != null && body.accessToken.isNotEmpty()) {
+
+                                val tokenToSave = CreateTokenModel(
+                                    operatorId = body.operatorId,
+                                    expiresIn = body.expiresIn,
+                                    refreshBefore = body.refreshBefore,
+                                    createdOn = body.createdOn,
+                                    accessToken = body.accessToken,
+                                    refreshToken = body.refreshToken,
+                                )
+
+                                tokenLocalDataSource.saveToken(tokenToSave)
+
+                                RefreshResult.Success(body.accessToken)
+                            } else {
+                                RefreshResult.UnknownError
+                            }
                         }
-                    } else {
-                        null
+
+                        response.code() == 400 || response.code() == 401 -> {
+                            RefreshResult.InvalidRefreshToken
+                        }
+
+                        else -> {
+                            RefreshResult.UnknownError
+                        }
                     }
+
+                } catch (e: IOException) {
+                    RefreshResult.NetworkError
                 } catch (e: Exception) {
-                    null
+                    RefreshResult.UnknownError
                 }
             }
         }

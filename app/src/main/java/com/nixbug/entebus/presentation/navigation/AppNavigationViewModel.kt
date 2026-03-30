@@ -45,8 +45,6 @@ class AppNavigationViewModel @Inject constructor(
         }
     }
 
-    private var handled = false
-
     private fun observeSession() {
         viewModelScope.launch {
             sessionExpired.collect {
