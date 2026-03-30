@@ -31,7 +31,7 @@ object RepositoryModule {
     @Singleton
     fun provideTokenRepository(
         api: TokenApi,
-        localDataSource: TokenLocalDataSource,
+        localDataSource: TokenLocalDataSource
     ): TokenRepository {
         return TokenRepositoryImpl(api, localDataSource)
     }
@@ -39,16 +39,14 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideUserRepository(
-        localDataSource: UserLocalDataSource,
+        localDataSource: UserLocalDataSource
     ): UserRepository {
         return UserRepositoryImpl(localDataSource)
     }
 
     @Provides
     @Singleton
-    fun providePublicCompanyRepository(
-        api: CompanyApi
-    ): PublicCompanyRepository {
+    fun providePublicCompanyRepository(api: CompanyApi): PublicCompanyRepository {
         return PublicCompanyRepositoryImpl(api)
     }
 
