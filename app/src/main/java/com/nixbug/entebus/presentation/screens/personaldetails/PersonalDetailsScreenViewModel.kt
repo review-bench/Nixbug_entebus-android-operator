@@ -1,19 +1,41 @@
 package com.nixbug.entebus.presentation.screens.personaldetails
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.repository.OperatorAccountRepository
 import com.nixbug.entebus.presentation.screens.profile.ProfileUiModel
 import com.nixbug.entebus.presentation.screens.profile.ProfileUiState
+import com.nixbug.entebus.utils.network.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class PersonalDetailsScreenViewModel @Inject constructor() : ViewModel() {
+class PersonalDetailsScreenViewModel @Inject constructor(
+    private val operatorAccountRepository: OperatorAccountRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val response = operatorAccountRepository.fetchOperatorAccount()
+            when (response) {
+                is Resource.Success -> {
+                    println("Profile Success${response.data}")
+                }
+
+                else -> {
+                    println("Profile Error${response.message} ${response.statusCode}")
+                }
+
+            }
+        }
+    }
 
     private val _editState = MutableStateFlow<ProfileUiModel?>(null)
     val editState = _editState.asStateFlow()
