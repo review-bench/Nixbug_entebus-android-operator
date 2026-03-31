@@ -1,100 +1,97 @@
 package com.nixbug.entebus.presentation.screens.personaldetails
 
 import androidx.lifecycle.ViewModel
-import com.nixbug.entebus.presentation.screens.profile.ProfileUiModel
-import com.nixbug.entebus.presentation.screens.profile.ProfileUiState
+import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.usecase.account.GetOperatorAccountUseCase
+import com.nixbug.entebus.utils.network.Resource
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.utcToIstConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
-class PersonalDetailsScreenViewModel @Inject constructor() : ViewModel() {
+class PersonalDetailsScreenViewModel @Inject constructor(
+    private val getOperatorAccountUseCase: GetOperatorAccountUseCase
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ProfileUiState())
+    private val _uiState = MutableStateFlow(PersonalDetailsUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val _editState = MutableStateFlow<ProfileUiModel?>(null)
-    val editState = _editState.asStateFlow()
+    init {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isLoading = true) }
+                val response = getOperatorAccountUseCase()
+                when (response) {
+                    is Resource.Success -> {
+                        val user = response.data?.firstOrNull()
+                        _uiState.update {
+                            it.copy(
+                                id = user?.id,
+                                username = user?.username,
+                                gender = user?.gender,
+                                genderText = mapGenderToText(user?.gender),
+                                fullName = user?.fullName,
+                                status = user?.status,
+                                statusText = mapStatusToText(user?.status),
+                                phoneNumber = user?.phoneNumber,
+                                emailId = user?.emailId,
+                                createdOn = user?.createdOn,
+                                createdOnText = formatDate(user?.createdOn),
+                            )
+                        }
+                    }
 
-    private val _isEditMode = MutableStateFlow(false)
-    val isEditMode = _isEditMode.asStateFlow()
+                    is Resource.Error -> {
+                        SnackbarManager.show(
+                            response.message ?: "Something went wrong",
+                            SnackbarType.ERROR
+                        )
+                    }
 
-    fun startEdit() {
-        _editState.value = uiState.value.userDetails.copy()
-        _isEditMode.value = true
-    }
+                    else -> {
+                        SnackbarManager.show(
+                            response.message ?: "Something went wrong",
+                            SnackbarType.ERROR
+                        )
+                    }
 
-    fun cancelEdit() {
-        _editState.value = null
-        _isEditMode.value = false
-    }
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(e.message ?: "Something went wrong", SnackbarType.ERROR)
+            } finally {
+                _uiState.update { it.copy(isLoading = false) }
+            }
 
-    fun saveEdit() {
-        val updated = _editState.value ?: return
-
-        // TODO call API here
-
-        _uiState.update {
-            it.copy(userDetails = updated)
-        }
-
-        _isEditMode.value = false
-        _editState.value = null
-    }
-
-    fun updateFullName(value: String) {
-        _editState.update { it?.copy(fullName = value) }
-    }
-
-    fun updatePhone(value: String) {
-        _editState.update { it?.copy(phoneNumber = value) }
-    }
-
-    fun updateEmail(value: String) {
-        _editState.update { it?.copy(emailId = value) }
-    }
-
-    fun updateGender(value: Int) {
-        _editState.update { it?.copy(gender = value) }
-    }
-
-    enum class Gender(val id: Int, val displayName: String) {
-        OTHER(1, "Other"),
-        FEMALE(2, "Female"),
-        MALE(3, "Male"),
-        TRANSGENDER(4, "Transgender");
-
-        companion object {
-            fun fromId(id: Int): Gender =
-                entries.firstOrNull { it.id == id } ?: OTHER
-
-            fun fromText(text: String): Gender =
-                entries.firstOrNull { it.displayName == text } ?: OTHER
         }
     }
 
-    enum class Status(val id: Int, val displayName: String) {
-        ACTIVE(1, "Active"),
-        SUSPENDED(2, "Suspended");
-
-        companion object {
-            fun fromId(id: Int): Status =
-                entries.firstOrNull { it.id == id } ?: SUSPENDED
+    private fun mapGenderToText(gender: Int?): String {
+        return when (gender) {
+            1 -> "Other"
+            2 -> "Female"
+            3 -> "Male"
+            4 -> "Transgender"
+            else -> "N/A"
         }
     }
 
-    fun genderToText(genderId: Int): String =
-        Gender.fromId(genderId).displayName
+    private fun formatDate(date: String?): String {
+        return utcToIstConverter(date)?.first ?: "N/A"
+    }
 
-    fun textToGender(text: String): Int =
-        Gender.fromText(text).id
-
-    fun statusToText(statusId: Int): String =
-        Status.fromId(statusId).displayName
-
-    fun getGenderOptions(): List<String> =
-        Gender.entries.map { it.displayName }
-
+    private fun mapStatusToText(status: Int?): String {
+        return when (status) {
+            1 -> "Active"
+            2 -> "Suspended"
+            else -> "N/A"
+        }
+    }
 }

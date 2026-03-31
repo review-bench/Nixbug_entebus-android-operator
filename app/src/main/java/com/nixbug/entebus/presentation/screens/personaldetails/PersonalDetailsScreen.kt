@@ -28,10 +28,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
 import com.nixbug.entebus.presentation.components.DialogBox
+import com.nixbug.entebus.presentation.components.loadingskeleton.PersonalDetailsSkeleton
+import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
-import com.nixbug.entebus.utils.utcToIstConverter
 
 @Composable
 fun PersonalDetailsScreen(
@@ -40,15 +41,12 @@ fun PersonalDetailsScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
-    val editState by viewModel.editState.collectAsState()
-    val isEditMode by viewModel.isEditMode.collectAsState()
-    val profile = editState ?: uiState.userDetails
 
     val focusManager = LocalFocusManager.current
-    val date = utcToIstConverter(uiState.userDetails.createdOn)?.first ?: "N/A"
+
     var showDiscardDialog by remember { mutableStateOf(false) }
 
-    BackHandler(enabled = isEditMode) {
+    BackHandler(enabled = uiState.isEditMode) {
         showDiscardDialog = true
     }
 
@@ -59,7 +57,6 @@ fun PersonalDetailsScreen(
             confirmText = "Discard",
             onConfirmClick = {
                 showDiscardDialog = false
-                viewModel.cancelEdit()
                 navController.popBackStack()
             },
             dismissible = true,
@@ -83,7 +80,7 @@ fun PersonalDetailsScreen(
         AppHeader(
             title = "Personal Details",
             onBackClick = {
-                if (isEditMode) {
+                if (uiState.isEditMode) {
                     showDiscardDialog = true
                 } else {
                     navController.popBackStack()
@@ -93,13 +90,13 @@ fun PersonalDetailsScreen(
             primaryActionText = "Edit",
             primaryActionIcon = Icons.Default.Edit,
             onPrimaryActionClick = {
-                if (isEditMode) {
+                if (uiState.isEditMode) {
                     SnackbarManager.show(
                         message = "You are already in edit mode",
                         type = SnackbarType.INFO
                     )
                 } else {
-                    viewModel.startEdit()
+//                    StartEdit
                 }
             },
             paddingEnd = 16.dp
@@ -116,166 +113,171 @@ fun PersonalDetailsScreen(
                         focusManager.clearFocus()
                     })
                 }
-        ) {
-
-            /* ---------- Personal Information ---------- */
-            SectionTitle(title = "Personal Info")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(6.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-
-                    if (!isEditMode) {
-                        InfoRow(
-                            label = "User Id",
-                            value = uiState.userDetails.id.toString(),
-                            icon = Icons.Default.Tag,
-                            iconBg = DisabledButtonColor,
-                            iconTint = MaterialTheme.colorScheme.primary
-                        )
-
-                        DividerWithSpacing()
-
-                        InfoRow(
-                            label = "Username",
-                            value = uiState.userDetails.username,
-                            icon = Icons.Default.AccountBox,
-                            iconBg = DisabledButtonColor,
-                            iconTint = MaterialTheme.colorScheme.primary
-                        )
-
-                        DividerWithSpacing()
-                    }
-
-                    EditableInfoRow(
-                        placeHolder = "Enter Your Full Name",
-                        label = "Full Name",
-                        value = profile.fullName,
-                        icon = Icons.Default.Badge,
-                        iconBg = DisabledButtonColor,
-                        iconTint = MaterialTheme.colorScheme.primary,
-                        isEditMode = isEditMode,
-                        onValueChange = viewModel::updateFullName
-                    )
-
-                    DividerWithSpacing()
-
-                    GenderDropdownRow(
-                        label = "Gender",
-                        value = viewModel.genderToText(profile.gender),
-                        icon = Icons.Default.Wc,
-                        iconBg = DisabledButtonColor,
-                        iconTint = MaterialTheme.colorScheme.primary,
-                        isEditMode = isEditMode,
-                        options = viewModel.getGenderOptions(),
-                        onValueChange = { viewModel.updateGender(viewModel.textToGender(it)) }
-                    )
-
-                    if (!isEditMode) {
-                        DividerWithSpacing()
-
-                        InfoRow(
-                            label = "Status",
-                            value = viewModel.statusToText(uiState.userDetails.status),
-                            icon = Icons.Default.Info,
-                            iconBg = DisabledButtonColor,
-                            iconTint = MaterialTheme.colorScheme.primary
-                        )
-
-                        DividerWithSpacing()
-
-                        InfoRow(
-                            label = "Created On",
-                            value = date,
-                            icon = Icons.Default.Today,
-                            iconBg = DisabledButtonColor,
-                            iconTint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-
-            /* ---------- Contact Information ---------- */
-            SectionTitle("Contact Info")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(6.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-
-                    EditableInfoRow(
-                        placeHolder = "Enter Your Phone Number",
-                        label = "Phone",
-                        value = profile.phoneNumber,
-                        icon = Icons.Default.Phone,
-                        iconBg = DisabledButtonColor,
-                        iconTint = MaterialTheme.colorScheme.primary,
-                        isEditMode = isEditMode,
-                        onValueChange = viewModel::updatePhone
-                    )
-
-                    DividerWithSpacing()
-
-                    EditableInfoRow(
-                        placeHolder = "Enter Your Email",
-                        label = "Email",
-                        value = profile.emailId,
-                        icon = Icons.Default.Email,
-                        iconBg = DisabledButtonColor,
-                        iconTint = MaterialTheme.colorScheme.primary,
-                        isEditMode = isEditMode,
-                        onValueChange = viewModel::updateEmail
-
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(28.dp))
-
-            /* ---------- Save & Cancel Buttons ---------- */
-            if (isEditMode) {
-                Row(
+        )
+        {
+            if (uiState.isLoading) {
+                val shimmerBrush = rememberShimmerBrush()
+                PersonalDetailsSkeleton(shimmerBrush = shimmerBrush)
+            } else {
+                /* ---------- Personal Information ---------- */
+                SectionTitle(title = "Personal Info")
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                )
-                {
-                    OutlinedButton(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        onClick = viewModel::cancelEdit,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-                    ) {
-                        Text(
-                            text = "Cancel",
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(6.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
 
-                    Button(
-                        onClick = viewModel::saveEdit,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Text(
-                            text = "Save Changes",
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                        if (!uiState.isEditMode) {
+                            InfoRow(
+                                label = "User Id",
+                                value = uiState.id?.toString() ?: "N/A",
+                                icon = Icons.Default.Tag,
+                                iconBg = DisabledButtonColor,
+                                iconTint = MaterialTheme.colorScheme.primary
+                            )
 
+                            DividerWithSpacing()
+
+                            InfoRow(
+                                label = "Username",
+                                value = uiState.username ?: "N/A",
+                                icon = Icons.Default.AccountBox,
+                                iconBg = DisabledButtonColor,
+                                iconTint = MaterialTheme.colorScheme.primary
+                            )
+
+                            DividerWithSpacing()
+                        }
+
+                        EditableInfoRow(
+                            placeHolder = "Enter Your Full Name",
+                            label = "Full Name",
+                            value = uiState.fullName,
+                            icon = Icons.Default.Badge,
+                            iconBg = DisabledButtonColor,
+                            iconTint = MaterialTheme.colorScheme.primary,
+                            isEditMode = uiState.isEditMode,
+                            onValueChange = {}
+                        )
+
+                        DividerWithSpacing()
+
+                        GenderDropdownRow(
+                            label = "Gender",
+                            value = uiState.genderText,
+                            icon = Icons.Default.Wc,
+                            iconBg = DisabledButtonColor,
+                            iconTint = MaterialTheme.colorScheme.primary,
+                            isEditMode = uiState.isEditMode,
+                            options = listOf("Male", "Female", "Other", "Transgender"),
+                            onValueChange = { }
+                        )
+
+                        if (!uiState.isEditMode) {
+                            DividerWithSpacing()
+
+                            InfoRow(
+                                label = "Status",
+                                value = uiState.statusText,
+                                icon = Icons.Default.Info,
+                                iconBg = DisabledButtonColor,
+                                iconTint = MaterialTheme.colorScheme.primary
+                            )
+
+                            DividerWithSpacing()
+
+                            InfoRow(
+                                label = "Created On",
+                                value = uiState.createdOnText,
+                                icon = Icons.Default.Today,
+                                iconBg = DisabledButtonColor,
+                                iconTint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
-            }
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+                /* ---------- Contact Information ---------- */
+                SectionTitle("Contact Info")
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(6.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+
+                        EditableInfoRow(
+                            placeHolder = "Enter Your Phone Number",
+                            label = "Phone",
+                            value = uiState.phoneNumber,
+                            icon = Icons.Default.Phone,
+                            iconBg = DisabledButtonColor,
+                            iconTint = MaterialTheme.colorScheme.primary,
+                            isEditMode = uiState.isEditMode,
+                            onValueChange = {}
+                        )
+
+                        DividerWithSpacing()
+
+                        EditableInfoRow(
+                            placeHolder = "Enter Your Email",
+                            label = "Email",
+                            value = uiState.emailId,
+                            icon = Icons.Default.Email,
+                            iconBg = DisabledButtonColor,
+                            iconTint = MaterialTheme.colorScheme.primary,
+                            isEditMode = uiState.isEditMode,
+                            onValueChange = {}
+
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(28.dp))
+
+                /* ---------- Save & Cancel Buttons ---------- */
+                if (uiState.isEditMode) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    )
+                    {
+                        OutlinedButton(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            onClick = {},
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text(
+                                text = "Cancel",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        Button(
+                            onClick = {},
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(52.dp),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Text(
+                                text = "Save Changes",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
     }
 }
