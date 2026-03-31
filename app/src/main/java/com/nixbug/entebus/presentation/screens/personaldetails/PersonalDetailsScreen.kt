@@ -180,7 +180,7 @@ fun PersonalDetailsScreen(
 
                             InfoRow(
                                 label = "Status",
-                                value = if (uiState.status == 1) "Active" else "Suspended",
+                                value = if (uiState.status == 1) "Active" else if(uiState.status == 2) "Suspended" else "N/A",
                                 icon = Icons.Default.Info,
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
