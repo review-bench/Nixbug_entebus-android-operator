@@ -3,6 +3,7 @@ package com.nixbug.entebus.presentation.screens.personaldetails
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.repository.OperatorAccountRepository
+import com.nixbug.entebus.domain.usecase.account.GetOperatorAccountUseCase
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
@@ -15,7 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PersonalDetailsScreenViewModel @Inject constructor(
-    private val operatorAccountRepository: OperatorAccountRepository
+    private val getOperatorAccountUseCase: GetOperatorAccountUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PersonalDetailsUiState())
@@ -25,7 +26,7 @@ class PersonalDetailsScreenViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isLoading = true) }
-                val response = operatorAccountRepository.fetchOperatorAccount()
+                val response = getOperatorAccountUseCase()
                 when (response) {
                     is Resource.Success -> {
                         val user = response.data?.firstOrNull()
