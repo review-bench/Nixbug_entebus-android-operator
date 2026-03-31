@@ -10,6 +10,9 @@ data class PersonalDetailsUiState(
     val emailId: String? = null,
     val createdOn: String? = null,
 
+    val genderText: String = "N/A",
+    val createdOnText: String = "N/A",
+
     val isLoading: Boolean = false,
     val isEditMode: Boolean = false,
     val error: String? = null

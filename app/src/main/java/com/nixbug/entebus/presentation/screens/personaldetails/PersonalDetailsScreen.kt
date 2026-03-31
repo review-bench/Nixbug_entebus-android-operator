@@ -33,7 +33,6 @@ import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimme
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
-import com.nixbug.entebus.utils.utcToIstConverter
 
 @Composable
 fun PersonalDetailsScreen(
@@ -42,15 +41,6 @@ fun PersonalDetailsScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
-
-    val genderText = when (uiState.gender) {
-        1 -> "Other"
-        2 -> "Female"
-        3 -> "Male"
-        4 -> "Transgender"
-        else -> "N/A"
-    }
-    val date = utcToIstConverter(uiState.createdOn)?.first ?: "N/A"
 
     val focusManager = LocalFocusManager.current
 
@@ -176,7 +166,7 @@ fun PersonalDetailsScreen(
 
                         GenderDropdownRow(
                             label = "Gender",
-                            value = genderText,
+                            value = uiState.genderText,
                             icon = Icons.Default.Wc,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
@@ -200,7 +190,7 @@ fun PersonalDetailsScreen(
 
                             InfoRow(
                                 label = "Created On",
-                                value = date,
+                                value = uiState.createdOnText,
                                 icon = Icons.Default.Today,
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
