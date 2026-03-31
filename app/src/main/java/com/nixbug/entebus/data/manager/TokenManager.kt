@@ -7,14 +7,19 @@ import javax.inject.Singleton
 class TokenManager @Inject constructor() {
     @Volatile
     var accessToken: String? = null
+
     @Volatile
     var refreshToken: String? = null
+
     @Volatile
     var expiryTime: Long? = null
+
     @Volatile
     var refreshBefore: Long? = null
+
     @Volatile
     var createdOn: Long? = null
+
     @Volatile
     var operatorId: Int? = null
 
