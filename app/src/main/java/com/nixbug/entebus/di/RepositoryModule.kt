@@ -65,6 +65,6 @@ object RepositoryModule {
         api: AccountApi,
         tokenManager: TokenManager
     ): OperatorAccountRepository {
-        return OperatorAccountRepositoryImpl(api,tokenManager)
+        return OperatorAccountRepositoryImpl(api, tokenManager)
     }
 }

@@ -1,8 +1,7 @@
 package com.nixbug.entebus.domain.model
 
-
 data class OperatorAccountModel(
-    val id:Int,
+    val id: Int,
     val username: String,
     val gender: Int,
     val fullName: String?,

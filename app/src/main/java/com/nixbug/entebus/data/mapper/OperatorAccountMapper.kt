@@ -6,7 +6,7 @@ import com.nixbug.entebus.domain.model.OperatorAccountModel
 
 fun OperatorSchema.toOperatorAccountDomain(): OperatorAccountModel {
     return OperatorAccountModel(
-        id=id,
+        id = id,
         username = username,
         gender = gender,
         fullName = fullName,
