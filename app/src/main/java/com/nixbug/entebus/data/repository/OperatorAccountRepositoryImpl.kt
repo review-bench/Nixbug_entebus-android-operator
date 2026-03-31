@@ -15,9 +15,16 @@ class OperatorAccountRepositoryImpl @Inject constructor(
 ) : OperatorAccountRepository {
 
     override suspend fun fetchOperatorAccount(): Resource<List<OperatorAccountModel>> {
+        val operatorId = tokenManager.operatorId
+
+        if (operatorId == null) {
+            return Resource.Error(
+                message = "Session expired. Please login again."
+            )
+        }
         return apiHelper(
             apiCall = {
-                accountApi.fetchAccountOperatorCompanyAccountGet(id = tokenManager.operatorId)
+                accountApi.fetchAccountOperatorCompanyAccountGet(id = operatorId)
             },
             mapper = { responseList ->
                 responseList.map { it.toOperatorAccountDomain() }

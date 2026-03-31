@@ -12,8 +12,8 @@ data class PersonalDetailsUiState(
 
     val genderText: String = "N/A",
     val createdOnText: String = "N/A",
+    val statusText: String = "N/A",
 
     val isLoading: Boolean = false,
     val isEditMode: Boolean = false,
-    val error: String? = null
 )

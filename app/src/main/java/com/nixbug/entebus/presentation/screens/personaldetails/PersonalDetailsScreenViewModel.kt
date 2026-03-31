@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class PersonalDetailsScreenViewModel @Inject constructor(
@@ -38,32 +39,33 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                                 genderText = mapGenderToText(user?.gender),
                                 fullName = user?.fullName,
                                 status = user?.status,
+                                statusText = mapStatusToText(user?.status),
                                 phoneNumber = user?.phoneNumber,
                                 emailId = user?.emailId,
                                 createdOn = user?.createdOn,
-                                createdOnText = formatDate(user?.createdOn)
+                                createdOnText = formatDate(user?.createdOn),
                             )
                         }
                     }
 
-                    is Resource.Loading -> {
-                        _uiState.update { it.copy(isLoading = true) }
-                    }
-
                     is Resource.Error -> {
-                        _uiState.update {
-                            it.copy(error = response.message)
-                        }
-                        SnackbarManager.show("${response.message}", SnackbarType.ERROR)
+                        SnackbarManager.show(
+                            response.message ?: "Something went wrong",
+                            SnackbarType.ERROR
+                        )
                     }
 
                     else -> {
-                        SnackbarManager.show("${response.message}", SnackbarType.ERROR)
+                        SnackbarManager.show(
+                            response.message ?: "Something went wrong",
+                            SnackbarType.ERROR
+                        )
                     }
 
                 }
             } catch (e: Exception) {
-                SnackbarManager.show("${e.message}", SnackbarType.ERROR)
+                if (e is CancellationException) throw e
+                SnackbarManager.show(e.message ?: "Something went wrong", SnackbarType.ERROR)
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
@@ -83,5 +85,13 @@ class PersonalDetailsScreenViewModel @Inject constructor(
 
     private fun formatDate(date: String?): String {
         return utcToIstConverter(date)?.first ?: "N/A"
+    }
+
+    private fun mapStatusToText(status: Int?): String {
+        return when (status) {
+            1 -> "Active"
+            2 -> "Suspended"
+            else -> "N/A"
+        }
     }
 }
