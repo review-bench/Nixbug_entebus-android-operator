@@ -41,9 +41,7 @@ fun PersonalDetailsScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
-
     val focusManager = LocalFocusManager.current
-
     var showDiscardDialog by remember { mutableStateOf(false) }
 
     BackHandler(enabled = uiState.isEditMode) {
@@ -80,11 +78,9 @@ fun PersonalDetailsScreen(
         AppHeader(
             title = "Personal Details",
             onBackClick = {
-                if (uiState.isEditMode) {
-                    showDiscardDialog = true
-                } else {
-                    navController.popBackStack()
-                }
+
+                navController.popBackStack()
+
             },
             showTopBarActions = true,
             primaryActionText = "Edit",
@@ -96,7 +92,7 @@ fun PersonalDetailsScreen(
                         type = SnackbarType.INFO
                     )
                 } else {
-//                    StartEdit
+                    viewModel.onStartEdit()
                 }
             },
             paddingEnd = 16.dp
@@ -115,7 +111,7 @@ fun PersonalDetailsScreen(
                 }
         )
         {
-            if (uiState.isLoading) {
+            if (uiState.isLoading && !uiState.isEditMode) {
                 val shimmerBrush = rememberShimmerBrush()
                 PersonalDetailsSkeleton(shimmerBrush = shimmerBrush)
             } else {
@@ -130,6 +126,7 @@ fun PersonalDetailsScreen(
                     Column(modifier = Modifier.padding(16.dp)) {
 
                         if (!uiState.isEditMode) {
+                            // ID
                             InfoRow(
                                 label = "User Id",
                                 value = uiState.id?.toString() ?: "N/A",
@@ -139,7 +136,7 @@ fun PersonalDetailsScreen(
                             )
 
                             DividerWithSpacing()
-
+                            // User Name
                             InfoRow(
                                 label = "Username",
                                 value = uiState.username ?: "N/A",
@@ -151,19 +148,22 @@ fun PersonalDetailsScreen(
                             DividerWithSpacing()
                         }
 
+                        // Full Name
                         EditableInfoRow(
                             placeHolder = "Enter Your Full Name",
                             label = "Full Name",
-                            value = uiState.fullName,
                             icon = Icons.Default.Badge,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
                             isEditMode = uiState.isEditMode,
-                            onValueChange = {}
+                            value = if (uiState.isEditMode) uiState.editedFullName else uiState.fullName,
+                            onValueChange = viewModel::onFullNameChange,
+                            error = uiState.fullNameError
                         )
 
                         DividerWithSpacing()
 
+                        // Gender
                         GenderDropdownRow(
                             label = "Gender",
                             value = uiState.genderText,
@@ -172,12 +172,13 @@ fun PersonalDetailsScreen(
                             iconTint = MaterialTheme.colorScheme.primary,
                             isEditMode = uiState.isEditMode,
                             options = listOf("Male", "Female", "Other", "Transgender"),
-                            onValueChange = { }
+                            onValueChange = viewModel::onGenderChange
                         )
 
                         if (!uiState.isEditMode) {
                             DividerWithSpacing()
 
+                            // Status
                             InfoRow(
                                 label = "Status",
                                 value = uiState.statusText,
@@ -188,6 +189,7 @@ fun PersonalDetailsScreen(
 
                             DividerWithSpacing()
 
+                            // Created On
                             InfoRow(
                                 label = "Created On",
                                 value = uiState.createdOnText,
@@ -210,29 +212,32 @@ fun PersonalDetailsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
 
+                        // Phone Number
                         EditableInfoRow(
                             placeHolder = "Enter Your Phone Number",
                             label = "Phone",
-                            value = uiState.phoneNumber,
+                            value = if (uiState.isEditMode) uiState.editedPhoneNumber else uiState.phoneNumber,
                             icon = Icons.Default.Phone,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
                             isEditMode = uiState.isEditMode,
-                            onValueChange = {}
+                            onValueChange = viewModel::onPhoneChange,
+                            error = uiState.phoneError
                         )
 
                         DividerWithSpacing()
 
+                        // Email
                         EditableInfoRow(
                             placeHolder = "Enter Your Email",
                             label = "Email",
-                            value = uiState.emailId,
+                            value = if (uiState.isEditMode) uiState.editedEmailId else uiState.emailId,
                             icon = Icons.Default.Email,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
                             isEditMode = uiState.isEditMode,
-                            onValueChange = {}
-
+                            onValueChange = viewModel::onEmailChange,
+                            error = uiState.emailError
                         )
                     }
                 }
@@ -245,6 +250,8 @@ fun PersonalDetailsScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     )
                     {
+
+                        // Cancel Button
                         OutlinedButton(
                             modifier = Modifier
                                 .weight(1f)
@@ -260,8 +267,9 @@ fun PersonalDetailsScreen(
                             )
                         }
 
+                        // Save Changes Button
                         Button(
-                            onClick = {},
+                            onClick = { viewModel.onSaveClick() },
                             modifier = Modifier
                                 .weight(1f)
                                 .height(52.dp),
@@ -341,6 +349,7 @@ fun InfoRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyLarge,
@@ -360,7 +369,8 @@ fun EditableInfoRow(
     iconBg: Color,
     iconTint: Color,
     isEditMode: Boolean,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    error: String? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
@@ -433,6 +443,14 @@ fun EditableInfoRow(
                                 unfocusedBorderThickness = 1.dp,
                             )
                         }
+                    )
+                }
+                if (error != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelSmall
                     )
                 }
             } else {

@@ -2,7 +2,9 @@ package com.nixbug.entebus.presentation.screens.personaldetails
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.data.remote.operator.model.GenderType
 import com.nixbug.entebus.domain.usecase.account.GetOperatorAccountUseCase
+import com.nixbug.entebus.domain.usecase.account.UpdateOperatorAccountUseCase
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
@@ -17,11 +19,14 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class PersonalDetailsScreenViewModel @Inject constructor(
-    private val getOperatorAccountUseCase: GetOperatorAccountUseCase
+    private val getOperatorAccountUseCase: GetOperatorAccountUseCase,
+    private val updateOperatorAccountUseCase: UpdateOperatorAccountUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PersonalDetailsUiState())
     val uiState = _uiState.asStateFlow()
+
+//    To SHOW IN UI
 
     init {
         viewModelScope.launch {
@@ -94,4 +99,71 @@ class PersonalDetailsScreenViewModel @Inject constructor(
             else -> "N/A"
         }
     }
+
+//    TO EDIT
+
+    fun onStartEdit() {
+        _uiState.update {
+            it.copy(
+                isEditMode = true,
+                editedFullName = it.fullName,
+                editedGender = it.gender,
+                editedPhoneNumber = it.phoneNumber,
+                editedEmailId = it.emailId
+            )
+        }
+    }
+
+    fun onFullNameChange(value: String) {
+        _uiState.update {
+            it.copy(
+                editedFullName = value,
+                fullNameError = null
+            )
+        }
+    }
+
+    fun onPhoneChange(value: String) {
+        _uiState.update {
+            it.copy(
+                editedPhoneNumber = value,
+                phoneError = null
+            )
+        }
+    }
+
+    fun onEmailChange(value: String) {
+        _uiState.update {
+            it.copy(
+                editedEmailId = value,
+                emailError = null
+            )
+        }
+    }
+
+    fun onGenderChange(value: String) {
+        val genderInt = when (value) {
+            "Male" -> 3
+            "Female" -> 2
+            "Other" -> 1
+            "Transgender" -> 4
+            else -> null
+        }
+        _uiState.update {
+            it.copy(
+                editedGender = genderInt,
+                genderText = value
+            )
+        }
+    }
+
+    fun onSaveClick() {
+
+        val state = _uiState.value
+
+
+
+
+    }
+
 }
