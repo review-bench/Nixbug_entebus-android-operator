@@ -6,6 +6,7 @@ import com.nixbug.entebus.data.interceptor.AuthInterceptor
 import com.nixbug.entebus.data.remote.operator.api.AccountApi
 import com.nixbug.entebus.data.remote.operator.api.TokenApi
 import com.nixbug.entebus.data.remote.publicapi.api.CompanyApi
+import com.nixbug.entebus.data.retro.CustomAccountApi
 import com.nixbug.entebus.utils.network.NullOnEmptyConverterFactory
 import dagger.Module
 import dagger.Provides
@@ -79,5 +80,9 @@ object NetworkModule {
     @Provides
     fun provideAccountApi(@OperatorApi retrofit: Retrofit): AccountApi {
         return retrofit.create(AccountApi::class.java)
+    }
+
+    fun provideCustomAccountApi(@OperatorApi retrofit: Retrofit): CustomAccountApi {
+        return retrofit.create(CustomAccountApi::class.java)
     }
 }

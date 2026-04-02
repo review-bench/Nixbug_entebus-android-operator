@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -216,13 +217,14 @@ fun PersonalDetailsScreen(
                         EditableInfoRow(
                             placeHolder = "Enter Your Phone Number",
                             label = "Phone",
-                            value = if (uiState.isEditMode) uiState.editedPhoneNumber else uiState.phoneNumber,
+                            value = if (uiState.isEditMode) uiState.editedPhoneNumber else uiState.formattedPhoneNumber,
                             icon = Icons.Default.Phone,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
                             isEditMode = uiState.isEditMode,
                             onValueChange = viewModel::onPhoneChange,
-                            error = uiState.phoneError
+                            error = uiState.phoneError,
+                            isPhoneField = true
                         )
 
                         DividerWithSpacing()
@@ -370,9 +372,11 @@ fun EditableInfoRow(
     iconTint: Color,
     isEditMode: Boolean,
     onValueChange: (String) -> Unit,
-    error: String? = null
+    error: String? = null,
+    isPhoneField: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    var isFocused by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -402,10 +406,21 @@ fun EditableInfoRow(
             if (isEditMode) {
                 BasicTextField(
                     value = value ?: "",
-                    onValueChange = onValueChange,
+                    onValueChange = {
+                        if (isPhoneField) {
+                            if (it.length <= 10 && it.all { ch -> ch.isDigit() }) {
+                                onValueChange(it)
+                            }
+                        } else {
+                            onValueChange(it)
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(40.dp),
+                        .height(40.dp)
+                        .onFocusChanged {
+                            isFocused = it.isFocused
+                        },
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
                         color = MaterialTheme.colorScheme.onSurface
                     ),
@@ -415,13 +430,28 @@ fun EditableInfoRow(
                     OutlinedTextFieldDefaults.DecorationBox(
                         value = value ?: "",
                         placeholder = {
-                            Text(
-                                placeHolder,
-                                color = Color.LightGray,
-                                style = MaterialTheme.typography.labelMedium
-                            )
+                            if (!(isPhoneField && (isFocused || !value.isNullOrEmpty()))) {
+                                Text(
+                                    placeHolder,
+                                    color = Color.LightGray,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         },
-                        innerTextField = innerTextField,
+                        innerTextField = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+
+                                if (isPhoneField && (isFocused || !value.isNullOrEmpty())) {
+                                    Text(
+                                        text = "+91 ",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                innerTextField()
+                            }
+                        },
                         enabled = true,
                         singleLine = true,
                         visualTransformation = VisualTransformation.None,

@@ -1,10 +1,9 @@
 package com.nixbug.entebus.presentation.screens.personaldetails
 
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nixbug.entebus.data.remote.operator.model.GenderType
 import com.nixbug.entebus.domain.usecase.account.GetOperatorAccountUseCase
-import com.nixbug.entebus.domain.usecase.account.UpdateOperatorAccountUseCase
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
@@ -20,11 +19,12 @@ import kotlin.coroutines.cancellation.CancellationException
 @HiltViewModel
 class PersonalDetailsScreenViewModel @Inject constructor(
     private val getOperatorAccountUseCase: GetOperatorAccountUseCase,
-    private val updateOperatorAccountUseCase: UpdateOperatorAccountUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PersonalDetailsUiState())
     val uiState = _uiState.asStateFlow()
+    private val nameRegex = Regex("^[A-Za-z]+( [A-Za-z]+)*$")
+    private val phoneRegex = Regex("^[0-9]{10}$")
 
 //    To SHOW IN UI
 
@@ -46,6 +46,7 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                                 status = user?.status,
                                 statusText = mapStatusToText(user?.status),
                                 phoneNumber = user?.phoneNumber,
+                                formattedPhoneNumber = formatPhoneForUI(user?.phoneNumber),
                                 emailId = user?.emailId,
                                 createdOn = user?.createdOn,
                                 createdOnText = formatDate(user?.createdOn),
@@ -100,6 +101,17 @@ class PersonalDetailsScreenViewModel @Inject constructor(
         }
     }
 
+    private fun formatPhoneForUI(phone: String?): String? {
+        if (phone.isNullOrBlank()) return null
+
+        return phone
+            .replace("tel:", "")
+            .replace("+91", "")
+            .replace("-", "")
+            .filter { it.isDigit() }
+            .takeLast(10) // ensures only 10 digits
+    }
+
 //    TO EDIT
 
     fun onStartEdit() {
@@ -108,7 +120,7 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                 isEditMode = true,
                 editedFullName = it.fullName,
                 editedGender = it.gender,
-                editedPhoneNumber = it.phoneNumber,
+                editedPhoneNumber = it.formattedPhoneNumber,
                 editedEmailId = it.emailId
             )
         }
@@ -158,12 +170,59 @@ class PersonalDetailsScreenViewModel @Inject constructor(
     }
 
     fun onSaveClick() {
-
         val state = _uiState.value
+        val fullNameError = validateFullName(state.editedFullName)
+        val emailError = validateEmail(state.editedEmailId)
+        val phoneError = validatePhone(state.editedPhoneNumber)
 
+        if (fullNameError != null || emailError != null || phoneError != null) {
+            _uiState.update {
+                it.copy(
+                    fullNameError = fullNameError,
+                    emailError = emailError,
+                    phoneError = phoneError
+                )
+            }
+            return
+        }
+        viewModelScope.launch {
 
+//            updateOperatorAccountUseCase(1, "ffdf", "dfdfd", "wewewe")
+        }
+    }
 
+    private fun validateFullName(name: String?): String? {
+        if (name.isNullOrBlank()) return null // optional field (based on your backend)
 
+        if (name != name.trim()) {
+            return "Name should not start or end with spaces"
+        }
+
+        if (!nameRegex.matches(name)) {
+            return "Invalid name format"
+        }
+
+        return null
+    }
+
+    private fun validateEmail(email: String?): String? {
+        if (email.isNullOrBlank()) return null
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            return "Invalid email address"
+        }
+
+        return null
+    }
+
+    private fun validatePhone(phone: String?): String? {
+        if (phone.isNullOrBlank()) return null
+
+        if (!phoneRegex.matches(phone)) {
+            return "Phone number must be 10 digits"
+        }
+
+        return null
     }
 
 }

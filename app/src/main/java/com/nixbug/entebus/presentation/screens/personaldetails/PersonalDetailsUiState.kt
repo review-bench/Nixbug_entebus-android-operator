@@ -14,6 +14,7 @@ data class PersonalDetailsUiState(
     val genderText: String = "N/A",
     val createdOnText: String = "N/A",
     val statusText: String = "N/A",
+    val formattedPhoneNumber: String? = null,
 
     val editedFullName: String? = null,
     val editedGender: Int? = null,
