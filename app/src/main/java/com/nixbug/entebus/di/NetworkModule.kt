@@ -82,6 +82,7 @@ object NetworkModule {
         return retrofit.create(AccountApi::class.java)
     }
 
+    @Provides
     fun provideCustomAccountApi(@OperatorApi retrofit: Retrofit): CustomAccountApi {
         return retrofit.create(CustomAccountApi::class.java)
     }

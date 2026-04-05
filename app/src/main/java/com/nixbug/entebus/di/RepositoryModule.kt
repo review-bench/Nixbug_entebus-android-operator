@@ -12,6 +12,7 @@ import com.nixbug.entebus.data.repository.PublicCompanyRepositoryImpl
 import com.nixbug.entebus.data.repository.SessionRepositoryImpl
 import com.nixbug.entebus.data.repository.TokenRepositoryImpl
 import com.nixbug.entebus.data.repository.UserRepositoryImpl
+import com.nixbug.entebus.data.retro.CustomAccountApi
 import com.nixbug.entebus.domain.repository.OperatorAccountRepository
 import com.nixbug.entebus.domain.repository.PublicCompanyRepository
 import com.nixbug.entebus.domain.repository.SessionRepository
@@ -63,8 +64,9 @@ object RepositoryModule {
     @Singleton
     fun provideOperatorAccountRepository(
         api: AccountApi,
-        tokenManager: TokenManager
+        tokenManager: TokenManager,
+        customAccountApi: CustomAccountApi
     ): OperatorAccountRepository {
-        return OperatorAccountRepositoryImpl(api, tokenManager)
+        return OperatorAccountRepositoryImpl(api, tokenManager, customAccountApi)
     }
 }

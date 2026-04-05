@@ -3,7 +3,9 @@ package com.nixbug.entebus.presentation.screens.personaldetails
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.GsonBuilder
 import com.nixbug.entebus.domain.usecase.account.GetOperatorAccountUseCase
+import com.nixbug.entebus.domain.usecase.account.UpdateOperatorAccountUseCase
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
@@ -13,12 +15,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class PersonalDetailsScreenViewModel @Inject constructor(
     private val getOperatorAccountUseCase: GetOperatorAccountUseCase,
+    private val updateOperatorAccountUseCase: UpdateOperatorAccountUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PersonalDetailsUiState())
@@ -185,9 +190,72 @@ class PersonalDetailsScreenViewModel @Inject constructor(
             }
             return
         }
-        viewModelScope.launch {
 
-//            updateOperatorAccountUseCase(1, "ffdf", "dfdfd", "wewewe")
+        val updateMap = mutableMapOf<String, Any?>()
+
+        // 1. Full Name
+        if (state.editedFullName?.trim() != state.fullName?.trim()) {
+            updateMap["full_name"] = state.editedFullName.takeIf { it?.isNotBlank() == true }
+        }
+
+        // 2. Email
+        if (state.editedEmailId?.trim() != state.emailId?.trim()) {
+            updateMap["email_id"] = state.editedEmailId.takeIf { it?.isNotBlank() == true }
+        }
+
+        // 3. Phone (Compare the cleaned versions)
+        if (state.editedPhoneNumber != state.formattedPhoneNumber) {
+            val phoneValue =
+                state.editedPhoneNumber.takeIf { it?.isNotBlank() == true }?.let { "+91$it" }
+            updateMap["phone_number"] = phoneValue
+        }
+
+        // 4. Gender
+        if (state.editedGender != state.gender) {
+            updateMap["gender"] = state.editedGender
+        }
+
+        if (updateMap.isEmpty()) {
+            _uiState.update { it.copy(isEditMode = false) }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            val gson = GsonBuilder().serializeNulls().create()
+            val jsonString = gson.toJson(updateMap)
+
+            println("Patch Body: $jsonString")
+
+            val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+            val body = jsonString.toRequestBody(mediaType)
+
+            val result = updateOperatorAccountUseCase(body)
+
+            when (result) {
+                is Resource.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isEditMode = false,
+                            fullName = result.data?.fullName,
+                            gender = result.data?.gender,
+                            phoneNumber = result.data?.phoneNumber,
+                            emailId = result.data?.emailId,
+                            genderText = mapGenderToText(result.data?.gender),
+                            formattedPhoneNumber = formatPhoneForUI(result.data?.phoneNumber),
+                        )
+                    }
+                    SnackbarManager.show("Profile updated successfully", SnackbarType.SUCCESS)
+                }
+
+                is Resource.Error -> {
+                    SnackbarManager.show(result.message ?: "Update failed", SnackbarType.ERROR)
+                }
+
+                else -> {}
+            }
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
