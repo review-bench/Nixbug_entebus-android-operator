@@ -4,7 +4,7 @@ import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
 import com.nixbug.entebus.data.manager.SessionManager
 import com.nixbug.entebus.data.manager.TokenManager
-import com.nixbug.entebus.data.remote.operator.api.AccountApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
 import com.nixbug.entebus.data.remote.publicapi.api.PublicCompanyApi
 import com.nixbug.entebus.data.repository.OperatorAccountRepositoryImpl
@@ -62,7 +62,7 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideOperatorAccountRepository(
-        api: AccountApi,
+        api: OperatorAccountApi,
         tokenManager: TokenManager
     ): OperatorAccountRepository {
         return OperatorAccountRepositoryImpl(api, tokenManager)
