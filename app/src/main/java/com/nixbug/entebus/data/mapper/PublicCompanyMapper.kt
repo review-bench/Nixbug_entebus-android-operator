@@ -1,6 +1,6 @@
 package com.nixbug.entebus.data.mapper
 
-import com.nixbug.entebus.data.remote.publicapi.model.MaskedCompanySchema
+import com.nixbug.entebus.data.remote.publicapi.model.company.MaskedCompanySchema
 import com.nixbug.entebus.domain.model.PublicCompanyModel
 
 fun MaskedCompanySchema.toPublicCompanyDomain(): PublicCompanyModel {

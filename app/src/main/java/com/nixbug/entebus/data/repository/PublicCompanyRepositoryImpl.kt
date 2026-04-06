@@ -1,9 +1,9 @@
 package com.nixbug.entebus.data.repository
 
 import com.nixbug.entebus.data.mapper.toPublicCompanyDomain
-import com.nixbug.entebus.data.remote.publicapi.api.CompanyApi
-import com.nixbug.entebus.data.remote.publicapi.model.AppApiCompanyOrderBy
-import com.nixbug.entebus.data.remote.publicapi.model.OrderIn
+import com.nixbug.entebus.data.remote.publicapi.api.PublicCompanyApi
+import com.nixbug.entebus.data.remote.publicapi.model.company.AppApiCompanyOrderBy
+import com.nixbug.entebus.data.remote.publicapi.model.company.OrderIn
 import com.nixbug.entebus.domain.repository.PublicCompanyRepository
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.network.apiHelper
@@ -11,7 +11,7 @@ import com.nixbug.entebus.domain.model.PublicCompanyModel
 import javax.inject.Inject
 
 class PublicCompanyRepositoryImpl @Inject constructor(
-    private val companyApi: CompanyApi,
+    private val companyApi: PublicCompanyApi,
 ) : PublicCompanyRepository {
     override suspend fun fetchPublicCompany(
         location: String?,
