@@ -3,8 +3,8 @@ package com.nixbug.entebus.data.repository
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.local.mapper.toDomain
 import com.nixbug.entebus.data.mapper.toTokenDomain
-import com.nixbug.entebus.data.remote.operator.api.TokenApi
-import com.nixbug.entebus.data.remote.operator.model.PlatformType
+import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
+import com.nixbug.entebus.data.remote.operator.model.token.PlatformType
 import com.nixbug.entebus.domain.model.CreateTokenModel
 import com.nixbug.entebus.domain.model.local.AuthToken
 import com.nixbug.entebus.domain.repository.TokenRepository
@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 
 class TokenRepositoryImpl @Inject constructor(
-    private val tokenApi: TokenApi,
+    private val tokenApi: OperatorTokenApi,
     private val localDataSource: TokenLocalDataSource,
 ) : TokenRepository {
 

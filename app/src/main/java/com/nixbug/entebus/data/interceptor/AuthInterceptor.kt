@@ -2,8 +2,8 @@ package com.nixbug.entebus.data.interceptor
 
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.manager.TokenManager
-import com.nixbug.entebus.data.remote.operator.api.TokenApi
-import com.nixbug.entebus.data.remote.operator.model.GrantType
+import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
+import com.nixbug.entebus.data.remote.operator.model.token.GrantType
 import com.nixbug.entebus.di.NoAuthApi
 import com.nixbug.entebus.domain.model.CreateTokenModel
 import com.nixbug.entebus.domain.repository.SessionRepository
@@ -22,7 +22,7 @@ class AuthInterceptor @Inject constructor(
     private val tokenManager: TokenManager,
     private val tokenLocalDataSource: TokenLocalDataSource,
     private val sessionRepository: SessionRepository,
-    @NoAuthApi private val tokenApiNoAuth: Provider<TokenApi>
+    @NoAuthApi private val tokenApiNoAuth: Provider<OperatorTokenApi>
 ) : Interceptor {
 
     private val refreshTokenMutex = Mutex()

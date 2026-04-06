@@ -110,7 +110,7 @@ tasks.register<Exec>("generateOperatorApiClient") {
     description = "Generates the Operator API client from OpenAPI spec"
     group = "openapi"
 
-    val outputDir = "$projectDir/src/main/java/com/nixbug/entebus/data/remote/operator"
+    val outputDir = "$projectDir/src/main/java/com/nixbug/entebus/data/openapigenerator/operator"
 
     commandLine(
         "openapi-generator-cli",
@@ -132,7 +132,7 @@ tasks.register<Exec>("generatePublicApiClient") {
     description = "Generates the Public API client from OpenAPI spec"
     group = "openapi"
 
-    val outputDir = "$projectDir/src/main/java/com/nixbug/entebus/data/remote/publicapi"
+    val outputDir = "$projectDir/src/main/java/com/nixbug/entebus/data/openapigenerator/publicapi"
 
     commandLine(
         "openapi-generator-cli", "generate",
