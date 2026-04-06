@@ -1,7 +1,7 @@
 package com.nixbug.entebus.data.remote.operator.api
 
 import com.nixbug.entebus.data.remote.operator.model.account.OperatorSchema
-import com.nixbug.entebus.data.remote.operator.model.OperatorType
+import com.nixbug.entebus.data.remote.operator.model.account.OperatorType
 import com.nixbug.entebus.data.remote.operator.model.account.AccountStatus
 import com.nixbug.entebus.data.remote.operator.model.account.AppApiOperatorAccountOrderBy
 import com.nixbug.entebus.data.remote.operator.model.account.AppApiOperatorAccountUpdateForm

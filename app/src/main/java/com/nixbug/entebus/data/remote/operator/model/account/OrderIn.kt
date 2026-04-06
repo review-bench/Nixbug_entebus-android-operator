@@ -42,10 +42,10 @@ enum class OrderIn(val value: String) {
          * Returns a valid [OrderIn] for [data], null otherwise.
          */
         fun decode(data: Any?): OrderIn? = data?.let {
-          val normalizedData = "$it".lowercase()
-          values().firstOrNull { value ->
-            it == value || normalizedData == "$value".lowercase()
-          }
+            val normalizedData = "$it".lowercase()
+            values().firstOrNull { value ->
+                it == value || normalizedData == "$value".lowercase()
+            }
         }
     }
 }

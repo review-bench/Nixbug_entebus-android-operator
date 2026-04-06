@@ -1,8 +1,6 @@
 package com.nixbug.entebus.data.remote.operator.model.account
 
 import com.google.gson.annotations.SerializedName
-import com.nixbug.entebus.data.remote.operator.model.account.GenderType
-import com.nixbug.entebus.data.remote.operator.model.OperatorType
 
 /**
  *

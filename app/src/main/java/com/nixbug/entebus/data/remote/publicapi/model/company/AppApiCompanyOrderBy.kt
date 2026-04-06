@@ -48,10 +48,10 @@ enum class AppApiCompanyOrderBy(val value: String) {
          * Returns a valid [AppApiCompanyOrderBy] for [data], null otherwise.
          */
         fun decode(data: Any?): AppApiCompanyOrderBy? = data?.let {
-          val normalizedData = "$it".lowercase()
-          values().firstOrNull { value ->
-            it == value || normalizedData == "$value".lowercase()
-          }
+            val normalizedData = "$it".lowercase()
+            values().firstOrNull { value ->
+                it == value || normalizedData == "$value".lowercase()
+            }
         }
     }
 }

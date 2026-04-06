@@ -26,7 +26,7 @@ import com.google.gson.annotations.SerializedName
  */
 
 
-data class OperatorTokenSchema (
+data class OperatorTokenSchema(
 
     @SerializedName("id")
     val id: Int,
@@ -62,6 +62,4 @@ data class OperatorTokenSchema (
     val tokenType: String? = null
 
 ) {
-
-
 }

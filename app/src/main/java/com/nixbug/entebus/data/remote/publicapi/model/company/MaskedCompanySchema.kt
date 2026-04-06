@@ -18,7 +18,7 @@ import com.google.gson.annotations.SerializedName
  */
 
 
-data class MaskedCompanySchema (
+data class MaskedCompanySchema(
 
     @SerializedName("id")
     val id: Int,
@@ -30,6 +30,4 @@ data class MaskedCompanySchema (
     val type: Int
 
 ) {
-
-
 }

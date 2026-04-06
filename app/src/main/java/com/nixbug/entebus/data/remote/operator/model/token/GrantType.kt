@@ -42,10 +42,10 @@ enum class GrantType(val value: String) {
          * Returns a valid [GrantType] for [data], null otherwise.
          */
         fun decode(data: Any?): GrantType? = data?.let {
-          val normalizedData = "$it".lowercase()
-          values().firstOrNull { value ->
-            it == value || normalizedData == "$value".lowercase()
-          }
+            val normalizedData = "$it".lowercase()
+            values().firstOrNull { value ->
+                it == value || normalizedData == "$value".lowercase()
+            }
         }
     }
 }

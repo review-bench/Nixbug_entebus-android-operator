@@ -21,22 +21,22 @@ import com.google.gson.annotations.SerializedName
 /**
  * Schema for operator account response.
  *
- * @param id 
- * @param companyId 
- * @param username 
- * @param gender 
- * @param description 
- * @param type 
- * @param fullName 
- * @param status 
- * @param phoneNumber 
- * @param emailId 
- * @param updatedOn 
- * @param createdOn 
+ * @param id
+ * @param companyId
+ * @param username
+ * @param gender
+ * @param description
+ * @param type
+ * @param fullName
+ * @param status
+ * @param phoneNumber
+ * @param emailId
+ * @param updatedOn
+ * @param createdOn
  */
 
 
-data class OperatorSchema (
+data class OperatorSchema(
 
     @SerializedName("id")
     val id: Int,
@@ -78,4 +78,3 @@ data class OperatorSchema (
 
 
 }
-

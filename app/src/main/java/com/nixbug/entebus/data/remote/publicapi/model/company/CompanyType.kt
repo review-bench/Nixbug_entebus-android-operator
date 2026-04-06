@@ -15,7 +15,8 @@ import com.google.gson.annotations.SerializedName
  * Values: _1,_2,_3
  */
 
-enum class CompanyType(val value: Int) {
+enum class
+CompanyType(val value: Int) {
 
     @SerializedName(value = "1")
     _1(1),
@@ -45,10 +46,10 @@ enum class CompanyType(val value: Int) {
          * Returns a valid [CompanyType] for [data], null otherwise.
          */
         fun decode(data: Any?): CompanyType? = data?.let {
-          val normalizedData = "$it".lowercase()
-          values().firstOrNull { value ->
-            it == value || normalizedData == "$value".lowercase()
-          }
+            val normalizedData = "$it".lowercase()
+            values().firstOrNull { value ->
+                it == value || normalizedData == "$value".lowercase()
+            }
         }
     }
 }

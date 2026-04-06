@@ -48,10 +48,10 @@ enum class PlatformType(val value: Int) {
          * Returns a valid [PlatformType] for [data], null otherwise.
          */
         fun decode(data: Any?): PlatformType? = data?.let {
-          val normalizedData = "$it".lowercase()
-          values().firstOrNull { value ->
-            it == value || normalizedData == "$value".lowercase()
-          }
+            val normalizedData = "$it".lowercase()
+            values().firstOrNull { value ->
+                it == value || normalizedData == "$value".lowercase()
+            }
         }
     }
 }

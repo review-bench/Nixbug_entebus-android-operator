@@ -13,7 +13,7 @@
     "UnusedImport"
 )
 
-package com.nixbug.entebus.data.remote.operator.model
+package com.nixbug.entebus.data.remote.operator.model.account
 
 
 import com.google.gson.annotations.SerializedName
@@ -24,7 +24,7 @@ import com.google.gson.annotations.SerializedName
  * Values: _1,_2,_3,_4,_5,_6,_7
  */
 
-enum class OperatorType(val value: kotlin.Int) {
+enum class OperatorType(val value: Int) {
 
     @SerializedName(value = "1")
     _1(1),
@@ -54,23 +54,22 @@ enum class OperatorType(val value: kotlin.Int) {
      * This solves a problem when the variable name and its value are different, and ensures that
      * the client sends the correct enum values to the server always.
      */
-    override fun toString(): kotlin.String = value.toString()
+    override fun toString(): String = value.toString()
 
     companion object {
         /**
          * Converts the provided [data] to a [String] on success, null otherwise.
          */
-        fun encode(data: kotlin.Any?): kotlin.String? = if (data is OperatorType) "$data" else null
+        fun encode(data: Any?): String? = if (data is OperatorType) "$data" else null
 
         /**
          * Returns a valid [OperatorType] for [data], null otherwise.
          */
-        fun decode(data: kotlin.Any?): OperatorType? = data?.let {
-          val normalizedData = "$it".lowercase()
-          values().firstOrNull { value ->
-            it == value || normalizedData == "$value".lowercase()
-          }
+        fun decode(data: Any?): OperatorType? = data?.let {
+            val normalizedData = "$it".lowercase()
+            values().firstOrNull { value ->
+                it == value || normalizedData == "$value".lowercase()
+            }
         }
     }
 }
-
