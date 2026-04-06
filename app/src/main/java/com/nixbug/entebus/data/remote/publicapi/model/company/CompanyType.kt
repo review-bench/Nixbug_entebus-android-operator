@@ -8,8 +8,7 @@ import com.google.gson.annotations.SerializedName
  * Values: _1,_2,_3
  */
 
-enum class
-CompanyType(val value: Int) {
+enum class CompanyType(val value: Int) {
 
     @SerializedName(value = "1")
     _1(1),

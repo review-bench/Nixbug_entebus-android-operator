@@ -16,7 +16,7 @@ import com.google.gson.annotations.SerializedName
  */
 
 
-data class AppApiOperatorAccountUpdateForm (
+data class AppApiOperatorAccountUpdateForm(
 
     @SerializedName("password")
     val password: String? = null,
