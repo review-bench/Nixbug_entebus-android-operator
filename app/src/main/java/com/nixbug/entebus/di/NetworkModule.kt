@@ -4,7 +4,7 @@ import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.data.interceptor.AuthInterceptor
 import com.nixbug.entebus.data.remote.operator.api.AccountApi
-import com.nixbug.entebus.data.remote.operator.api.TokenApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
 import com.nixbug.entebus.data.remote.publicapi.api.PublicCompanyApi
 import com.nixbug.entebus.utils.network.NullOnEmptyConverterFactory
 import dagger.Module
@@ -61,8 +61,8 @@ object NetworkModule {
     }
 
     @Provides
-    fun provideTokenApi(@OperatorApi retrofit: Retrofit): TokenApi {
-        return retrofit.create(TokenApi::class.java)
+    fun provideTokenApi(@OperatorApi retrofit: Retrofit): OperatorTokenApi {
+        return retrofit.create(OperatorTokenApi::class.java)
     }
 
     @Provides
@@ -72,8 +72,8 @@ object NetworkModule {
 
     @Provides
     @NoAuthApi
-    fun provideTokenApiNoAuth(@NoAuthApi retrofit: Retrofit): TokenApi {
-        return retrofit.create(TokenApi::class.java)
+    fun provideTokenApiNoAuth(@NoAuthApi retrofit: Retrofit): OperatorTokenApi {
+        return retrofit.create(OperatorTokenApi::class.java)
     }
 
     @Provides
