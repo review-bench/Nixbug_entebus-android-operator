@@ -3,7 +3,9 @@ package com.nixbug.entebus.presentation.screens.personaldetails
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.GsonBuilder
+import com.nixbug.entebus.domain.model.FieldUpdate
+import com.nixbug.entebus.domain.model.OperatorAccountUpdateRequest
+import com.nixbug.entebus.domain.model.unchanged
 import com.nixbug.entebus.domain.usecase.account.GetOperatorAccountUseCase
 import com.nixbug.entebus.domain.usecase.account.UpdateOperatorAccountUseCase
 import com.nixbug.entebus.utils.network.Resource
@@ -15,8 +17,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -166,31 +166,25 @@ class PersonalDetailsScreenViewModel @Inject constructor(
             return
         }
 
-        val updateMap = mutableMapOf<String, Any?>()
+        val request = OperatorAccountUpdateRequest(
+            fullName = state.editedFullName.toFieldUpdateIfChanged(state.fullName),
+            emailId = state.editedEmailId.toFieldUpdateIfChanged(state.emailId),
+            phoneNumber = if (state.editedPhoneNumber != state.formattedPhoneNumber) {
+                val value = state.editedPhoneNumber
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { "+91$it" }
+                FieldUpdate.Value(value)
+            } else {
+                unchanged()
+            },
+            gender = if (state.editedGender != state.gender) {
+                FieldUpdate.Value(state.editedGender)
+            } else {
+                unchanged()
+            }
+        )
 
-        // 1. Full Name
-        if (state.editedFullName?.trim() != state.fullName?.trim()) {
-            updateMap["full_name"] = state.editedFullName.takeIf { it?.isNotBlank() == true }
-        }
-
-        // 2. Email
-        if (state.editedEmailId?.trim() != state.emailId?.trim()) {
-            updateMap["email_id"] = state.editedEmailId.takeIf { it?.isNotBlank() == true }
-        }
-
-        // 3. Phone (Compare the cleaned versions)
-        if (state.editedPhoneNumber != state.formattedPhoneNumber) {
-            val phoneValue =
-                state.editedPhoneNumber.takeIf { it?.isNotBlank() == true }?.let { "+91$it" }
-            updateMap["phone_number"] = phoneValue
-        }
-
-        // 4. Gender
-        if (state.editedGender != state.gender) {
-            updateMap["gender"] = state.editedGender
-        }
-
-        if (updateMap.isEmpty()) {
+        if (!request.hasChanges()) {
             SnackbarManager.show("No changes to update", SnackbarType.INFO)
             return
         }
@@ -198,12 +192,8 @@ class PersonalDetailsScreenViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isUpdating = true) }
-                val gson = GsonBuilder().serializeNulls().create()
-                val jsonString = gson.toJson(updateMap)
-                val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
-                val body = jsonString.toRequestBody(mediaType)
-                val result = updateOperatorAccountUseCase(body)
-                when (result) {
+
+                when (val result = updateOperatorAccountUseCase(request)) {
 
                     is Resource.Success -> {
                         _uiState.update {
@@ -217,11 +207,18 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                                 formattedPhoneNumber = formatPhoneForUI(result.data?.phoneNumber),
                             )
                         }
-                        SnackbarManager.show("Profile updated successfully", SnackbarType.SUCCESS)
+
+                        SnackbarManager.show(
+                            "Profile updated successfully",
+                            SnackbarType.SUCCESS
+                        )
                     }
 
                     is Resource.Error -> {
-                        SnackbarManager.show(result.message ?: "Update failed", SnackbarType.ERROR)
+                        SnackbarManager.show(
+                            result.message ?: "Update failed",
+                            SnackbarType.ERROR
+                        )
                     }
 
                     else -> {}
@@ -229,13 +226,24 @@ class PersonalDetailsScreenViewModel @Inject constructor(
 
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                SnackbarManager.show(e.message ?: "Update failed", SnackbarType.ERROR)
+
+                SnackbarManager.show(
+                    e.message ?: "Update failed",
+                    SnackbarType.ERROR
+                )
             } finally {
                 _uiState.update { it.copy(isUpdating = false) }
             }
         }
     }
 
+    fun String?.toFieldUpdateIfChanged(old: String?): FieldUpdate<String> {
+        return if (this?.trim() != old?.trim()) {
+            FieldUpdate.Value(this?.takeIf { it.isNotBlank() })
+        } else {
+            unchanged()
+        }
+    }
     //  ----------------------------------
 
 
