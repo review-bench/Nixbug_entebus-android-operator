@@ -1,9 +1,11 @@
 package com.nixbug.entebus.data.repository
 
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.data.mapper.toOperatorAccountDomain
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
+import com.nixbug.entebus.di.SerializeNullsGson
 import com.nixbug.entebus.domain.model.FieldUpdate
 import com.nixbug.entebus.domain.repository.OperatorAccountRepository
 import com.nixbug.entebus.utils.network.Resource
@@ -17,6 +19,7 @@ import javax.inject.Inject
 class OperatorAccountRepositoryImpl @Inject constructor(
     private val accountApi: OperatorAccountApi,
     private val tokenManager: TokenManager,
+    @SerializeNullsGson private val gson: Gson
 ) : OperatorAccountRepository {
 
     override suspend fun fetchOperatorAccount(): Resource<List<OperatorAccountModel>> {
@@ -66,7 +69,6 @@ class OperatorAccountRepositoryImpl @Inject constructor(
             FieldUpdate.Unchanged -> {}
         }
 
-        val gson = GsonBuilder().serializeNulls().create()
         val jsonString = gson.toJson(map)
         val body = jsonString.toRequestBody("application/json".toMediaTypeOrNull())
 

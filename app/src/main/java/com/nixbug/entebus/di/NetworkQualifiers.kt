@@ -13,3 +13,7 @@ annotation class PublicApi
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class NoAuthApi
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class SerializeNullsGson
