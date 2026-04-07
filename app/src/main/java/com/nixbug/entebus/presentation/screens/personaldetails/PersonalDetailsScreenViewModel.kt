@@ -37,6 +37,7 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = true) }
                 val response = getOperatorAccountUseCase()
                 when (response) {
+
                     is Resource.Success -> {
                         val user = response.data?.firstOrNull()
                         _uiState.update {
@@ -44,15 +45,15 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                                 id = user?.id,
                                 username = user?.username,
                                 gender = user?.gender,
-                                genderText = mapGenderToText(user?.gender),
                                 fullName = user?.fullName,
                                 status = user?.status,
-                                statusText = mapStatusToText(user?.status),
                                 phoneNumber = user?.phoneNumber,
-                                formattedPhoneNumber = formatPhoneForUI(user?.phoneNumber),
                                 emailId = user?.emailId,
                                 createdOn = user?.createdOn,
-                                createdOnText = formatDate(user?.createdOn),
+                                formattedPhoneNumber = formatPhoneForUI(user?.phoneNumber),
+                                genderText = mapGenderToText(user?.gender),
+                                statusText = mapStatusToText(user?.status),
+                                createdOnText = formatDate(user?.createdOn)
                             )
                         }
                     }
@@ -78,10 +79,10 @@ class PersonalDetailsScreenViewModel @Inject constructor(
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
-
         }
     }
 
+    //  ------- Convert Raw Api Data to UI Data -------
     private fun mapGenderToText(gender: Int?): String {
         return when (gender) {
             1 -> "Other"
@@ -115,6 +116,10 @@ class PersonalDetailsScreenViewModel @Inject constructor(
             .takeLast(10)
     }
 
+    //  -------------------------------------------------
+
+
+    //  ------- Edit Mode Functions -------
     fun onStartEdit() {
         _uiState.update {
             it.copy(
@@ -141,49 +146,6 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                     emailError = null
                 )
             }
-        }
-    }
-
-    fun onFullNameChange(value: String) {
-        _uiState.update {
-            it.copy(
-                editedFullName = value,
-                fullNameError = null
-            )
-        }
-    }
-
-    fun onPhoneChange(value: String) {
-        _uiState.update {
-            it.copy(
-                editedPhoneNumber = value,
-                phoneError = null
-            )
-        }
-    }
-
-    fun onEmailChange(value: String) {
-        _uiState.update {
-            it.copy(
-                editedEmailId = value,
-                emailError = null
-            )
-        }
-    }
-
-    fun onGenderChange(value: String) {
-        val genderInt = when (value) {
-            "Male" -> 3
-            "Female" -> 2
-            "Other" -> 1
-            "Transgender" -> 4
-            else -> null
-        }
-        _uiState.update {
-            it.copy(
-                editedGender = genderInt,
-                genderText = value
-            )
         }
     }
 
@@ -229,46 +191,102 @@ class PersonalDetailsScreenViewModel @Inject constructor(
         }
 
         if (updateMap.isEmpty()) {
-            _uiState.update { it.copy(isEditMode = false) }
+            SnackbarManager.show("No changes to update", SnackbarType.INFO)
             return
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            try {
+                _uiState.update { it.copy(isUpdating = true) }
+                val gson = GsonBuilder().serializeNulls().create()
+                val jsonString = gson.toJson(updateMap)
+                val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+                val body = jsonString.toRequestBody(mediaType)
+                val result = updateOperatorAccountUseCase(body)
+                when (result) {
 
-            val gson = GsonBuilder().serializeNulls().create()
-            val jsonString = gson.toJson(updateMap)
-            val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
-            val body = jsonString.toRequestBody(mediaType)
-
-            val result = updateOperatorAccountUseCase(body)
-
-            when (result) {
-                is Resource.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            isEditMode = false,
-                            fullName = result.data?.fullName,
-                            gender = result.data?.gender,
-                            phoneNumber = result.data?.phoneNumber,
-                            emailId = result.data?.emailId,
-                            genderText = mapGenderToText(result.data?.gender),
-                            formattedPhoneNumber = formatPhoneForUI(result.data?.phoneNumber),
-                        )
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isEditMode = false,
+                                fullName = result.data?.fullName,
+                                gender = result.data?.gender,
+                                phoneNumber = result.data?.phoneNumber,
+                                emailId = result.data?.emailId,
+                                genderText = mapGenderToText(result.data?.gender),
+                                formattedPhoneNumber = formatPhoneForUI(result.data?.phoneNumber),
+                            )
+                        }
+                        SnackbarManager.show("Profile updated successfully", SnackbarType.SUCCESS)
                     }
-                    SnackbarManager.show("Profile updated successfully", SnackbarType.SUCCESS)
+
+                    is Resource.Error -> {
+                        SnackbarManager.show(result.message ?: "Update failed", SnackbarType.ERROR)
+                    }
+
+                    else -> {}
                 }
 
-                is Resource.Error -> {
-                    SnackbarManager.show(result.message ?: "Update failed", SnackbarType.ERROR)
-                }
-
-                else -> {}
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(e.message ?: "Update failed", SnackbarType.ERROR)
+            } finally {
+                _uiState.update { it.copy(isUpdating = false) }
             }
-            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
+    //  ----------------------------------
+
+
+    //  ------- On Value Change Functions -------
+    fun onFullNameChange(value: String) {
+        _uiState.update {
+            it.copy(
+                editedFullName = value,
+                fullNameError = null
+            )
+        }
+    }
+
+    fun onPhoneChange(value: String) {
+        _uiState.update {
+            it.copy(
+                editedPhoneNumber = value,
+                phoneError = null
+            )
+        }
+    }
+
+    fun onEmailChange(value: String) {
+        _uiState.update {
+            it.copy(
+                editedEmailId = value,
+                emailError = null
+            )
+        }
+    }
+
+    fun onGenderChange(value: String) {
+        val genderInt = when (value) {
+            "Male" -> 3
+            "Female" -> 2
+            "Other" -> 1
+            "Transgender" -> 4
+            else -> null
+        }
+        _uiState.update {
+            it.copy(
+                editedGender = genderInt,
+                genderText = value
+            )
+        }
+    }
+
+    //  ----------------------------------
+
+
+    //  ------ Validation Functions-------
     private fun validateFullName(name: String?): String? {
         if (name.isNullOrBlank()) return null
 
@@ -303,4 +321,5 @@ class PersonalDetailsScreenViewModel @Inject constructor(
         return null
     }
 
+    //  ----------------------------------
 }

@@ -169,7 +169,7 @@ fun PersonalDetailsScreen(
                         // Gender
                         GenderDropdownRow(
                             label = "Gender",
-                            value = uiState.genderText,
+                            value = uiState.genderText ?: "N/A",
                             icon = Icons.Default.Wc,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
@@ -184,7 +184,7 @@ fun PersonalDetailsScreen(
                             // Status
                             InfoRow(
                                 label = "Status",
-                                value = uiState.statusText,
+                                value = uiState.statusText ?: "N/A",
                                 icon = Icons.Default.Info,
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
@@ -194,7 +194,7 @@ fun PersonalDetailsScreen(
                             // Created On
                             InfoRow(
                                 label = "Created On",
-                                value = uiState.createdOnText,
+                                value = uiState.createdOnText ?: "N/A",
                                 icon = Icons.Default.Today,
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
@@ -252,7 +252,6 @@ fun PersonalDetailsScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     )
                     {
-
                         // Cancel Button
                         OutlinedButton(
                             modifier = Modifier
@@ -277,12 +276,18 @@ fun PersonalDetailsScreen(
                                 .height(52.dp),
                             shape = RoundedCornerShape(14.dp)
                         ) {
-                            Text(
-                                text = "Save Changes",
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            if (uiState.isUpdating) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = Color.White
+                                )
+                            } else {
+                                Text(
+                                    text = "Save Changes",
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
-
                     }
                 }
 

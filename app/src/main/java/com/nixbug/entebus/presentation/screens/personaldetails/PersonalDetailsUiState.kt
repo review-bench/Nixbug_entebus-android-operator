@@ -6,14 +6,13 @@ data class PersonalDetailsUiState(
     val gender: Int? = null,
     val status: Int? = null,
     val createdOn: String? = null,
-
     val fullName: String? = null,
     val phoneNumber: String? = null,
     val emailId: String? = null,
 
-    val genderText: String = "N/A",
-    val createdOnText: String = "N/A",
-    val statusText: String = "N/A",
+    val genderText: String? = null,
+    val createdOnText: String? = null,
+    val statusText: String? = null,
     val formattedPhoneNumber: String? = null,
 
     val editedFullName: String? = null,
@@ -27,4 +26,5 @@ data class PersonalDetailsUiState(
 
     val isLoading: Boolean = false,
     val isEditMode: Boolean = false,
+    val isUpdating: Boolean = false
 )
