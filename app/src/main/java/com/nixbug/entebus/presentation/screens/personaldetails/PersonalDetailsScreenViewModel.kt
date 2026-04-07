@@ -334,4 +334,13 @@ class PersonalDetailsScreenViewModel @Inject constructor(
     }
 
     //  ----------------------------------
+
+    fun hasChanges(): Boolean {
+        val state = _uiState.value
+
+        return state.editedFullName?.trim() != state.fullName?.trim() ||
+                state.editedEmailId?.trim() != state.emailId?.trim() ||
+                state.editedPhoneNumber != state.formattedPhoneNumber ||
+                state.editedGender != state.gender
+    }
 }

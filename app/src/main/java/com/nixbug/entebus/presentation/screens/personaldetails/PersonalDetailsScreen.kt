@@ -48,7 +48,11 @@ fun PersonalDetailsScreen(
     var showDiscardDialog by remember { mutableStateOf(false) }
 
     BackHandler(enabled = uiState.isEditMode) {
-        showDiscardDialog = true
+        if (viewModel.hasChanges()) {
+            showDiscardDialog = true
+        } else {
+            viewModel.onCancelEdit()
+        }
     }
 
     if (showDiscardDialog) {
@@ -82,7 +86,11 @@ fun PersonalDetailsScreen(
             title = "Personal Details",
             onBackClick = {
                 if (uiState.isEditMode) {
-                    showDiscardDialog = true
+                    if (viewModel.hasChanges()) {
+                        showDiscardDialog = true
+                    } else {
+                        viewModel.onCancelEdit()
+                    }
                 } else {
                     navController.popBackStack()
                 }
