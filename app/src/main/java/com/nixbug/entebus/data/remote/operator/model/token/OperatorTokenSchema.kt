@@ -1,0 +1,58 @@
+package com.nixbug.entebus.data.remote.operator.model.token
+
+import com.google.gson.annotations.SerializedName
+
+/**
+ * Schema for operator token response including the tokens.
+ *
+ * @param id
+ * @param operatorId
+ * @param companyId
+ * @param expiresIn
+ * @param refreshBefore
+ * @param platformType
+ * @param clientDetails
+ * @param createdOn
+ * @param accessToken
+ * @param refreshToken
+ * @param tokenType
+ */
+
+
+data class OperatorTokenSchema(
+
+    @SerializedName("id")
+    val id: Int,
+
+    @SerializedName("operator_id")
+    val operatorId: Int,
+
+    @SerializedName("company_id")
+    val companyId: Int,
+
+    @SerializedName("expires_in")
+    val expiresIn: Int,
+
+    @SerializedName("refresh_before")
+    val refreshBefore: String,
+
+    @SerializedName("platform_type")
+    val platformType: Int,
+
+    @SerializedName("client_details")
+    val clientDetails: String?,
+
+    @SerializedName("created_on")
+    val createdOn: String,
+
+    @SerializedName("access_token")
+    val accessToken: String,
+
+    @SerializedName("refresh_token")
+    val refreshToken: String,
+
+    @SerializedName("token_type")
+    val tokenType: String? = null
+
+) {
+}

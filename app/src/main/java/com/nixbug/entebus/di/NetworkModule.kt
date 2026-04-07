@@ -3,10 +3,9 @@ package com.nixbug.entebus.di
 import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.data.interceptor.AuthInterceptor
-import com.nixbug.entebus.data.remote.operator.api.AccountApi
-import com.nixbug.entebus.data.remote.operator.api.TokenApi
-import com.nixbug.entebus.data.remote.publicapi.api.CompanyApi
-import com.nixbug.entebus.data.retro.CustomAccountApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
+import com.nixbug.entebus.data.remote.publicapi.api.PublicCompanyApi
 import com.nixbug.entebus.utils.network.NullOnEmptyConverterFactory
 import dagger.Module
 import dagger.Provides
@@ -62,28 +61,23 @@ object NetworkModule {
     }
 
     @Provides
-    fun provideTokenApi(@OperatorApi retrofit: Retrofit): TokenApi {
-        return retrofit.create(TokenApi::class.java)
+    fun provideTokenApi(@OperatorApi retrofit: Retrofit): OperatorTokenApi {
+        return retrofit.create(OperatorTokenApi::class.java)
     }
 
     @Provides
-    fun provideCompanyApi(@PublicApi retrofit: Retrofit): CompanyApi {
-        return retrofit.create(CompanyApi::class.java)
+    fun provideCompanyApi(@PublicApi retrofit: Retrofit): PublicCompanyApi {
+        return retrofit.create(PublicCompanyApi::class.java)
     }
 
     @Provides
     @NoAuthApi
-    fun provideTokenApiNoAuth(@NoAuthApi retrofit: Retrofit): TokenApi {
-        return retrofit.create(TokenApi::class.java)
+    fun provideTokenApiNoAuth(@NoAuthApi retrofit: Retrofit): OperatorTokenApi {
+        return retrofit.create(OperatorTokenApi::class.java)
     }
 
     @Provides
-    fun provideAccountApi(@OperatorApi retrofit: Retrofit): AccountApi {
-        return retrofit.create(AccountApi::class.java)
-    }
-
-    @Provides
-    fun provideCustomAccountApi(@OperatorApi retrofit: Retrofit): CustomAccountApi {
-        return retrofit.create(CustomAccountApi::class.java)
+    fun provideAccountApi(@OperatorApi retrofit: Retrofit): OperatorAccountApi {
+        return retrofit.create(OperatorAccountApi::class.java)
     }
 }

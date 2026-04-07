@@ -1,6 +1,6 @@
 package com.nixbug.entebus.data.mapper
 
-import com.nixbug.entebus.data.remote.operator.model.OperatorTokenSchema
+import com.nixbug.entebus.data.remote.operator.model.token.OperatorTokenSchema
 import com.nixbug.entebus.domain.model.CreateTokenModel
 
 fun OperatorTokenSchema.toTokenDomain(): CreateTokenModel {

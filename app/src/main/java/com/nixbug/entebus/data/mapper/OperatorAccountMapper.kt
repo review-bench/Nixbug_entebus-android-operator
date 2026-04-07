@@ -1,6 +1,6 @@
 package com.nixbug.entebus.data.mapper
 
-import com.nixbug.entebus.data.remote.operator.model.OperatorSchema
+import com.nixbug.entebus.data.remote.operator.model.account.OperatorSchema
 import com.nixbug.entebus.domain.model.OperatorAccountModel
 
 
