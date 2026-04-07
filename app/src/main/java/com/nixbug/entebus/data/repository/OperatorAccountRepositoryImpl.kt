@@ -43,7 +43,7 @@ class OperatorAccountRepositoryImpl @Inject constructor(
 
         return apiHelper(
             apiCall = {
-                customAccountApi.updateAccount(
+                accountApi.updateAccountOperatorCompanyAccountIdPatch(
                     id = operatorId,
                     body = requestBody
                 )

@@ -7,6 +7,7 @@ import com.nixbug.entebus.data.remote.operator.model.account.AppApiOperatorAccou
 import com.nixbug.entebus.data.remote.operator.model.account.AppApiOperatorAccountUpdateForm
 import com.nixbug.entebus.data.remote.operator.model.account.GenderType
 import com.nixbug.entebus.data.remote.operator.model.account.OrderIn
+import okhttp3.RequestBody
 
 import retrofit2.Response
 import retrofit2.http.Body
@@ -92,7 +93,7 @@ interface OperatorAccountApi {
     @PATCH("company/account/{id}")
     suspend fun updateAccountOperatorCompanyAccountIdPatch(
         @Path("id") id: Int,
-        @Body appApiOperatorAccountUpdateForm: AppApiOperatorAccountUpdateForm
+        @Body body: RequestBody
     ): Response<OperatorSchema>
 
 }
