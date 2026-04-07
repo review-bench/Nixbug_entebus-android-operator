@@ -58,7 +58,7 @@ fun PersonalDetailsScreen(
     if (showDiscardDialog) {
         DialogBox(
             title = "Discard changes?",
-            message = "Any unsaved changes will lost. Are you sure you want to leave?",
+            message = "Any unsaved changes will be lost. Are you sure you want to leave?",
             confirmText = "Discard",
             onConfirmClick = {
                 viewModel.onCancelEdit()
@@ -267,6 +267,7 @@ fun PersonalDetailsScreen(
                                 .height(52.dp),
                             shape = RoundedCornerShape(14.dp),
                             onClick = { viewModel.onCancelEdit() },
+                            enabled = !uiState.isUpdating,
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                         ) {
