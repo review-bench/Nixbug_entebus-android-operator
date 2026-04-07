@@ -31,8 +31,6 @@ class PersonalDetailsScreenViewModel @Inject constructor(
     private val nameRegex = Regex("^[A-Za-z]+( [A-Za-z]+)*$")
     private val phoneRegex = Regex("^[0-9]{10}$")
 
-//    To SHOW IN UI
-
     init {
         viewModelScope.launch {
             try {
@@ -114,10 +112,8 @@ class PersonalDetailsScreenViewModel @Inject constructor(
             .replace("+91", "")
             .replace("-", "")
             .filter { it.isDigit() }
-            .takeLast(10) // ensures only 10 digits
+            .takeLast(10)
     }
-
-//    TO EDIT
 
     fun onStartEdit() {
         _uiState.update {
@@ -225,9 +221,6 @@ class PersonalDetailsScreenViewModel @Inject constructor(
 
             val gson = GsonBuilder().serializeNulls().create()
             val jsonString = gson.toJson(updateMap)
-
-            println("Patch Body: $jsonString")
-
             val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
             val body = jsonString.toRequestBody(mediaType)
 
@@ -260,7 +253,7 @@ class PersonalDetailsScreenViewModel @Inject constructor(
     }
 
     private fun validateFullName(name: String?): String? {
-        if (name.isNullOrBlank()) return null // optional field (based on your backend)
+        if (name.isNullOrBlank()) return null
 
         if (name != name.trim()) {
             return "Name should not start or end with spaces"
