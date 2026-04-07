@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -55,8 +57,8 @@ fun PersonalDetailsScreen(
             message = "Changes have not been saved. Leaving this page will discard them.",
             confirmText = "Discard",
             onConfirmClick = {
+                viewModel.onCancelEdit()
                 showDiscardDialog = false
-                navController.popBackStack()
             },
             dismissible = true,
             onDismiss = { showDiscardDialog = false },
@@ -79,9 +81,11 @@ fun PersonalDetailsScreen(
         AppHeader(
             title = "Personal Details",
             onBackClick = {
-
-                navController.popBackStack()
-
+                if (uiState.isEditMode) {
+                    showDiscardDialog = true
+                } else {
+                    navController.popBackStack()
+                }
             },
             showTopBarActions = true,
             primaryActionText = "Edit",
@@ -135,8 +139,8 @@ fun PersonalDetailsScreen(
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
                             )
-
                             DividerWithSpacing()
+
                             // User Name
                             InfoRow(
                                 label = "Username",
@@ -145,7 +149,6 @@ fun PersonalDetailsScreen(
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
                             )
-
                             DividerWithSpacing()
                         }
 
@@ -161,7 +164,6 @@ fun PersonalDetailsScreen(
                             onValueChange = viewModel::onFullNameChange,
                             error = uiState.fullNameError
                         )
-
                         DividerWithSpacing()
 
                         // Gender
@@ -187,7 +189,6 @@ fun PersonalDetailsScreen(
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
                             )
-
                             DividerWithSpacing()
 
                             // Created On
@@ -226,7 +227,6 @@ fun PersonalDetailsScreen(
                             error = uiState.phoneError,
                             isPhoneField = true
                         )
-
                         DividerWithSpacing()
 
                         // Email
@@ -259,7 +259,7 @@ fun PersonalDetailsScreen(
                                 .weight(1f)
                                 .height(52.dp),
                             shape = RoundedCornerShape(14.dp),
-                            onClick = {},
+                            onClick = { viewModel.onCancelEdit() },
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                         ) {
@@ -426,6 +426,9 @@ fun EditableInfoRow(
                     ),
                     singleLine = true,
                     interactionSource = interactionSource,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = if (isPhoneField) KeyboardType.Number else KeyboardType.Text
+                    )
                 ) { innerTextField ->
                     OutlinedTextFieldDefaults.DecorationBox(
                         value = value ?: "",
@@ -460,7 +463,7 @@ fun EditableInfoRow(
                         container = {
                             OutlinedTextFieldDefaults.Container(
                                 enabled = true,
-                                isError = false,
+                                isError = error != null,
                                 interactionSource = interactionSource,
                                 colors = OutlinedTextFieldDefaults.colors(
                                     unfocusedBorderColor = Color.LightGray,

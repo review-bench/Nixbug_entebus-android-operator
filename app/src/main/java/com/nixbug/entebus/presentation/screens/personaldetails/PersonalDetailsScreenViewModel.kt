@@ -127,6 +127,23 @@ class PersonalDetailsScreenViewModel @Inject constructor(
         }
     }
 
+    fun onCancelEdit() {
+        if (_uiState.value.isEditMode) {
+            _uiState.update {
+                it.copy(
+                    isEditMode = false,
+                    editedFullName = null,
+                    editedGender = null,
+                    editedPhoneNumber = null,
+                    editedEmailId = null,
+                    fullNameError = null,
+                    phoneError = null,
+                    emailError = null
+                )
+            }
+        }
+    }
+
     fun onFullNameChange(value: String) {
         _uiState.update {
             it.copy(
