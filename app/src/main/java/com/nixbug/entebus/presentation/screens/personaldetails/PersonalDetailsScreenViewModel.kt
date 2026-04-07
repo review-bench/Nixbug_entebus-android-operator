@@ -290,8 +290,18 @@ class PersonalDetailsScreenViewModel @Inject constructor(
     private fun validateFullName(name: String?): String? {
         if (name.isNullOrBlank()) return null
 
-        if (name != name.trim()) {
+        val trimmed = name.trim()
+
+        if (name != trimmed) {
             return "Name should not start or end with spaces"
+        }
+
+        if (trimmed.length < 2) {
+            return "Name must be at least 2 characters"
+        }
+
+        if (trimmed.contains("  ")) {
+            return "Multiple spaces are not allowed"
         }
 
         if (!nameRegex.matches(name)) {
@@ -303,7 +313,11 @@ class PersonalDetailsScreenViewModel @Inject constructor(
 
     private fun validateEmail(email: String?): String? {
         if (email.isNullOrBlank()) return null
+        val trimmed = email.trim()
 
+        if (trimmed != email) {
+            return "Email should not start or end with spaces"
+        }
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             return "Invalid email address"
         }
@@ -313,11 +327,9 @@ class PersonalDetailsScreenViewModel @Inject constructor(
 
     private fun validatePhone(phone: String?): String? {
         if (phone.isNullOrBlank()) return null
-
         if (!phoneRegex.matches(phone)) {
             return "Phone number must be 10 digits"
         }
-
         return null
     }
 

@@ -494,7 +494,11 @@ fun EditableInfoRow(
             } else {
                 if (value != null) {
                     Text(
-                        text = value,
+                        text = if (isPhoneField) {
+                            "+91 $value"
+                        } else {
+                            value
+                        },
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold
                     )
