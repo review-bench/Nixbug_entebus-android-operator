@@ -58,7 +58,7 @@ fun PersonalDetailsScreen(
     if (showDiscardDialog) {
         DialogBox(
             title = "Discard changes?",
-            message = "Changes have not been saved. Leaving this page will discard them.",
+            message = "Any unsaved changes will lost. Are you sure you want to leave?",
             confirmText = "Discard",
             onConfirmClick = {
                 viewModel.onCancelEdit()
@@ -279,6 +279,7 @@ fun PersonalDetailsScreen(
                         // Save Changes Button
                         Button(
                             onClick = { viewModel.onSaveClick() },
+                            enabled = !uiState.isUpdating,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(52.dp),
