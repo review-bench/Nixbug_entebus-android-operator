@@ -127,7 +127,8 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                 editedFullName = it.fullName,
                 editedGender = it.gender,
                 editedPhoneNumber = it.formattedPhoneNumber,
-                editedEmailId = it.emailId
+                editedEmailId = it.emailId,
+                editedGenderText = it.genderText
             )
         }
     }
@@ -141,6 +142,7 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                     editedGender = null,
                     editedPhoneNumber = null,
                     editedEmailId = null,
+                    editedGenderText = null,
                     fullNameError = null,
                     phoneError = null,
                     emailError = null
@@ -286,7 +288,7 @@ class PersonalDetailsScreenViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 editedGender = genderInt,
-                genderText = value
+                editedGenderText = value
             )
         }
     }

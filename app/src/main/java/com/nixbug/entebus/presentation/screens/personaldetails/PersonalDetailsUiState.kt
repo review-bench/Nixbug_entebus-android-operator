@@ -19,6 +19,7 @@ data class PersonalDetailsUiState(
     val editedGender: Int? = null,
     val editedPhoneNumber: String? = null,
     val editedEmailId: String? = null,
+    val editedGenderText: String? = null,
 
     val fullNameError: String? = null,
     val phoneError: String? = null,

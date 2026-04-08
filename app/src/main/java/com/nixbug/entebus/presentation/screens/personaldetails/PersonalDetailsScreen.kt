@@ -47,7 +47,7 @@ fun PersonalDetailsScreen(
     val focusManager = LocalFocusManager.current
     var showDiscardDialog by remember { mutableStateOf(false) }
 
-    BackHandler(enabled = uiState.isEditMode) {
+    BackHandler(enabled = uiState.isEditMode && !uiState.isUpdating) {
         if (viewModel.hasChanges()) {
             showDiscardDialog = true
         } else {
@@ -177,7 +177,11 @@ fun PersonalDetailsScreen(
                         // Gender
                         GenderDropdownRow(
                             label = "Gender",
-                            value = uiState.genderText ?: "N/A",
+                            value = if (uiState.isEditMode) {
+                                uiState.editedGenderText ?: "N/A"
+                            } else {
+                                uiState.genderText ?: "N/A"
+                            },
                             icon = Icons.Default.Wc,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,

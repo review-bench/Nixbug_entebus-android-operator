@@ -1,7 +1,6 @@
 package com.nixbug.entebus.data.repository
 
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.data.mapper.toOperatorAccountDomain
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
