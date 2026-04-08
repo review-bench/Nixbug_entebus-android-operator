@@ -190,11 +190,9 @@ class PersonalDetailsScreenViewModel @Inject constructor(
             SnackbarManager.show("No changes to update", SnackbarType.INFO)
             return
         }
-
+        _uiState.update { it.copy(isUpdating = true) }
         viewModelScope.launch {
             try {
-                _uiState.update { it.copy(isUpdating = true) }
-
                 when (val result = updateOperatorAccountUseCase(request)) {
 
                     is Resource.Success -> {
@@ -239,7 +237,7 @@ class PersonalDetailsScreenViewModel @Inject constructor(
         }
     }
 
-    fun String?.toFieldUpdateIfChanged(old: String?): FieldUpdate<String> {
+    private fun String?.toFieldUpdateIfChanged(old: String?): FieldUpdate<String> {
         return if (this?.trim() != old?.trim()) {
             FieldUpdate.Value(this?.takeIf { it.isNotBlank() })
         } else {

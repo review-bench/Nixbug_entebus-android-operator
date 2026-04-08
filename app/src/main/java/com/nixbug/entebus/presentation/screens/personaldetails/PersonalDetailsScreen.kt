@@ -85,6 +85,14 @@ fun PersonalDetailsScreen(
         AppHeader(
             title = "Personal Details",
             onBackClick = {
+                if (uiState.isUpdating) {
+                    SnackbarManager.show(
+                        message = "Please wait, your profile is being updated",
+                        type = SnackbarType.INFO,
+                        duration = SnackbarDuration.Short
+                    )
+                    return@AppHeader
+                }
                 if (uiState.isEditMode) {
                     if (viewModel.hasChanges()) {
                         showDiscardDialog = true
@@ -288,7 +296,10 @@ fun PersonalDetailsScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(52.dp),
-                            shape = RoundedCornerShape(14.dp)
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                disabledContainerColor = DisabledButtonColor
+                            )
                         ) {
                             if (uiState.isUpdating) {
                                 CircularProgressIndicator(
