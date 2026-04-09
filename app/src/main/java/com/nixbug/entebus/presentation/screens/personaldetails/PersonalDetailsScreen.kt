@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
@@ -46,6 +47,7 @@ fun PersonalDetailsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
     var showDiscardDialog by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     BackHandler(enabled = uiState.isEditMode && !uiState.isUpdating) {
         if (viewModel.hasChanges()) {
@@ -291,7 +293,10 @@ fun PersonalDetailsScreen(
 
                         // Save Changes Button
                         Button(
-                            onClick = { viewModel.onSaveClick() },
+                            onClick = {
+                                keyboardController?.hide()
+                                viewModel.onSaveClick()
+                            },
                             enabled = !uiState.isUpdating,
                             modifier = Modifier
                                 .weight(1f)

@@ -312,6 +312,10 @@ class PersonalDetailsScreenViewModel @Inject constructor(
             return "Multiple spaces are not allowed"
         }
 
+        if (name.any { it.isDigit() }) {
+            return "Numbers are not allowed in full name"
+        }
+
         if (!nameRegex.matches(name)) {
             return "Invalid name format"
         }
