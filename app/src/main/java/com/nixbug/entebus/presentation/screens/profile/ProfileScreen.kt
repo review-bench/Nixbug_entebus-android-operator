@@ -141,7 +141,7 @@ fun ProfileScreenTop(modifier: Modifier = Modifier) {
                     .data(imageUrl)
                     .memoryCacheKey("1")
                     .diskCacheKey("1")
-                    .addHeader("Authorization", "Bearer b477fb9220e765a9f65d3dbc40fc345925460eef517f4de22662b382e48db688")
+                    .addHeader("Authorization", "")
                     .crossfade(true)
                     .build(),
                 contentDescription = "Profile Image",
