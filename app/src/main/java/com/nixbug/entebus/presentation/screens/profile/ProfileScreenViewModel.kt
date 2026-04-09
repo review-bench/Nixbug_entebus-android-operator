@@ -25,8 +25,8 @@ class ProfileScreenViewModel @Inject constructor(
     private val getAccountImageUseCase: GetAccountImageUseCase,
     private val clearSessionUseCase: ClearSessionUseCase
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(ProfileUiState())
-    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+//    private val _uiState = MutableStateFlow(ProfileUiState())
+//    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
 //    init {
 //        viewModelScope.launch {

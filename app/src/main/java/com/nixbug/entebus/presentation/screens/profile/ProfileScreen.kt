@@ -52,7 +52,7 @@ fun ProfileScreen(
     rootNavController: NavHostController,
     viewModel: ProfileScreenViewModel = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsState()
+//    val state by viewModel.uiState.collectAsState()
     var showLogOutDialog by remember { mutableStateOf(false) }
 
     if (showLogOutDialog) {
@@ -88,7 +88,6 @@ fun ProfileScreen(
 
             ProfileScreenTop(
                 modifier = Modifier.weight(0.4f),
-                userDetails = state.userDetails
             )
 
             ProfileScreenBottom(
@@ -109,7 +108,7 @@ fun ProfileScreen(
 }
 
 @Composable
-fun ProfileScreenTop(modifier: Modifier = Modifier, userDetails: ProfileUiModel) {
+fun ProfileScreenTop(modifier: Modifier = Modifier) {
 
     Column(
         modifier = modifier
@@ -130,10 +129,7 @@ fun ProfileScreenTop(modifier: Modifier = Modifier, userDetails: ProfileUiModel)
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = userDetails.username
-                    .firstOrNull()
-                    ?.uppercaseChar()
-                    ?.toString() ?: "",
+                text = "A",
                 style = MaterialTheme.typography.displayLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color(0x8699CB5E)
@@ -141,7 +137,7 @@ fun ProfileScreenTop(modifier: Modifier = Modifier, userDetails: ProfileUiModel)
         }
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = userDetails.username,
+            text = "Amal",
             color = Color.White,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
