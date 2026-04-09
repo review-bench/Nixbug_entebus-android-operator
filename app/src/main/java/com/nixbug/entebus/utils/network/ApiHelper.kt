@@ -67,6 +67,7 @@ suspend fun <T, R> apiHelper(
                 } catch (e: Exception) {
                     errorBody
                 }
+
             } else {
                 errorMessage = errorMessage ?: "Request failed (HTTP $responseCode)"
             }

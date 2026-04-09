@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.data.interceptor.AuthInterceptor
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
 import com.nixbug.entebus.data.remote.publicapi.api.PublicCompanyApi
 import com.nixbug.entebus.utils.network.NullOnEmptyConverterFactory
@@ -79,5 +80,10 @@ object NetworkModule {
     @Provides
     fun provideAccountApi(@OperatorApi retrofit: Retrofit): OperatorAccountApi {
         return retrofit.create(OperatorAccountApi::class.java)
+    }
+
+    @Provides
+    fun provideAccountImageApi(@OperatorApi retrofit: Retrofit): OperatorAccountImageApi {
+        return retrofit.create(OperatorAccountImageApi::class.java)
     }
 }

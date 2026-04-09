@@ -3,6 +3,7 @@ package com.nixbug.entebus.data.remote.operator.api
 import com.nixbug.entebus.data.remote.operator.model.accountimage.AppApiOperatorImageOrderBy
 import com.nixbug.entebus.data.remote.operator.model.accountimage.OperatorImageSchema
 import com.nixbug.entebus.data.remote.operator.model.account.OrderIn
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -36,7 +37,7 @@ interface OperatorAccountImageApi {
      * @return [kotlin.collections.List<OperatorImageSchema>]
      */
     @GET("company/account/picture")
-    suspend fun fetchOperatorImageForOperatorCompanyAccountPictureGet(
+    suspend fun fetchOperatorAccountImage(
         @Query("offset") offset: kotlin.Int? = 0,
         @Query("limit") limit: kotlin.Int? = 20,
         @Query("id") id: kotlin.Int? = null,
@@ -74,5 +75,5 @@ interface OperatorAccountImageApi {
         @Path("id") id: kotlin.Int,
         @Query("width") width: kotlin.Int? = null,
         @Query("height") height: kotlin.Int? = null
-    ): Response<kotlin.Any>
+    ): Response<ResponseBody>
 }
