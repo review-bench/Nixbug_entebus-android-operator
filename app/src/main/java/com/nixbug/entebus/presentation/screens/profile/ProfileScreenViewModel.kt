@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -28,11 +29,39 @@ class ProfileScreenViewModel @Inject constructor(
 //    private val _uiState = MutableStateFlow(ProfileUiState())
 //    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
-//    init {
-//        viewModelScope.launch {
-//            getAccountImageUseCase()
-//        }
-//    }
+    init {
+        viewModelScope.launch {
+            try {
+                val response = getAccountImageUseCase()
+                when (response) {
+                    is Resource.Success -> {
+                        val user = response.data?.firstOrNull()
+                        println("Image Response :${user?.id} ")
+                    }
+
+                    is Resource.Error -> {
+                        SnackbarManager.show(
+                            response.message ?: "Something went wrong",
+                            SnackbarType.ERROR
+                        )
+                    }
+
+                    else -> {
+                        SnackbarManager.show(
+                            response.message ?: "Something went wrong",
+                            SnackbarType.ERROR
+                        )
+                    }
+
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(e.message ?: "Something went wrong", SnackbarType.ERROR)
+            } finally {
+            }
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             try {

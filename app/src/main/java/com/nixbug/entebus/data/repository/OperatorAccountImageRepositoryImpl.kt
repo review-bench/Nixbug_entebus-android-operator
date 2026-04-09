@@ -1,56 +1,31 @@
 package com.nixbug.entebus.data.repository
 
 import com.nixbug.entebus.data.manager.TokenManager
+import com.nixbug.entebus.data.mapper.toOperatorAccountImageDomain
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
+import com.nixbug.entebus.domain.model.OperatorAccountImageModel
 import com.nixbug.entebus.domain.repository.OperatorAccountImageRepository
 import com.nixbug.entebus.utils.network.Resource
+import com.nixbug.entebus.utils.network.apiHelper
 import javax.inject.Inject
 
 class OperatorAccountImageRepositoryImpl @Inject constructor(
     private val accountImageApi: OperatorAccountImageApi,
     private val tokenManager: TokenManager,
 ) : OperatorAccountImageRepository {
-    override suspend fun fetchOperatorAccountImage(): Resource<String> {
+    override suspend fun fetchOperatorAccountImage(): Resource<List<OperatorAccountImageModel>> {
         val operatorId = tokenManager.operatorId
         if (operatorId == null) {
             println("Session expired. Please login again.")
             return Resource.Error("No operatorId")
         }
-
-        val listResponse = accountImageApi.fetchOperatorAccountImage(operatorId = operatorId)
-
-        if (listResponse.isSuccessful) {
-            val images = listResponse.body()
-
-            if (!images.isNullOrEmpty()) {
-                val firstImage = images[0]
-
-                println("Operator Image ID: ${firstImage.id}, File Name: ${firstImage.fileName}")
-                try {
-                    val imageResponse =
-                        accountImageApi.downloadOperatorImageForOperatorCompanyAccountPictureIdGet(
-                            firstImage.id
-                        )
-                    if (imageResponse.isSuccessful) {
-//                    val body = imageResponse.body()
-                        val body = imageResponse.body()
-                        println("Downloaded Image size: ${body?.contentLength()}")
-                    } else {
-                        println("Download API Error: ${imageResponse.code()}")
-                    }
-                } catch (e: Exception) {
-                    println("Error downloading image: ${e.message}")
-
-
-                }
-
-            } else {
-                println("No images found")
+        return apiHelper(
+            apiCall = {
+                accountImageApi.fetchOperatorAccountImage(operatorId = operatorId)
+            },
+            mapper = { responseList ->
+                responseList.map { it.toOperatorAccountImageDomain() }
             }
-        } else {
-            println("List API Error: ${listResponse.code()}")
-        }
-
-        return Resource.Success("done")
+        )
     }
 }
