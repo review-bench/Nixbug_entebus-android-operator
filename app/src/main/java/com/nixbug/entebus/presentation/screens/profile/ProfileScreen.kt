@@ -38,14 +38,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
+import com.nixbug.entebus.R
 
 @Composable
 fun ProfileScreen(
@@ -128,11 +134,22 @@ fun ProfileScreenTop(modifier: Modifier = Modifier) {
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "A",
-                style = MaterialTheme.typography.displayLarge,
-                fontWeight = FontWeight.Bold,
-                color = Color(0x8699CB5E)
+            val context = LocalContext.current
+            val imageUrl = "https://dev-api.entebus.com/operator/company/account/picture/1"
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .memoryCacheKey("1")
+                    .diskCacheKey("1")
+                    .addHeader("Authorization", "Bearer b477fb9220e765a9f65d3dbc40fc345925460eef517f4de22662b382e48db688")
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Profile Image",
+                placeholder = painterResource(R.drawable.entebus_logo),
+                modifier = Modifier
+                    .size(148.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
