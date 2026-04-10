@@ -1,8 +1,13 @@
 package com.nixbug.entebus.presentation.screens.personaldetails
 
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.FieldUpdate
+import com.nixbug.entebus.domain.model.OperatorAccountUpdateRequest
+import com.nixbug.entebus.domain.model.unchanged
 import com.nixbug.entebus.domain.usecase.account.GetOperatorAccountUseCase
+import com.nixbug.entebus.domain.usecase.account.UpdateOperatorAccountUseCase
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
@@ -17,11 +22,14 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class PersonalDetailsScreenViewModel @Inject constructor(
-    private val getOperatorAccountUseCase: GetOperatorAccountUseCase
+    private val getOperatorAccountUseCase: GetOperatorAccountUseCase,
+    private val updateOperatorAccountUseCase: UpdateOperatorAccountUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PersonalDetailsUiState())
     val uiState = _uiState.asStateFlow()
+    private val nameRegex = Regex("^[A-Za-z]+( [A-Za-z]+)*$")
+    private val phoneRegex = Regex("^[0-9]{10}$")
 
     init {
         viewModelScope.launch {
@@ -29,6 +37,7 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = true) }
                 val response = getOperatorAccountUseCase()
                 when (response) {
+
                     is Resource.Success -> {
                         val user = response.data?.firstOrNull()
                         _uiState.update {
@@ -36,14 +45,15 @@ class PersonalDetailsScreenViewModel @Inject constructor(
                                 id = user?.id,
                                 username = user?.username,
                                 gender = user?.gender,
-                                genderText = mapGenderToText(user?.gender),
                                 fullName = user?.fullName,
                                 status = user?.status,
-                                statusText = mapStatusToText(user?.status),
                                 phoneNumber = user?.phoneNumber,
                                 emailId = user?.emailId,
                                 createdOn = user?.createdOn,
-                                createdOnText = formatDate(user?.createdOn),
+                                formattedPhoneNumber = formatPhoneForUI(user?.phoneNumber),
+                                genderText = mapGenderToText(user?.gender),
+                                statusText = mapStatusToText(user?.status),
+                                createdOnText = formatDate(user?.createdOn)
                             )
                         }
                     }
@@ -69,10 +79,10 @@ class PersonalDetailsScreenViewModel @Inject constructor(
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
-
         }
     }
 
+    //  ------- Convert Raw Api Data to UI Data -------
     private fun mapGenderToText(gender: Int?): String {
         return when (gender) {
             1 -> "Other"
@@ -93,5 +103,256 @@ class PersonalDetailsScreenViewModel @Inject constructor(
             2 -> "Suspended"
             else -> "N/A"
         }
+    }
+
+    private fun formatPhoneForUI(phone: String?): String? {
+        if (phone.isNullOrBlank()) return null
+
+        return phone
+            .replace("tel:", "")
+            .replace("+91", "")
+            .replace("-", "")
+            .filter { it.isDigit() }
+            .takeLast(10)
+    }
+
+    //  -------------------------------------------------
+
+
+    //  ------- Edit Mode Functions -------
+    fun onStartEdit() {
+        _uiState.update {
+            it.copy(
+                isEditMode = true,
+                editedFullName = it.fullName,
+                editedGender = it.gender,
+                editedPhoneNumber = it.formattedPhoneNumber,
+                editedEmailId = it.emailId,
+                editedGenderText = it.genderText
+            )
+        }
+    }
+
+    fun onCancelEdit() {
+        if (_uiState.value.isEditMode) {
+            _uiState.update {
+                it.copy(
+                    isEditMode = false,
+                    editedFullName = null,
+                    editedGender = null,
+                    editedPhoneNumber = null,
+                    editedEmailId = null,
+                    editedGenderText = null,
+                    fullNameError = null,
+                    phoneError = null,
+                    emailError = null
+                )
+            }
+        }
+    }
+
+    fun onSaveClick() {
+        val state = _uiState.value
+        val fullNameError = validateFullName(state.editedFullName)
+        val emailError = validateEmail(state.editedEmailId)
+        val phoneError = validatePhone(state.editedPhoneNumber)
+
+        if (fullNameError != null || emailError != null || phoneError != null) {
+            _uiState.update {
+                it.copy(
+                    fullNameError = fullNameError,
+                    emailError = emailError,
+                    phoneError = phoneError
+                )
+            }
+            return
+        }
+
+        val request = OperatorAccountUpdateRequest(
+            fullName = state.editedFullName.toFieldUpdateIfChanged(state.fullName),
+            emailId = state.editedEmailId.toFieldUpdateIfChanged(state.emailId),
+            phoneNumber = if (state.editedPhoneNumber != state.formattedPhoneNumber) {
+                val value = state.editedPhoneNumber
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { "+91$it" }
+                FieldUpdate.Value(value)
+            } else {
+                unchanged()
+            },
+            gender = if (state.editedGender != state.gender) {
+                FieldUpdate.Value(state.editedGender)
+            } else {
+                unchanged()
+            }
+        )
+
+        if (!request.hasChanges()) {
+            SnackbarManager.show("No changes to update", SnackbarType.INFO)
+            return
+        }
+        _uiState.update { it.copy(isUpdating = true) }
+        viewModelScope.launch {
+            try {
+                when (val result = updateOperatorAccountUseCase(request)) {
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isEditMode = false,
+                                fullName = result.data?.fullName,
+                                gender = result.data?.gender,
+                                phoneNumber = result.data?.phoneNumber,
+                                emailId = result.data?.emailId,
+                                genderText = mapGenderToText(result.data?.gender),
+                                formattedPhoneNumber = formatPhoneForUI(result.data?.phoneNumber),
+                            )
+                        }
+
+                        SnackbarManager.show(
+                            "Profile updated successfully",
+                            SnackbarType.SUCCESS
+                        )
+                    }
+
+                    is Resource.Error -> {
+                        SnackbarManager.show(
+                            result.message ?: "Update failed",
+                            SnackbarType.ERROR
+                        )
+                    }
+
+                    else -> {}
+                }
+
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+
+                SnackbarManager.show(
+                    e.message ?: "Update failed",
+                    SnackbarType.ERROR
+                )
+            } finally {
+                _uiState.update { it.copy(isUpdating = false) }
+            }
+        }
+    }
+
+    private fun String?.toFieldUpdateIfChanged(old: String?): FieldUpdate<String> {
+        return if (this?.trim() != old?.trim()) {
+            FieldUpdate.Value(this?.takeIf { it.isNotBlank() })
+        } else {
+            unchanged()
+        }
+    }
+    //  ----------------------------------
+
+
+    //  ------- On Value Change Functions -------
+    fun onFullNameChange(value: String) {
+        _uiState.update {
+            it.copy(
+                editedFullName = value,
+                fullNameError = null
+            )
+        }
+    }
+
+    fun onPhoneChange(value: String) {
+        _uiState.update {
+            it.copy(
+                editedPhoneNumber = value,
+                phoneError = null
+            )
+        }
+    }
+
+    fun onEmailChange(value: String) {
+        _uiState.update {
+            it.copy(
+                editedEmailId = value,
+                emailError = null
+            )
+        }
+    }
+
+    fun onGenderChange(value: String) {
+        val genderInt = when (value) {
+            "Male" -> 3
+            "Female" -> 2
+            "Other" -> 1
+            "Transgender" -> 4
+            else -> null
+        }
+        _uiState.update {
+            it.copy(
+                editedGender = genderInt,
+                editedGenderText = value
+            )
+        }
+    }
+
+    //  ----------------------------------
+
+
+    //  ------ Validation Functions-------
+    private fun validateFullName(name: String?): String? {
+        if (name.isNullOrBlank()) return null
+
+        val trimmed = name.trim()
+
+        if (name != trimmed) {
+            return "Name should not start or end with spaces"
+        }
+
+        if (trimmed.length < 2) {
+            return "Name must be at least 2 characters"
+        }
+
+        if (trimmed.contains("  ")) {
+            return "Multiple spaces are not allowed"
+        }
+
+        if (name.any { it.isDigit() }) {
+            return "Numbers are not allowed in full name"
+        }
+
+        if (!nameRegex.matches(name)) {
+            return "Invalid name format"
+        }
+
+        return null
+    }
+
+    private fun validateEmail(email: String?): String? {
+        if (email.isNullOrBlank()) return null
+        val trimmed = email.trim()
+
+        if (trimmed != email) {
+            return "Email should not start or end with spaces"
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            return "Invalid email address"
+        }
+
+        return null
+    }
+
+    private fun validatePhone(phone: String?): String? {
+        if (phone.isNullOrBlank()) return null
+        if (!phoneRegex.matches(phone)) {
+            return "Phone number must be 10 digits"
+        }
+        return null
+    }
+
+    //  ----------------------------------
+
+    fun hasChanges(): Boolean {
+        val state = _uiState.value
+
+        return state.editedFullName?.trim() != state.fullName?.trim() ||
+                state.editedEmailId?.trim() != state.emailId?.trim() ||
+                state.editedPhoneNumber != state.formattedPhoneNumber ||
+                state.editedGender != state.gender
     }
 }

@@ -1,5 +1,6 @@
 package com.nixbug.entebus.di
 
+import com.google.gson.Gson
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
 import com.nixbug.entebus.data.manager.SessionManager
@@ -66,9 +67,10 @@ object RepositoryModule {
     @Singleton
     fun provideOperatorAccountRepository(
         api: OperatorAccountApi,
-        tokenManager: TokenManager
+        tokenManager: TokenManager,
+        @SerializeNullsGson gson: Gson
     ): OperatorAccountRepository {
-        return OperatorAccountRepositoryImpl(api, tokenManager)
+        return OperatorAccountRepositoryImpl(api, tokenManager, gson)
     }
 
     @Provides

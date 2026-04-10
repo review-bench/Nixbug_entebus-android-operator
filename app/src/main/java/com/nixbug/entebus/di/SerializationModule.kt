@@ -19,4 +19,14 @@ object SerializationModule {
             .setLenient()
             .create()
     }
+
+    @Provides
+    @Singleton
+    @SerializeNullsGson
+    fun provideSerializeNullsGson(): Gson {
+        return GsonBuilder()
+            .setLenient()
+            .serializeNulls()
+            .create()
+    }
 }

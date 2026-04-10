@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -17,11 +18,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,23 +45,26 @@ fun PersonalDetailsScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
-
     val focusManager = LocalFocusManager.current
-
     var showDiscardDialog by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
-    BackHandler(enabled = uiState.isEditMode) {
-        showDiscardDialog = true
+    BackHandler(enabled = uiState.isEditMode && !uiState.isUpdating) {
+        if (viewModel.hasChanges()) {
+            showDiscardDialog = true
+        } else {
+            viewModel.onCancelEdit()
+        }
     }
 
     if (showDiscardDialog) {
         DialogBox(
             title = "Discard changes?",
-            message = "Changes have not been saved. Leaving this page will discard them.",
+            message = "Any unsaved changes will be lost. Are you sure you want to leave?",
             confirmText = "Discard",
             onConfirmClick = {
+                viewModel.onCancelEdit()
                 showDiscardDialog = false
-                navController.popBackStack()
             },
             dismissible = true,
             onDismiss = { showDiscardDialog = false },
@@ -80,8 +87,20 @@ fun PersonalDetailsScreen(
         AppHeader(
             title = "Personal Details",
             onBackClick = {
+                if (uiState.isUpdating) {
+                    SnackbarManager.show(
+                        message = "Please wait, your profile is being updated",
+                        type = SnackbarType.INFO,
+                        duration = SnackbarDuration.Short
+                    )
+                    return@AppHeader
+                }
                 if (uiState.isEditMode) {
-                    showDiscardDialog = true
+                    if (viewModel.hasChanges()) {
+                        showDiscardDialog = true
+                    } else {
+                        viewModel.onCancelEdit()
+                    }
                 } else {
                     navController.popBackStack()
                 }
@@ -96,7 +115,7 @@ fun PersonalDetailsScreen(
                         type = SnackbarType.INFO
                     )
                 } else {
-//                    StartEdit
+                    viewModel.onStartEdit()
                 }
             },
             paddingEnd = 16.dp
@@ -115,7 +134,7 @@ fun PersonalDetailsScreen(
                 }
         )
         {
-            if (uiState.isLoading) {
+            if (uiState.isLoading && !uiState.isEditMode) {
                 val shimmerBrush = rememberShimmerBrush()
                 PersonalDetailsSkeleton(shimmerBrush = shimmerBrush)
             } else {
@@ -130,6 +149,7 @@ fun PersonalDetailsScreen(
                     Column(modifier = Modifier.padding(16.dp)) {
 
                         if (!uiState.isEditMode) {
+                            // ID
                             InfoRow(
                                 label = "User Id",
                                 value = uiState.id?.toString() ?: "N/A",
@@ -137,9 +157,9 @@ fun PersonalDetailsScreen(
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
                             )
-
                             DividerWithSpacing()
 
+                            // User Name
                             InfoRow(
                                 label = "Username",
                                 value = uiState.username ?: "N/A",
@@ -147,50 +167,56 @@ fun PersonalDetailsScreen(
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
                             )
-
                             DividerWithSpacing()
                         }
 
+                        // Full Name
                         EditableInfoRow(
                             placeHolder = "Enter Your Full Name",
                             label = "Full Name",
-                            value = uiState.fullName,
                             icon = Icons.Default.Badge,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
                             isEditMode = uiState.isEditMode,
-                            onValueChange = {}
+                            value = if (uiState.isEditMode) uiState.editedFullName else uiState.fullName,
+                            onValueChange = viewModel::onFullNameChange,
+                            error = uiState.fullNameError
                         )
-
                         DividerWithSpacing()
 
+                        // Gender
                         GenderDropdownRow(
                             label = "Gender",
-                            value = uiState.genderText,
+                            value = if (uiState.isEditMode) {
+                                uiState.editedGenderText ?: "N/A"
+                            } else {
+                                uiState.genderText ?: "N/A"
+                            },
                             icon = Icons.Default.Wc,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
                             isEditMode = uiState.isEditMode,
                             options = listOf("Male", "Female", "Other", "Transgender"),
-                            onValueChange = { }
+                            onValueChange = viewModel::onGenderChange
                         )
 
                         if (!uiState.isEditMode) {
                             DividerWithSpacing()
 
+                            // Status
                             InfoRow(
                                 label = "Status",
-                                value = uiState.statusText,
+                                value = uiState.statusText ?: "N/A",
                                 icon = Icons.Default.Info,
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
                             )
-
                             DividerWithSpacing()
 
+                            // Created On
                             InfoRow(
                                 label = "Created On",
-                                value = uiState.createdOnText,
+                                value = uiState.createdOnText ?: "N/A",
                                 icon = Icons.Default.Today,
                                 iconBg = DisabledButtonColor,
                                 iconTint = MaterialTheme.colorScheme.primary
@@ -210,29 +236,32 @@ fun PersonalDetailsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
 
+                        // Phone Number
                         EditableInfoRow(
                             placeHolder = "Enter Your Phone Number",
                             label = "Phone",
-                            value = uiState.phoneNumber,
+                            value = if (uiState.isEditMode) uiState.editedPhoneNumber else uiState.formattedPhoneNumber,
                             icon = Icons.Default.Phone,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
                             isEditMode = uiState.isEditMode,
-                            onValueChange = {}
+                            onValueChange = viewModel::onPhoneChange,
+                            error = uiState.phoneError,
+                            isPhoneField = true
                         )
-
                         DividerWithSpacing()
 
+                        // Email
                         EditableInfoRow(
                             placeHolder = "Enter Your Email",
                             label = "Email",
-                            value = uiState.emailId,
+                            value = if (uiState.isEditMode) uiState.editedEmailId else uiState.emailId,
                             icon = Icons.Default.Email,
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
                             isEditMode = uiState.isEditMode,
-                            onValueChange = {}
-
+                            onValueChange = viewModel::onEmailChange,
+                            error = uiState.emailError
                         )
                     }
                 }
@@ -245,12 +274,14 @@ fun PersonalDetailsScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     )
                     {
+                        // Cancel Button
                         OutlinedButton(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(52.dp),
                             shape = RoundedCornerShape(14.dp),
-                            onClick = {},
+                            onClick = { viewModel.onCancelEdit() },
+                            enabled = !uiState.isUpdating,
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                         ) {
@@ -260,19 +291,33 @@ fun PersonalDetailsScreen(
                             )
                         }
 
+                        // Save Changes Button
                         Button(
-                            onClick = {},
+                            onClick = {
+                                keyboardController?.hide()
+                                viewModel.onSaveClick()
+                            },
+                            enabled = !uiState.isUpdating,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(52.dp),
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            Text(
-                                text = "Save Changes",
-                                fontWeight = FontWeight.SemiBold
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                disabledContainerColor = DisabledButtonColor
                             )
+                        ) {
+                            if (uiState.isUpdating) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = Color.White
+                                )
+                            } else {
+                                Text(
+                                    text = "Save Changes",
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
-
                     }
                 }
 
@@ -341,6 +386,7 @@ fun InfoRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyLarge,
@@ -360,9 +406,12 @@ fun EditableInfoRow(
     iconBg: Color,
     iconTint: Color,
     isEditMode: Boolean,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    error: String? = null,
+    isPhoneField: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    var isFocused by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -392,26 +441,55 @@ fun EditableInfoRow(
             if (isEditMode) {
                 BasicTextField(
                     value = value ?: "",
-                    onValueChange = onValueChange,
+                    onValueChange = {
+                        if (isPhoneField) {
+                            if (it.length <= 10 && it.all { ch -> ch.isDigit() }) {
+                                onValueChange(it)
+                            }
+                        } else {
+                            onValueChange(it)
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(40.dp),
+                        .height(40.dp)
+                        .onFocusChanged {
+                            isFocused = it.isFocused
+                        },
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
                         color = MaterialTheme.colorScheme.onSurface
                     ),
                     singleLine = true,
                     interactionSource = interactionSource,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = if (isPhoneField) KeyboardType.Number else KeyboardType.Text
+                    )
                 ) { innerTextField ->
                     OutlinedTextFieldDefaults.DecorationBox(
                         value = value ?: "",
                         placeholder = {
-                            Text(
-                                placeHolder,
-                                color = Color.LightGray,
-                                style = MaterialTheme.typography.labelMedium
-                            )
+                            if (!(isPhoneField && (isFocused || !value.isNullOrEmpty()))) {
+                                Text(
+                                    placeHolder,
+                                    color = Color.LightGray,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         },
-                        innerTextField = innerTextField,
+                        innerTextField = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+
+                                if (isPhoneField && (isFocused || !value.isNullOrEmpty())) {
+                                    Text(
+                                        text = "+91 ",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                innerTextField()
+                            }
+                        },
                         enabled = true,
                         singleLine = true,
                         visualTransformation = VisualTransformation.None,
@@ -420,7 +498,7 @@ fun EditableInfoRow(
                         container = {
                             OutlinedTextFieldDefaults.Container(
                                 enabled = true,
-                                isError = false,
+                                isError = error != null,
                                 interactionSource = interactionSource,
                                 colors = OutlinedTextFieldDefaults.colors(
                                     unfocusedBorderColor = Color.LightGray,
@@ -435,10 +513,22 @@ fun EditableInfoRow(
                         }
                     )
                 }
+                if (error != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
             } else {
                 if (value != null) {
                     Text(
-                        text = value,
+                        text = if (isPhoneField) {
+                            "+91 $value"
+                        } else {
+                            value
+                        },
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold
                     )
