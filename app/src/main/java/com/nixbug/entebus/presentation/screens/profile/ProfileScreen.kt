@@ -46,8 +46,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import coil.request.ImageRequest
+import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
@@ -142,40 +145,54 @@ fun ProfileScreenTop(
             contentAlignment = Alignment.Center
         ) {
             val context = LocalContext.current
-            if (isImageLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(45.dp),
-                    color = Color(0x8699CB5E),
-                    strokeWidth = 8.dp
-                )
+            if (imageId != null) {
+
+                val imageUrl =
+                    "${BuildConfig.OPERATOR_BASE_URL}company/account/picture/$imageId?width=300&height=300"
+
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(imageUrl)
+                        .memoryCacheKey(imageId.toString())
+                        .diskCacheKey(imageId.toString())
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Profile Image",
+                    modifier = Modifier
+                        .size(148.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.Center
+                ) {
+                    when (val state = painter.state) {
+
+                        is AsyncImagePainter.State.Loading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(40.dp),
+                                strokeWidth = 4.dp
+                            )
+                        }
+
+                        is AsyncImagePainter.State.Error -> {
+                            ProfileInitial(username)
+                        }
+
+                        is AsyncImagePainter.State.Success -> {
+                            SubcomposeAsyncImageContent()
+                        }
+
+                        else -> Unit
+                    }
+                }
+
             } else {
-                if (imageId != null) {
-                    val imageUrl =
-                        "https://dev-api.entebus.com/operator/company/account/picture/$imageId?width=300&height=300"
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(imageUrl)
-                            .memoryCacheKey(imageId.toString())
-                            .diskCacheKey(imageId.toString())
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Profile Image",
-                        modifier = Modifier
-                            .size(148.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                        alignment = Alignment.Center
+                if (isImageLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(40.dp),
+                        strokeWidth = 4.dp
                     )
                 } else {
-                    Text(
-                        text = username
-                            ?.firstOrNull()
-                            ?.uppercaseChar()
-                            ?.toString() ?: "",
-                        style = MaterialTheme.typography.displayLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0x8699CB5E)
-                    )
+                    ProfileInitial(username)
                 }
             }
         }
@@ -187,6 +204,16 @@ fun ProfileScreenTop(
             fontWeight = FontWeight.Bold
         )
     }
+}
+
+@Composable
+fun ProfileInitial(username: String?) {
+    Text(
+        text = username?.firstOrNull()?.uppercaseChar()?.toString() ?: "",
+        style = MaterialTheme.typography.displayLarge,
+        fontWeight = FontWeight.Bold,
+        color = Color(0x8699CB5E)
+    )
 }
 
 @Composable
