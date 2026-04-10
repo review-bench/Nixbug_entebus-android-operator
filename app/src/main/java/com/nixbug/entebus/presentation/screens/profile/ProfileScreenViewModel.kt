@@ -6,6 +6,7 @@ import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
 import com.nixbug.entebus.domain.usecase.accountimage.GetAccountImageUseCase
 import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
 import com.nixbug.entebus.domain.usecase.token.RevokeTokenUseCase
+import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
@@ -24,12 +25,22 @@ class ProfileScreenViewModel @Inject constructor(
     private val revokeTokenUseCase: RevokeTokenUseCase,
     private val getTokenUseCase: GetTokenUseCase,
     private val getAccountImageUseCase: GetAccountImageUseCase,
+    private val getUserUseCase: GetUserUseCase,
     private val clearSessionUseCase: ClearSessionUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            getUserUseCase().collect { user ->
+                _uiState.update {
+                    it.copy(
+                        username = user.username
+                    )
+                }
+            }
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(isImageLoading = true) }
             try {

@@ -94,7 +94,8 @@ fun ProfileScreen(
             ProfileScreenTop(
                 modifier = Modifier.weight(0.4f),
                 imageId = state.imageId,
-                isImageLoading = state.isImageLoading
+                isImageLoading = state.isImageLoading,
+                username = state.username
             )
 
             ProfileScreenBottom(
@@ -115,7 +116,12 @@ fun ProfileScreen(
 }
 
 @Composable
-fun ProfileScreenTop(modifier: Modifier = Modifier, imageId: Int?, isImageLoading: Boolean) {
+fun ProfileScreenTop(
+    modifier: Modifier = Modifier,
+    imageId: Int?,
+    isImageLoading: Boolean,
+    username: String?
+) {
 
     Column(
         modifier = modifier
@@ -138,9 +144,9 @@ fun ProfileScreenTop(modifier: Modifier = Modifier, imageId: Int?, isImageLoadin
             val context = LocalContext.current
             if (isImageLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = Color.Black,
-                    strokeWidth = 2.dp
+                    modifier = Modifier.size(45.dp),
+                    color =  Color(0x8699CB5E),
+                    strokeWidth = 8.dp
                 )
             } else {
                 if (imageId != null) {
@@ -161,16 +167,20 @@ fun ProfileScreenTop(modifier: Modifier = Modifier, imageId: Int?, isImageLoadin
                     )
                 } else {
                     Text(
-                        text = "A",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = Color.Gray
+                        text = username
+                            ?.firstOrNull()
+                            ?.uppercaseChar()
+                            ?.toString() ?: "",
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0x8699CB5E)
                     )
                 }
             }
         }
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "Amal",
+            text = username ?: "",
             color = Color.White,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
