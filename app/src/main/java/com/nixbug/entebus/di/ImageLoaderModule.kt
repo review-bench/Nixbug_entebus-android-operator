@@ -2,7 +2,7 @@ package com.nixbug.entebus.di
 
 import android.content.Context
 import coil.ImageLoader
-import com.nixbug.entebus.data.interceptor.ImageAuthInterceptor
+import com.nixbug.entebus.data.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,7 +19,7 @@ object ImageLoaderModule {
     @Singleton
     fun provideImageLoader(
         @ApplicationContext context: Context,
-        authInterceptor: ImageAuthInterceptor
+        authInterceptor: AuthInterceptor
     ): ImageLoader {
         val okHttpClient = OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
