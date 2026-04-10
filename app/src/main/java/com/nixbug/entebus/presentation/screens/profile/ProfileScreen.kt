@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Person2
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,26 +41,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
-import com.nixbug.entebus.R
 
 @Composable
 fun ProfileScreen(
     rootNavController: NavHostController,
     viewModel: ProfileScreenViewModel = hiltViewModel()
 ) {
-//    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsState()
     var showLogOutDialog by remember { mutableStateOf(false) }
 
     if (showLogOutDialog) {
@@ -95,6 +93,8 @@ fun ProfileScreen(
 
             ProfileScreenTop(
                 modifier = Modifier.weight(0.4f),
+                imageId = state.imageId,
+                isImageLoading = state.isImageLoading
             )
 
             ProfileScreenBottom(
@@ -115,7 +115,7 @@ fun ProfileScreen(
 }
 
 @Composable
-fun ProfileScreenTop(modifier: Modifier = Modifier) {
+fun ProfileScreenTop(modifier: Modifier = Modifier, imageId: Int?, isImageLoading: Boolean) {
 
     Column(
         modifier = modifier
@@ -136,20 +136,37 @@ fun ProfileScreenTop(modifier: Modifier = Modifier) {
             contentAlignment = Alignment.Center
         ) {
             val context = LocalContext.current
-            val imageUrl = "https://dev-api.entebus.com/operator/company/account/picture/12"
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(imageUrl)
-                    .memoryCacheKey("1")
-                    .diskCacheKey("1")
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Profile Image",
-                modifier = Modifier
-                    .size(148.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
+            if (isImageLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.Black,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                if (imageId != null) {
+                    val imageUrl =
+                        "https://dev-api.entebus.com/operator/company/account/picture/$imageId"
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(imageUrl)
+                            .memoryCacheKey(imageId.toString())
+                            .diskCacheKey(imageId.toString())
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Profile Image",
+                        modifier = Modifier
+                            .size(148.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = "A",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = Color.Gray
+                    )
+                }
+            }
         }
         Spacer(modifier = Modifier.height(10.dp))
         Text(

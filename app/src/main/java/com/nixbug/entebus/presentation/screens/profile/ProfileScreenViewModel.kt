@@ -26,17 +26,24 @@ class ProfileScreenViewModel @Inject constructor(
     private val getAccountImageUseCase: GetAccountImageUseCase,
     private val clearSessionUseCase: ClearSessionUseCase
 ) : ViewModel() {
-//    private val _uiState = MutableStateFlow(ProfileUiState())
-//    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(ProfileUiState())
+    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
+            _uiState.update { it.copy(isImageLoading = true) }
             try {
                 val response = getAccountImageUseCase()
                 when (response) {
                     is Resource.Success -> {
-                        val user = response.data?.firstOrNull()
-                        println("Image Response :${user?.id} ")
+                        val userImage = response.data?.firstOrNull()
+                        println("Image Response :${userImage?.id} ")
+                        _uiState.update {
+                            it.copy(
+                                imageId = userImage?.id
+                            )
+                        }
+
                     }
 
                     is Resource.Error -> {
@@ -58,6 +65,7 @@ class ProfileScreenViewModel @Inject constructor(
                 if (e is CancellationException) throw e
                 SnackbarManager.show(e.message ?: "Something went wrong", SnackbarType.ERROR)
             } finally {
+                _uiState.update { it.copy(isImageLoading = false) }
             }
         }
     }
