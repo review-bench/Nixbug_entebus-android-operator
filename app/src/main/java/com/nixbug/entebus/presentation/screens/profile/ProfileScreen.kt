@@ -145,13 +145,13 @@ fun ProfileScreenTop(
             if (isImageLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(45.dp),
-                    color =  Color(0x8699CB5E),
+                    color = Color(0x8699CB5E),
                     strokeWidth = 8.dp
                 )
             } else {
                 if (imageId != null) {
                     val imageUrl =
-                        "https://dev-api.entebus.com/operator/company/account/picture/$imageId"
+                        "https://dev-api.entebus.com/operator/company/account/picture/$imageId?width=300&height=300"
                     AsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(imageUrl)
@@ -163,7 +163,8 @@ fun ProfileScreenTop(
                         modifier = Modifier
                             .size(148.dp)
                             .clip(CircleShape),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        alignment = Alignment.Center
                     )
                 } else {
                     Text(
