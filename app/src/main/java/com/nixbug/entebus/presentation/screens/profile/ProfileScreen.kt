@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.nixbug.entebus.presentation.components.DialogBox
@@ -135,17 +136,15 @@ fun ProfileScreenTop(modifier: Modifier = Modifier) {
             contentAlignment = Alignment.Center
         ) {
             val context = LocalContext.current
-            val imageUrl = "https://dev-api.entebus.com/operator/company/account/picture/1"
+            val imageUrl = "https://dev-api.entebus.com/operator/company/account/picture/12"
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(imageUrl)
                     .memoryCacheKey("1")
                     .diskCacheKey("1")
-                    .addHeader("Authorization", "")
                     .crossfade(true)
                     .build(),
                 contentDescription = "Profile Image",
-                placeholder = painterResource(R.drawable.entebus_logo),
                 modifier = Modifier
                     .size(148.dp)
                     .clip(CircleShape),
