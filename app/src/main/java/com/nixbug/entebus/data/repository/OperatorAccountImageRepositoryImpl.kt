@@ -16,8 +16,9 @@ class OperatorAccountImageRepositoryImpl @Inject constructor(
     override suspend fun fetchOperatorAccountImage(): Resource<List<OperatorAccountImageModel>> {
         val operatorId = tokenManager.operatorId
         if (operatorId == null) {
-            println("Session expired. Please login again.")
-            return Resource.Error("No operatorId")
+            return Resource.Error(
+                message = "Session expired. Please login again."
+            )
         }
         return apiHelper(
             apiCall = {

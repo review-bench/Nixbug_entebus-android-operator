@@ -48,7 +48,6 @@ class ProfileScreenViewModel @Inject constructor(
                 when (response) {
                     is Resource.Success -> {
                         val userImage = response.data?.firstOrNull()
-                        println("Image Response :${userImage?.id} ")
                         _uiState.update {
                             it.copy(
                                 imageId = userImage?.id

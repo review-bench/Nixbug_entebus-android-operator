@@ -15,7 +15,7 @@ import com.google.gson.annotations.SerializedName
  */
 
 
-data class OperatorImageSchema (
+data class OperatorImageSchema(
 
     @SerializedName("id")
     val id: Int,

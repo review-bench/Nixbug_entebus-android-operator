@@ -38,10 +38,10 @@ enum class AppApiOperatorImageOrderBy(val value: String) {
          * Returns a valid [AppApiOperatorImageOrderBy] for [data], null otherwise.
          */
         fun decode(data: Any?): AppApiOperatorImageOrderBy? = data?.let {
-          val normalizedData = "$it".lowercase()
-          values().firstOrNull { value ->
-            it == value || normalizedData == "$value".lowercase()
-          }
+            val normalizedData = "$it".lowercase()
+            values().firstOrNull { value ->
+                it == value || normalizedData == "$value".lowercase()
+            }
         }
     }
 }

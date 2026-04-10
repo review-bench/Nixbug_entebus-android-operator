@@ -13,10 +13,11 @@ import kotlinx.coroutines.SupervisorJob
 import coil.ImageLoaderFactory
 
 @HiltAndroidApp
-class MyApp : Application(),ImageLoaderFactory {
+class MyApp : Application(), ImageLoaderFactory {
 
     @Inject
     lateinit var appInitializer: AppInitializer
+
     @Inject
     lateinit var imageLoader: ImageLoader
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
