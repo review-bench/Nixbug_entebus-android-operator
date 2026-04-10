@@ -171,6 +171,14 @@ fun PersonalDetailsScreen(
                         }
 
                         // Full Name
+                        val valueToShow = if (uiState.isEditMode) {
+                            uiState.editedFullName ?: ""
+                        } else {
+                            uiState.fullName
+                                ?.replaceFirstChar {
+                                    if (it.isLowerCase()) it.titlecase() else it.toString()
+                                } ?: ""
+                        }
                         EditableInfoRow(
                             placeHolder = "Enter Your Full Name",
                             label = "Full Name",
@@ -178,8 +186,13 @@ fun PersonalDetailsScreen(
                             iconBg = DisabledButtonColor,
                             iconTint = MaterialTheme.colorScheme.primary,
                             isEditMode = uiState.isEditMode,
-                            value = if (uiState.isEditMode) uiState.editedFullName else uiState.fullName,
-                            onValueChange = viewModel::onFullNameChange,
+                            value = valueToShow,
+                            onValueChange = {
+                                val formatted = it.replaceFirstChar { char ->
+                                    if (char.isLowerCase()) char.titlecase() else char.toString()
+                                }
+                                viewModel.onFullNameChange(formatted)
+                            },
                             error = uiState.fullNameError
                         )
                         DividerWithSpacing()
