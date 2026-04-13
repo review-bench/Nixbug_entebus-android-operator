@@ -25,13 +25,13 @@ class TicketBuilder {
     fun text(content: String, newLine: Boolean = true): TicketBuilder {
         val clipped = truncateWithEllipsis(content, currentLineWidth)
         val stringToWrite = if (newLine) "$clipped\n" else clipped
-        outputStream.write(stringToWrite.toByteArray(charset("ISO-8859-1")))
+        outputStream.write(stringToWrite.toByteArray(charset("UTF-8")))
         return this
     }
 
     fun divider(): TicketBuilder {
         val line = "-".repeat(currentLineWidth) + "\n"
-        outputStream.write(line.toByteArray(charset("ISO-8859-1")))
+        outputStream.write(line.toByteArray(charset("UTF-8")))
         return this
     }
 
@@ -48,7 +48,7 @@ class TicketBuilder {
             .padEnd(colCenterWidth)
         val fRight = right.take(colRightWidth).padStart(colRightWidth)
 
-        outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(charset("ISO-8859-1")))
+        outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(charset("UTF-8")))
         return this
     }
 
@@ -62,7 +62,7 @@ class TicketBuilder {
         val fRight = formatColumnJustified(right, sideW, true)// left align
 
         // Intentionally align route text towards the center arrow
-        outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(charset("ISO-8859-1")))
+        outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(charset("UTF-8")))
         return this
     }
 
@@ -81,7 +81,7 @@ class TicketBuilder {
         }
 
         val formatted = line.replace("₹", 0x9F.toChar().toString())
-        outputStream.write((formatted + "\n").toByteArray(charset("ISO-8859-1")))
+        outputStream.write((formatted + "\n").toByteArray(charset("UTF-8")))
         return this
     }
 
@@ -96,7 +96,6 @@ class TicketBuilder {
     fun build(): ByteArray {
         val finalResult = ByteArrayOutputStream()
         finalResult.write(PrinterManager.Commands.INIT)
-        finalResult.write(PrinterManager.Commands.CHAR_TABLE_PC858)
         finalResult.write(outputStream.toByteArray())
         finalResult.write(byteArrayOf(0x0A, 0x0A))
 
