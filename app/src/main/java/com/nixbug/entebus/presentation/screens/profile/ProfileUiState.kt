@@ -1,5 +1,7 @@
 package com.nixbug.entebus.presentation.screens.profile
 
 data class ProfileUiState(
-    val userDetails: ProfileUiModel = sampleProfileUiData,
+    val imageId: Int? = null,
+    val username: String? = null,
+    val isImageLoading: Boolean = false,
 )

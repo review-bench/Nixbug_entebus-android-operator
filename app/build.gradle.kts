@@ -104,6 +104,9 @@ dependencies {
     implementation(libs.camerax.view)
 
     implementation(libs.mlkit.barcode)
+
+    implementation(libs.coil.compose)
+
 }
 
 tasks.register<Exec>("generateOperatorApiClient") {

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Person2
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,11 +39,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
+import coil.request.ImageRequest
+import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
@@ -88,7 +96,9 @@ fun ProfileScreen(
 
             ProfileScreenTop(
                 modifier = Modifier.weight(0.4f),
-                userDetails = state.userDetails
+                imageId = state.imageId,
+                isImageLoading = state.isImageLoading,
+                username = state.username
             )
 
             ProfileScreenBottom(
@@ -109,7 +119,12 @@ fun ProfileScreen(
 }
 
 @Composable
-fun ProfileScreenTop(modifier: Modifier = Modifier, userDetails: ProfileUiModel) {
+fun ProfileScreenTop(
+    modifier: Modifier = Modifier,
+    imageId: Int?,
+    isImageLoading: Boolean,
+    username: String?
+) {
 
     Column(
         modifier = modifier
@@ -129,24 +144,76 @@ fun ProfileScreenTop(modifier: Modifier = Modifier, userDetails: ProfileUiModel)
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = userDetails.username
-                    .firstOrNull()
-                    ?.uppercaseChar()
-                    ?.toString() ?: "",
-                style = MaterialTheme.typography.displayLarge,
-                fontWeight = FontWeight.Bold,
-                color = Color(0x8699CB5E)
-            )
+            val context = LocalContext.current
+            if (imageId != null) {
+
+                val imageUrl =
+                    "${BuildConfig.OPERATOR_BASE_URL}company/account/picture/$imageId?width=300&height=300"
+
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(imageUrl)
+                        .memoryCacheKey(imageId.toString())
+                        .diskCacheKey(imageId.toString())
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Profile Image",
+                    modifier = Modifier
+                        .size(148.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.Center
+                ) {
+                    when (val state = painter.state) {
+
+                        is AsyncImagePainter.State.Loading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(40.dp),
+                                strokeWidth = 4.dp
+                            )
+                        }
+
+                        is AsyncImagePainter.State.Error -> {
+                            ProfileInitial(username)
+                        }
+
+                        is AsyncImagePainter.State.Success -> {
+                            SubcomposeAsyncImageContent()
+                        }
+
+                        else -> Unit
+                    }
+                }
+
+            } else {
+                if (isImageLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(40.dp),
+                        strokeWidth = 4.dp
+                    )
+                } else {
+                    ProfileInitial(username)
+                }
+            }
         }
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = userDetails.username,
+            text = username ?: "",
             color = Color.White,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
     }
+}
+
+@Composable
+fun ProfileInitial(username: String?) {
+    Text(
+        text = username?.firstOrNull()?.uppercaseChar()?.toString() ?: "",
+        style = MaterialTheme.typography.displayLarge,
+        fontWeight = FontWeight.Bold,
+        color = Color(0x8699CB5E)
+    )
 }
 
 @Composable
