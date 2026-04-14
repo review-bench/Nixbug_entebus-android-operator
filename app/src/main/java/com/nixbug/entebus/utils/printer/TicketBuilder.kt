@@ -25,13 +25,13 @@ class TicketBuilder {
     fun text(content: String, newLine: Boolean = true): TicketBuilder {
         val clipped = truncateWithEllipsis(content, currentLineWidth)
         val stringToWrite = if (newLine) "$clipped\n" else clipped
-        outputStream.write(stringToWrite.toByteArray(charset("UTF-8")))
+        outputStream.write(stringToWrite.toByteArray(Charsets.UTF_8))
         return this
     }
 
     fun divider(): TicketBuilder {
         val line = "-".repeat(currentLineWidth) + "\n"
-        outputStream.write(line.toByteArray(charset("UTF-8")))
+        outputStream.write(line.toByteArray(Charsets.UTF_8))
         return this
     }
 
@@ -48,7 +48,7 @@ class TicketBuilder {
             .padEnd(colCenterWidth)
         val fRight = right.take(colRightWidth).padStart(colRightWidth)
 
-        outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(charset("UTF-8")))
+        outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(Charsets.UTF_8))
         return this
     }
 
@@ -62,7 +62,7 @@ class TicketBuilder {
         val fRight = formatColumnJustified(right, sideW, true)// left align
 
         // Intentionally align route text towards the center arrow
-        outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(charset("UTF-8")))
+        outputStream.write((fLeft + fCenter + fRight + "\n").toByteArray(Charsets.UTF_8))
         return this
     }
 
@@ -80,7 +80,7 @@ class TicketBuilder {
             clippedLeft + " ".repeat(finalSpace.coerceAtLeast(0)) + right
         }
 
-        outputStream.write((line + "\n").toByteArray(charset("UTF-8")))
+        outputStream.write((line + "\n").toByteArray(Charsets.UTF_8))
         return this
     }
 
