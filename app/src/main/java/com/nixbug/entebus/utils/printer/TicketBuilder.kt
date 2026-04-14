@@ -80,8 +80,7 @@ class TicketBuilder {
             clippedLeft + " ".repeat(finalSpace.coerceAtLeast(0)) + right
         }
 
-        val formatted = line.replace("₹", 0x9F.toChar().toString())
-        outputStream.write((formatted + "\n").toByteArray(charset("UTF-8")))
+        outputStream.write((line + "\n").toByteArray(charset("UTF-8")))
         return this
     }
 
