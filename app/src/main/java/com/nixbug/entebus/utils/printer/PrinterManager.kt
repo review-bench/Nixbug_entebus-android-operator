@@ -97,7 +97,6 @@ class PrinterManager @Inject constructor(
         val SIZE_NORMAL = byteArrayOf(0x1D, 0x21, 0x00)
         val SIZE_DOUBLE_HEIGHT = byteArrayOf(0x1D, 0x21, 0x01)
         val SIZE_BIG = byteArrayOf(0x1D, 0x21, 0x11)
-        val CHAR_TABLE_PC858 = byteArrayOf(0x1B, 0x74, 0x13)
     }
 
     suspend fun sendData(data: ByteArray): Result<Unit> = withContext(Dispatchers.IO) {

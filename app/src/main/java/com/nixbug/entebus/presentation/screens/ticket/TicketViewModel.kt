@@ -184,7 +184,6 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
 
             val dateStr = dateFormat.format(calendar.time)
             val timeStr = timeFormat.format(calendar.time)
-            val dateTimeCombined = "$dateStr $timeStr"
 
             val totalFare = totalDistanceKm * 10.0
 
@@ -207,10 +206,8 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
                         .addCommand(PrinterManager.Commands.BOLD_OFF)
 
                         .addCommand(PrinterManager.Commands.SIZE_NORMAL)
-                        .addCommand(PrinterManager.Commands.FONT_B)
-                        .threeColumnRow("000123", dateTimeCombined, "ORDINARY")
+                        .threeColumnRow(dateStr, timeStr, "TKT-000123")
 
-                        .addCommand(PrinterManager.Commands.FONT_A)
                         .addCommand(PrinterManager.Commands.BOLD_ON)
                         .routeRow(
                             formatText(startingLandmark.name),
@@ -219,12 +216,11 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
                         )
                         .addCommand(PrinterManager.Commands.BOLD_OFF)
 
-                        .addCommand(PrinterManager.Commands.FONT_B)
                         .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
                         .apply {
                             selectedPassengers.forEach { passenger ->
-                                val lineFare = passenger.passengerCount * 10.0
-                                val line = "%-10s %2d x 10.00 = %6.2f".format(
+                                val lineFare = passenger.passengerCount * 100.0
+                                val line = "%-10s %2d x 100.00 = %6.2f".format(
                                     passenger.name.take(10),
                                     passenger.passengerCount,
                                     lineFare
@@ -239,7 +235,6 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
 
                         .divider()
 
-                        .addCommand(PrinterManager.Commands.FONT_A)
                         .addCommand(PrinterManager.Commands.ALIGN_CENTER)
                         .text("Not Transferable")
                         .text("Nixbug softwares")

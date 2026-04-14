@@ -237,10 +237,8 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
 
                         builder.addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
                         builder.text(service.regNo)
-                        builder.addCommand(PrinterManager.Commands.FONT_B)
                         builder.text(service.dateTimeRange)
                         builder.addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
-                        builder.addCommand(PrinterManager.Commands.FONT_A)
 
                         service.operators.forEach {
                             builder.leftRightRow(it.first, "${it.second} Rs")
@@ -253,11 +251,9 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
                         builder.divider()
                     }
 
-                    builder.addCommand(PrinterManager.Commands.FONT_A)
                     builder.addCommand(PrinterManager.Commands.SIZE_DOUBLE_HEIGHT)
                     builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
                     builder.text("GRAND TOTAL : ${data.grandTotal} Rs")
-                    builder.addCommand(PrinterManager.Commands.FONT_A)
                     builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
                     builder.text("--Nixbug Softwares OPC Pvt Ltd--")
 

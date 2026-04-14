@@ -832,8 +832,8 @@ private fun buildDateRange(
         utcToIstWithActualDate(finishedOn) ?: ("Invalid" to "Invalid")
 
     return if (startDate == finishDate) {
-        "$startDate, $startTime To $finishTime"
+        "$startDate,$startTime To $finishTime"
     } else {
-        "$startDate, $startTime To $finishDate, $finishTime"
+        "$startDate,$startTime To $finishDate,$finishTime"
     }
 }
