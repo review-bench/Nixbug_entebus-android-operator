@@ -364,17 +364,7 @@ fun CompanyDropdown(
                 }
             },
             shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                focusedBorderColor = Color(0xFF47C7FF),
-                unfocusedBorderColor = Color(0xFFC0C0C0),
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black,
-                disabledContainerColor = Color.White,
-                disabledTextColor = Color.Black,
-                disabledBorderColor = Color(0xFFC0C0C0),
-            ),
+            colors = defaultTextFieldColors(),
             isError = error != null,
             supportingText = if (error != null) {
                 {
@@ -480,14 +470,7 @@ fun UsernameField(
         shape = RoundedCornerShape(12.dp),
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedBorderColor = Color(0xFF47C7FF),
-            unfocusedBorderColor = Color(0xFFC0C0C0),
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black,
-        )
+        colors = defaultTextFieldColors()
     )
 
 }
@@ -528,14 +511,7 @@ fun PasswordField(
         modifier = Modifier
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedBorderColor = Color(0xFF47C7FF),
-            unfocusedBorderColor = Color(0xFFC0C0C0),
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black,
-        )
+        colors = defaultTextFieldColors()
     )
 }
 
@@ -588,3 +564,16 @@ fun FieldName(name: String) {
             .padding(bottom = 5.dp)
     )
 }
+
+@Composable
+fun defaultTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = Color.White,
+    unfocusedContainerColor = Color.White,
+    focusedBorderColor = Color(0xFF47C7FF),
+    unfocusedBorderColor = Color(0xFFC0C0C0),
+    focusedTextColor = Color.Black,
+    unfocusedTextColor = Color.Black,
+    disabledContainerColor = Color.White,
+    disabledTextColor = Color.Black,
+    disabledBorderColor = Color(0xFFC0C0C0),
+)
