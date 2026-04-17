@@ -248,6 +248,7 @@ fun AuthScreen(
                 clearSearchQuery = viewModel::clearSearchQuery,
                 showLocationLoader = state.locationFetchLoading,
                 showCompanyLoader = state.companyListLoading,
+                showSearchLoader = state.companySearchLoading,
                 error = state.companyError,
                 onLoadMore = { viewModel.fetchPublicCompanies(isPagination = true) }
             )
@@ -303,6 +304,7 @@ fun CompanyDropdown(
     showCompanyLoader: Boolean,
     error: String?,
     onLoadMore: () -> Unit,
+    showSearchLoader: Boolean,
 ) {
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -353,7 +355,7 @@ fun CompanyDropdown(
                 .fillMaxWidth()
                 .focusRequester(focusRequester),
             trailingIcon = {
-                if (showLocationLoader || showCompanyLoader) {
+                if (showLocationLoader || showCompanyLoader || showSearchLoader) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,

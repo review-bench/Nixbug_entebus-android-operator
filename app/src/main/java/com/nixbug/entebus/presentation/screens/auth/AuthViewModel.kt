@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -136,7 +137,8 @@ class AuthViewModel @Inject constructor(
                 it.copy(
                     offset = 0,
                     hasMore = true,
-                    companyListError = null
+                    companyListError = null,
+                    companySearchLoading = true
                 )
             }
 
@@ -151,41 +153,49 @@ class AuthViewModel @Inject constructor(
             }
         }
 
-        val result = fetchPublicCompanyUseCase(
-            location = locationParam,
-            name = searchQuery.value,
-            offset = if (isPagination) currentState.offset else 0,
-            limit = currentState.limit
-        )
+        try {
+            val result = fetchPublicCompanyUseCase(
+                location = locationParam,
+                name = searchQuery.value,
+                offset = if (isPagination) currentState.offset else 0,
+                limit = currentState.limit
+            )
 
-        when (result) {
-            is Resource.Success -> {
-                val newList = result.data ?: emptyList()
+            when (result) {
+                is Resource.Success -> {
+                    val newList = result.data ?: emptyList()
 
-                _uiState.update {
-                    it.copy(
-                        companyListLoading = false,
-                        isPaginationLoading = false,
-                        companyList = if (isPagination) it.companyList + newList else newList,
-                        offset = if (isPagination) it.offset + it.limit else it.limit,
-                        hasMore = newList.size == it.limit,
-                        companyListError = null
-                    )
+                    _uiState.update {
+                        it.copy(
+                            companyList = if (isPagination) it.companyList + newList else newList,
+                            offset = if (isPagination) it.offset + it.limit else it.limit,
+                            hasMore = newList.size == it.limit,
+                            companyListError = null
+                        )
+                    }
                 }
-            }
 
-            is Resource.Error -> {
-                _uiState.update {
-                    it.copy(
-                        companyListLoading = false,
-                        isPaginationLoading = false,
-                        companyListError = result.message
-                    )
+                is Resource.Error -> {
+                    _uiState.update {
+                        it.copy(companyListError = result.message)
+                    }
                 }
-            }
 
-            else -> {}
+                else -> {}
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            SnackbarManager.show(e.message ?: "Something went wrong", SnackbarType.ERROR)
+        } finally {
+            if (isPagination) {
+                _uiState.update { it.copy(isPaginationLoading = false) }
+            } else if (isSearching) {
+                _uiState.update { it.copy(companySearchLoading = false) }
+            } else {
+                _uiState.update { it.copy(companyListLoading = false) }
+            }
         }
+
     }
 
     fun expandedFunc(value: Boolean) {

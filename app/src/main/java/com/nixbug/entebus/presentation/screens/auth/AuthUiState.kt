@@ -5,6 +5,7 @@ import com.nixbug.entebus.domain.model.PublicCompanyModel
 data class AuthUiState(
     val locationFetchLoading: Boolean = false,
     val companyListLoading: Boolean = false,
+    val companySearchLoading: Boolean = false,
 
     val companyList: List<PublicCompanyModel> = emptyList(),
 
