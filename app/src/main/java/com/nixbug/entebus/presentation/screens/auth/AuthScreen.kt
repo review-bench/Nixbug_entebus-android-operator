@@ -36,6 +36,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,12 +47,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -93,6 +97,7 @@ fun AuthScreen(
     val state = viewModel.uiState.collectAsState().value
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val usernameFocusRequester = remember { FocusRequester() }
 
     // The Launcher that handles the result of the System GPS Dialog
     val gpsLauncher = rememberLauncherForActivityResult(
@@ -239,7 +244,10 @@ fun AuthScreen(
                 expanded = state.expanded,
                 onExpandChange = viewModel::expandedFunc,
                 onQueryChange = viewModel::onCompanyQueryChange,
-                onSelect = viewModel::onCompanySelected,
+                onSelect = {
+                    viewModel.onCompanySelected(it)
+                    usernameFocusRequester.requestFocus()
+                },
                 clearSelectedCompany = viewModel::clearSelectedCompany,
                 clearSearchQuery = viewModel::clearSearchQuery,
                 showLocationLoader = state.locationFetchLoading,
@@ -254,7 +262,8 @@ fun AuthScreen(
                 value = state.userName,
                 onChange = viewModel::onUserNameChange,
                 focusManager = focusManager,
-                error = state.userNameError
+                error = state.userNameError,
+                focusRequester = usernameFocusRequester
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -299,6 +308,9 @@ fun CompanyDropdown(
     error: String?,
     onLoadMore: () -> Unit,
 ) {
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     Text(
         text = "Company",
         color = Color.Black,
@@ -324,6 +336,12 @@ fun CompanyDropdown(
                 clearSelectedCompany()
             }
         }
+        LaunchedEffect(expanded) {
+            if (expanded) {
+                focusRequester.requestFocus()
+                keyboardController?.show()
+            }
+        }
 
         OutlinedTextField(
             value = if (expanded) uiState.companySearchQuery else uiState.selectedCompany?.name
@@ -344,7 +362,8 @@ fun CompanyDropdown(
             },
             modifier = Modifier
                 .menuAnchor(MenuAnchorType.PrimaryEditable)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .focusRequester(focusRequester),
             trailingIcon = {
                 if (showLocationLoader || showCompanyLoader) {
                     CircularProgressIndicator(
@@ -381,20 +400,30 @@ fun CompanyDropdown(
             onDismissRequest = { onExpandChange(false) },
             modifier = Modifier
                 .background(Color.White, RoundedCornerShape(12.dp))
-                .border(1.dp, Color(0xFF47C7FF), RoundedCornerShape(12.dp))
+                .border(1.8.dp, Color(0xFF47C7FF), RoundedCornerShape(7.dp))
                 .heightIn(max = 160.dp),
         ) {
-            uiState.companyList.forEach { company ->
+            uiState.companyList.forEachIndexed { index, company ->
+                val isSingleItem = uiState.companyList.size == 1
                 DropdownMenuItem(
                     text = { Text(company.name) },
                     modifier = Modifier
-                        .padding(horizontal = 6.dp)
-                        .clip(RoundedCornerShape(10.dp)),
+                        .padding(
+                            horizontal = 6.dp,
+                            vertical = if (isSingleItem) 2.dp else 0.dp
+                        ),
                     onClick = {
                         onSelect(company)
                         onExpandChange(false)
                     }
                 )
+                if (index < uiState.companyList.lastIndex) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        thickness = 0.5.dp,
+                        color = Color(0xFFE0E0E0)
+                    )
+                }
             }
             if (
                 uiState.hasMore &&
@@ -436,7 +465,8 @@ fun UsernameField(
     value: String,
     onChange: (String) -> Unit,
     focusManager: FocusManager,
-    error: String?
+    error: String?,
+    focusRequester: FocusRequester
 ) {
     Text(
         text = "Username",
@@ -465,7 +495,8 @@ fun UsernameField(
         },
         singleLine = true,
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .focusRequester(focusRequester),
         shape = RoundedCornerShape(12.dp),
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
