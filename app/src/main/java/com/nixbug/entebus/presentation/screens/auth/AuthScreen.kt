@@ -341,13 +341,11 @@ fun CompanyDropdown(
             readOnly = !expanded,
             enabled = !showLocationLoader && !showCompanyLoader,
             placeholder = {
-                Text(
+                PlaceHolderText(
                     if (expanded) "Search your company"
                     else if (showLocationLoader) "Fetching your current location"
                     else if (showCompanyLoader) "Fetching companies"
-                    else "Select your company",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.Gray
+                    else "Select your company"
                 )
             },
             modifier = Modifier
@@ -369,9 +367,7 @@ fun CompanyDropdown(
             colors = defaultTextFieldColors(),
             isError = error != null,
             supportingText = if (error != null) {
-                {
-                    Text(error)
-                }
+                { Text(error) }
             } else null
         )
 
@@ -452,13 +448,7 @@ fun UsernameField(
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        placeholder = {
-            Text(
-                "Enter your username",
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.Gray
-            )
-        },
+        placeholder = { PlaceHolderText("Enter your username") },
         isError = error != null,
         supportingText = {
             if (error != null) {
@@ -490,16 +480,8 @@ fun PasswordField(
         value = value,
         onValueChange = onChange,
         isError = error != null,
-        supportingText = {
-            error?.let { Text(it) }
-        },
-        placeholder = {
-            Text(
-                "Enter your password",
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.Gray
-            )
-        },
+        supportingText = { error?.let { Text(it) } },
+        placeholder = { PlaceHolderText("Enter your password") },
         singleLine = true,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
@@ -564,6 +546,15 @@ fun FieldName(name: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 5.dp)
+    )
+}
+
+@Composable
+fun PlaceHolderText(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = Color.Gray
     )
 }
 
