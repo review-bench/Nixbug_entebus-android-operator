@@ -36,6 +36,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,12 +47,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -93,6 +97,7 @@ fun AuthScreen(
     val state = viewModel.uiState.collectAsState().value
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val usernameFocusRequester = remember { FocusRequester() }
 
     // The Launcher that handles the result of the System GPS Dialog
     val gpsLauncher = rememberLauncherForActivityResult(
@@ -190,9 +195,7 @@ fun AuthScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .pointerInput(Unit) {
-                detectTapGestures(onTap = { focusManager.clearFocus() })
-            },
+            .pointerInput(Unit) { detectTapGestures(onTap = { focusManager.clearFocus() }) },
         contentAlignment = Alignment.Center
     ) {
 
@@ -207,9 +210,7 @@ fun AuthScreen(
         ) {
 
             Image(
-                painter = painterResource(
-                    id = R.drawable.entebus_logo
-                ),
+                painter = painterResource(id = R.drawable.entebus_logo),
                 contentDescription = "Logo",
                 modifier = Modifier
                     .size(130.dp)
@@ -239,11 +240,15 @@ fun AuthScreen(
                 expanded = state.expanded,
                 onExpandChange = viewModel::expandedFunc,
                 onQueryChange = viewModel::onCompanyQueryChange,
-                onSelect = viewModel::onCompanySelected,
+                onSelect = {
+                    viewModel.onCompanySelected(it)
+                    usernameFocusRequester.requestFocus()
+                },
                 clearSelectedCompany = viewModel::clearSelectedCompany,
                 clearSearchQuery = viewModel::clearSearchQuery,
                 showLocationLoader = state.locationFetchLoading,
                 showCompanyLoader = state.companyListLoading,
+                showSearchLoader = state.companySearchLoading,
                 error = state.companyError,
                 onLoadMore = { viewModel.fetchPublicCompanies(isPagination = true) }
             )
@@ -254,7 +259,8 @@ fun AuthScreen(
                 value = state.userName,
                 onChange = viewModel::onUserNameChange,
                 focusManager = focusManager,
-                error = state.userNameError
+                error = state.userNameError,
+                focusRequester = usernameFocusRequester
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -298,16 +304,12 @@ fun CompanyDropdown(
     showCompanyLoader: Boolean,
     error: String?,
     onLoadMore: () -> Unit,
+    showSearchLoader: Boolean,
 ) {
-    Text(
-        text = "Company",
-        color = Color.Black,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 5.dp)
-    )
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
+    FieldName("Company")
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { if (!showLocationLoader && !showCompanyLoader) onExpandChange(it) },
@@ -324,6 +326,12 @@ fun CompanyDropdown(
                 clearSelectedCompany()
             }
         }
+        LaunchedEffect(expanded) {
+            if (expanded) {
+                focusRequester.requestFocus()
+                keyboardController?.show()
+            }
+        }
 
         OutlinedTextField(
             value = if (expanded) uiState.companySearchQuery else uiState.selectedCompany?.name
@@ -333,20 +341,19 @@ fun CompanyDropdown(
             readOnly = !expanded,
             enabled = !showLocationLoader && !showCompanyLoader,
             placeholder = {
-                Text(
+                PlaceHolderText(
                     if (expanded) "Search your company"
                     else if (showLocationLoader) "Fetching your current location"
                     else if (showCompanyLoader) "Fetching companies"
-                    else "Select your company",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.Gray
+                    else "Select your company"
                 )
             },
             modifier = Modifier
                 .menuAnchor(MenuAnchorType.PrimaryEditable)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .focusRequester(focusRequester),
             trailingIcon = {
-                if (showLocationLoader || showCompanyLoader) {
+                if (showLocationLoader || showCompanyLoader || showSearchLoader) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,
@@ -357,22 +364,10 @@ fun CompanyDropdown(
                 }
             },
             shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                focusedBorderColor = Color(0xFF47C7FF),
-                unfocusedBorderColor = Color(0xFFC0C0C0),
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black,
-                disabledContainerColor = Color.White,
-                disabledTextColor = Color.Black,
-                disabledBorderColor = Color(0xFFC0C0C0),
-            ),
+            colors = defaultTextFieldColors(),
             isError = error != null,
             supportingText = if (error != null) {
-                {
-                    Text(error)
-                }
+                { Text(error) }
             } else null
         )
 
@@ -381,20 +376,30 @@ fun CompanyDropdown(
             onDismissRequest = { onExpandChange(false) },
             modifier = Modifier
                 .background(Color.White, RoundedCornerShape(12.dp))
-                .border(1.dp, Color(0xFF47C7FF), RoundedCornerShape(12.dp))
+                .border(1.8.dp, Color(0xFF47C7FF), RoundedCornerShape(7.dp))
                 .heightIn(max = 160.dp),
         ) {
-            uiState.companyList.forEach { company ->
+            uiState.companyList.forEachIndexed { index, company ->
+                val isSingleItem = uiState.companyList.size == 1
                 DropdownMenuItem(
                     text = { Text(company.name) },
                     modifier = Modifier
-                        .padding(horizontal = 6.dp)
-                        .clip(RoundedCornerShape(10.dp)),
+                        .padding(
+                            horizontal = 6.dp,
+                            vertical = if (isSingleItem) 2.dp else 0.dp
+                        ),
                     onClick = {
                         onSelect(company)
                         onExpandChange(false)
                     }
                 )
+                if (index < uiState.companyList.lastIndex) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        thickness = 0.5.dp,
+                        color = Color(0xFFE0E0E0)
+                    )
+                }
             }
             if (
                 uiState.hasMore &&
@@ -436,27 +441,14 @@ fun UsernameField(
     value: String,
     onChange: (String) -> Unit,
     focusManager: FocusManager,
-    error: String?
+    error: String?,
+    focusRequester: FocusRequester
 ) {
-    Text(
-        text = "Username",
-        color = Color.Black,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 5.dp)
-    )
-
+    FieldName("Username")
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        placeholder = {
-            Text(
-                "Enter your username",
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.Gray
-            )
-        },
+        placeholder = { PlaceHolderText("Enter your username") },
         isError = error != null,
         supportingText = {
             if (error != null) {
@@ -465,18 +457,12 @@ fun UsernameField(
         },
         singleLine = true,
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .focusRequester(focusRequester),
         shape = RoundedCornerShape(12.dp),
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedBorderColor = Color(0xFF47C7FF),
-            unfocusedBorderColor = Color(0xFFC0C0C0),
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black,
-        )
+        colors = defaultTextFieldColors()
     )
 
 }
@@ -489,29 +475,13 @@ fun PasswordField(
     toggle: () -> Unit,
     error: String?
 ) {
-    Text(
-        text = "Password",
-        color = Color.Black,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 5.dp)
-    )
-
+    FieldName("Password")
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
         isError = error != null,
-        supportingText = {
-            error?.let { Text(it) }
-        },
-        placeholder = {
-            Text(
-                "Enter your password",
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.Gray
-            )
-        },
+        supportingText = { error?.let { Text(it) } },
+        placeholder = { PlaceHolderText("Enter your password") },
         singleLine = true,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
@@ -525,14 +495,7 @@ fun PasswordField(
         modifier = Modifier
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedBorderColor = Color(0xFF47C7FF),
-            unfocusedBorderColor = Color(0xFFC0C0C0),
-            focusedTextColor = Color.Black,
-            unfocusedTextColor = Color.Black,
-        )
+        colors = defaultTextFieldColors()
     )
 }
 
@@ -573,3 +536,37 @@ fun SignInButton(
 
     }
 }
+
+@Composable
+fun FieldName(name: String) {
+    Text(
+        text = name,
+        color = Color.Black,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 5.dp)
+    )
+}
+
+@Composable
+fun PlaceHolderText(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = Color.Gray
+    )
+}
+
+@Composable
+fun defaultTextFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = Color.White,
+    unfocusedContainerColor = Color.White,
+    focusedBorderColor = Color(0xFF47C7FF),
+    unfocusedBorderColor = Color(0xFFC0C0C0),
+    focusedTextColor = Color.Black,
+    unfocusedTextColor = Color.Black,
+    disabledContainerColor = Color.White,
+    disabledTextColor = Color.Black,
+    disabledBorderColor = Color(0xFFC0C0C0),
+)
