@@ -195,9 +195,7 @@ fun AuthScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .pointerInput(Unit) {
-                detectTapGestures(onTap = { focusManager.clearFocus() })
-            },
+            .pointerInput(Unit) { detectTapGestures(onTap = { focusManager.clearFocus() }) },
         contentAlignment = Alignment.Center
     ) {
 
@@ -212,9 +210,7 @@ fun AuthScreen(
         ) {
 
             Image(
-                painter = painterResource(
-                    id = R.drawable.entebus_logo
-                ),
+                painter = painterResource(id = R.drawable.entebus_logo),
                 contentDescription = "Logo",
                 modifier = Modifier
                     .size(130.dp)
@@ -311,15 +307,7 @@ fun CompanyDropdown(
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    Text(
-        text = "Company",
-        color = Color.Black,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 5.dp)
-    )
-
+    FieldName("Company")
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { if (!showLocationLoader && !showCompanyLoader) onExpandChange(it) },
@@ -468,15 +456,7 @@ fun UsernameField(
     error: String?,
     focusRequester: FocusRequester
 ) {
-    Text(
-        text = "Username",
-        color = Color.Black,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 5.dp)
-    )
-
+    FieldName("Username")
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
@@ -520,15 +500,7 @@ fun PasswordField(
     toggle: () -> Unit,
     error: String?
 ) {
-    Text(
-        text = "Password",
-        color = Color.Black,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 5.dp)
-    )
-
+    FieldName("Password")
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
@@ -603,4 +575,16 @@ fun SignInButton(
         }
 
     }
+}
+
+@Composable
+fun FieldName(name: String) {
+    Text(
+        text = name,
+        color = Color.Black,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 5.dp)
+    )
 }
