@@ -35,6 +35,7 @@ import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.components.loadingskeleton.PersonalDetailsSkeleton
 import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
+import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 
@@ -76,7 +77,10 @@ fun PersonalDetailsScreen(
             exitBtnBorderColor = MaterialTheme.colorScheme.primary
         )
     }
-
+    SetStatusBarColor(
+        color = Color.White,
+        darkIcons = true
+    )
     Column(
         modifier = Modifier
             .fillMaxSize()

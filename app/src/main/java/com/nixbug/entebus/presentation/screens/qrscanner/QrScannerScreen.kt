@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.ui.theme.PrimaryColor
 import com.nixbug.entebus.utils.QrCodeAnalyzer
+import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import java.util.concurrent.Executors
@@ -77,7 +78,10 @@ fun QrScannerScreen(
             viewModel.clearResult()
         }
     }
-
+    SetStatusBarColor(
+        color = Color.White,
+        darkIcons = true
+    )
     Box(
         modifier = Modifier
             .fillMaxSize()

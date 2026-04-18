@@ -75,6 +75,7 @@ import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.CameraPermissionHelper
+import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.isCameraAvailable
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
@@ -135,7 +136,10 @@ fun TicketScreen(
             exitBtnBorderColor = MaterialTheme.colorScheme.primary
         )
     }
-
+    SetStatusBarColor(
+        color = Color.White,
+        darkIcons = true
+    )
     Column(
         modifier = Modifier
             .statusBarsPadding()

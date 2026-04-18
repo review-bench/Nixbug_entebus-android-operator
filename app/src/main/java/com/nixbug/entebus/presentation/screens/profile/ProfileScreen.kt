@@ -54,12 +54,17 @@ import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
+import com.nixbug.entebus.utils.SetStatusBarColor
 
 @Composable
 fun ProfileScreen(
     rootNavController: NavHostController,
     viewModel: ProfileScreenViewModel = hiltViewModel()
 ) {
+    SetStatusBarColor(
+        color = MaterialTheme.colorScheme.primary,
+        darkIcons = false // because background is dark
+    )
     val state by viewModel.uiState.collectAsState()
     var showLogOutDialog by remember { mutableStateOf(false) }
 
