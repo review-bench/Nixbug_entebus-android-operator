@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -63,7 +64,7 @@ fun ProfileScreen(
 ) {
     SetStatusBarColor(
         color = MaterialTheme.colorScheme.primary,
-        darkIcons = false // because background is dark
+        darkIcons = false
     )
     val state by viewModel.uiState.collectAsState()
     var showLogOutDialog by remember { mutableStateOf(false) }
@@ -136,7 +137,8 @@ fun ProfileScreenTop(
             .fillMaxWidth()
             .background(
                 color = MaterialTheme.colorScheme.primary,
-            ),
+            )
+            .statusBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
