@@ -81,6 +81,7 @@ import com.nixbug.entebus.R
 import com.nixbug.entebus.domain.model.PublicCompanyModel
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.utils.LocationPermissionHelper
+import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 
@@ -190,7 +191,10 @@ fun AuthScreen(
             )
         }
     }
-
+    SetStatusBarColor(
+        color = Color.White,
+        darkIcons = true
+    )
     Box(
         modifier = Modifier
             .fillMaxSize()

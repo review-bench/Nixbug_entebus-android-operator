@@ -61,6 +61,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.components.printer.PrinterPickerDialog
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
+import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.utcToIstConverter
@@ -140,7 +141,10 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
             }
         }
     }
-
+    SetStatusBarColor(
+        color = Color.White,
+        darkIcons = true
+    )
     Box(
         modifier = Modifier
             .fillMaxSize()

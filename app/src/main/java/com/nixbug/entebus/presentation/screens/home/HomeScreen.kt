@@ -85,6 +85,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import com.nixbug.entebus.presentation.components.printer.PrinterPickerDialog
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
+import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 
@@ -161,7 +162,10 @@ fun HomeScreen(
             }
         }
     }
-
+    SetStatusBarColor(
+        color = Color.White,
+        darkIcons = true
+    )
     Box(
         modifier = Modifier
             .fillMaxSize()

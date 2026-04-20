@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -54,12 +55,17 @@ import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
+import com.nixbug.entebus.utils.SetStatusBarColor
 
 @Composable
 fun ProfileScreen(
     rootNavController: NavHostController,
     viewModel: ProfileScreenViewModel = hiltViewModel()
 ) {
+    SetStatusBarColor(
+        color = MaterialTheme.colorScheme.primary,
+        darkIcons = false
+    )
     val state by viewModel.uiState.collectAsState()
     var showLogOutDialog by remember { mutableStateOf(false) }
 
@@ -131,7 +137,8 @@ fun ProfileScreenTop(
             .fillMaxWidth()
             .background(
                 color = MaterialTheme.colorScheme.primary,
-            ),
+            )
+            .statusBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

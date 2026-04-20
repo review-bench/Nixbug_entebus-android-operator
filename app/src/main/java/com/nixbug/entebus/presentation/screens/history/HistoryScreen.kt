@@ -73,17 +73,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.utcToIstConverter
 
 @Composable
 fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
-
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
     var showSheet by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
     // TODO: Use searchText to filter dutyHistoryData once search functionality is implemented.
-
+    SetStatusBarColor(
+        color = Color.White,
+        darkIcons = true
+    )
     Box(
         modifier = Modifier
             .fillMaxSize()

@@ -30,6 +30,7 @@ import com.nixbug.entebus.R
 import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.utils.LocationPermissionHelper
+import com.nixbug.entebus.utils.SetStatusBarColor
 
 
 @Composable
@@ -133,7 +134,10 @@ fun LocationRequestScreen(
             exitBtnBorderColor = MaterialTheme.colorScheme.primary
         )
     }
-
+    SetStatusBarColor(
+        color = Color.White,
+        darkIcons = true
+    )
     Column(
         modifier = Modifier
             .fillMaxSize()
