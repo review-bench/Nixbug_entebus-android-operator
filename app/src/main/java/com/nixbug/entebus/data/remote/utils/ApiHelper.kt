@@ -32,6 +32,7 @@ suspend fun <T, R> apiHelper(
                 } catch (e: Exception) {
                     errorBody
                 }
+
             if (responseCode == 401 && errorMessage?.contains(
                     "Invalid token",
                     ignoreCase = true
@@ -68,6 +69,8 @@ suspend fun <T, R> apiHelper(
                 } catch (e: Exception) {
                     errorBody
                 }
+            } else if (responseCode >= 500) {
+                errorMessage = "Server error. Please try again later."
             } else {
                 errorMessage = errorMessage ?: "Request failed (HTTP $responseCode)"
             }
