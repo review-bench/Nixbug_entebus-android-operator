@@ -109,7 +109,7 @@ fun PersonalDetailsScreen(
                     navController.popBackStack()
                 }
             },
-            showTopBarActions = !uiState.isEditMode,
+            showTopBarActions = !uiState.isEditMode && !uiState.isUpdating,
             primaryActionText = "Edit",
             primaryActionIcon = Icons.Default.Edit,
             onPrimaryActionClick = { viewModel.onStartEdit() },

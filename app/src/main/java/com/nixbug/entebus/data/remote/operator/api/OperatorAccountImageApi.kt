@@ -3,10 +3,8 @@ package com.nixbug.entebus.data.remote.operator.api
 import com.nixbug.entebus.data.remote.operator.model.accountimage.AppApiOperatorImageOrderBy
 import com.nixbug.entebus.data.remote.operator.model.accountimage.OperatorImageSchema
 import com.nixbug.entebus.data.remote.operator.model.account.OrderIn
-import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
-import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface OperatorAccountImageApi {
