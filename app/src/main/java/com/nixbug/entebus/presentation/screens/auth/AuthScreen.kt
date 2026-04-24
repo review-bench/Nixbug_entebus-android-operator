@@ -246,7 +246,9 @@ fun AuthScreen(
                 onQueryChange = viewModel::onCompanyQueryChange,
                 onSelect = {
                     viewModel.onCompanySelected(it)
-                    usernameFocusRequester.requestFocus()
+                    if (state.userName.isBlank()) {
+                        usernameFocusRequester.requestFocus()
+                    }
                 },
                 clearSelectedCompany = viewModel::clearSelectedCompany,
                 clearSearchQuery = viewModel::clearSearchQuery,
