@@ -10,7 +10,7 @@ import com.nixbug.entebus.domain.repository.OperatorAccountRepository
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.domain.model.OperatorAccountModel
 import com.nixbug.entebus.domain.model.OperatorAccountUpdateRequest
-import com.nixbug.entebus.utils.network.apiHelper
+import com.nixbug.entebus.data.remote.utils.apiHelper
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject

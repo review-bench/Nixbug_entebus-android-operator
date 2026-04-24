@@ -1,7 +1,8 @@
-package com.nixbug.entebus.utils.network
+package com.nixbug.entebus.data.remote.utils
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.nixbug.entebus.utils.network.Resource
 import retrofit2.Response
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException

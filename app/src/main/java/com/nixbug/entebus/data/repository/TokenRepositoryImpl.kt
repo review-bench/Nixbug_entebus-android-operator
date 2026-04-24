@@ -9,7 +9,7 @@ import com.nixbug.entebus.domain.model.CreateTokenModel
 import com.nixbug.entebus.domain.model.local.AuthToken
 import com.nixbug.entebus.domain.repository.TokenRepository
 import com.nixbug.entebus.utils.network.Resource
-import com.nixbug.entebus.utils.network.apiHelper
+import com.nixbug.entebus.data.remote.utils.apiHelper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

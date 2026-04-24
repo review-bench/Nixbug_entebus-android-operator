@@ -6,7 +6,7 @@ import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
 import com.nixbug.entebus.domain.model.OperatorAccountImageModel
 import com.nixbug.entebus.domain.repository.OperatorAccountImageRepository
 import com.nixbug.entebus.utils.network.Resource
-import com.nixbug.entebus.utils.network.apiHelper
+import com.nixbug.entebus.data.remote.utils.apiHelper
 import javax.inject.Inject
 
 class OperatorAccountImageRepositoryImpl @Inject constructor(

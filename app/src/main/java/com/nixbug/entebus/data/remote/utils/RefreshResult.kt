@@ -1,4 +1,4 @@
-package com.nixbug.entebus.utils.network
+package com.nixbug.entebus.data.remote.utils
 
 sealed class RefreshResult {
     data class Success(val token: String) : RefreshResult()
