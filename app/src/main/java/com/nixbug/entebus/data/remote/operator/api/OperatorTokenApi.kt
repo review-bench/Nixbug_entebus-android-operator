@@ -34,7 +34,7 @@ interface OperatorTokenApi {
      */
     @FormUrlEncoded
     @POST("company/account/token")
-    suspend fun createTokenCompanyAccountTokenPost(
+    suspend fun createToken(
         @Field("company_id") companyId: Int,
         @Field("username") username: String,
         @Field("password") password: String,
@@ -63,7 +63,7 @@ interface OperatorTokenApi {
      */
     @FormUrlEncoded
     @POST("company/account/token/refresh")
-    suspend fun refreshTokenCompanyAccountTokenRefreshPost(
+    suspend fun refreshAccessToken(
         @Field("refresh_token") refreshToken: String,
         @Field("grant_type") grantType: GrantType? = null
     ): Response<OperatorTokenSchema>
@@ -82,6 +82,6 @@ interface OperatorTokenApi {
      */
     @FormUrlEncoded
     @POST("company/account/token/revoke")
-    suspend fun revokeTokenCompanyAccountTokenRevokePost(@Field("token") token: String): Response<Any>
+    suspend fun revokeToken(@Field("token") token: String): Response<Any>
 
 }

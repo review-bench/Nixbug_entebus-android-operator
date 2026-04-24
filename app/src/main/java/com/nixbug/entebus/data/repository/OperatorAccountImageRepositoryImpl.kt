@@ -22,7 +22,7 @@ class OperatorAccountImageRepositoryImpl @Inject constructor(
         }
         return apiHelper(
             apiCall = {
-                accountImageApi.fetchOperatorAccountImage(operatorId = operatorId)
+                accountImageApi.getOperatorAccountImages(operatorId = operatorId)
             },
             mapper = { responseList ->
                 responseList.map { it.toOperatorAccountImageDomain() }

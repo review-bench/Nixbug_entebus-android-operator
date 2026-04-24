@@ -37,7 +37,7 @@ interface OperatorAccountImageApi {
      * @return [kotlin.collections.List<OperatorImageSchema>]
      */
     @GET("company/account/picture")
-    suspend fun fetchOperatorAccountImage(
+    suspend fun getOperatorAccountImages(
         @Query("offset") offset: kotlin.Int? = 0,
         @Query("limit") limit: kotlin.Int? = 20,
         @Query("id") id: kotlin.Int? = null,
@@ -54,26 +54,4 @@ interface OperatorAccountImageApi {
         @Query("order_by") orderBy: AppApiOperatorImageOrderBy? = null,
         @Query("order_in") orderIn: OrderIn? = null
     ): Response<kotlin.collections.List<OperatorImageSchema>>
-
-    /**
-     * GET company/account/picture/{id}
-     * Download Operator Image For Operator
-     * **Download operator profile picture in original or resized resolution.**                 - Requires a valid access token for authentication.
-     * Responses:
-     *  - 200: Successful Response
-     *  - 401: Unauthorized
-     *  - 404: Not Found
-     *  - 422: Validation Error
-     *
-     * @param id
-     * @param width  (optional)
-     * @param height  (optional)
-     * @return [kotlin.Any]
-     */
-    @GET("company/account/picture/{id}")
-    suspend fun downloadOperatorImageForOperatorCompanyAccountPictureIdGet(
-        @Path("id") id: kotlin.Int,
-        @Query("width") width: kotlin.Int? = null,
-        @Query("height") height: kotlin.Int? = null
-    ): Response<ResponseBody>
 }

@@ -29,7 +29,7 @@ class TokenRepositoryImpl @Inject constructor(
 
         return apiHelper(
             apiCall = {
-                tokenApi.createTokenCompanyAccountTokenPost(
+                tokenApi.createToken(
                     companyId = companyId,
                     username = username,
                     password = password,
@@ -61,7 +61,7 @@ class TokenRepositoryImpl @Inject constructor(
     override suspend fun revokeToken(token: String): Resource<Unit> {
         return apiHelper(
             apiCall = {
-                tokenApi.revokeTokenCompanyAccountTokenRevokePost(
+                tokenApi.revokeToken(
                     token = token
                 )
             },

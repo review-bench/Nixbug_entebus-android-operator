@@ -21,7 +21,7 @@ class PublicCompanyRepositoryImpl @Inject constructor(
     ): Resource<List<PublicCompanyModel>> {
         return apiHelper(
             apiCall = {
-                companyApi.fetchCompanyPublicCompanyGet(
+                companyApi.getPublicCompanies(
                     name = name,
                     location = location,
                     offset = offset,

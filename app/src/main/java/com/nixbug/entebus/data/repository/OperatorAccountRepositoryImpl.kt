@@ -31,7 +31,7 @@ class OperatorAccountRepositoryImpl @Inject constructor(
         }
         return apiHelper(
             apiCall = {
-                accountApi.fetchAccountOperatorCompanyAccountGet(id = operatorId)
+                accountApi.getOperatorAccounts(id = operatorId)
             },
             mapper = { responseList ->
                 responseList.map { it.toOperatorAccountDomain() }
@@ -73,7 +73,7 @@ class OperatorAccountRepositoryImpl @Inject constructor(
 
         return apiHelper(
             apiCall = {
-                accountApi.updateAccountOperatorCompanyAccountIdPatch(
+                accountApi.updateOperatorAccount(
                     id = operatorId,
                     body = body
                 )

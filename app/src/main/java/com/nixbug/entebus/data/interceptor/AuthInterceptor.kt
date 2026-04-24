@@ -134,7 +134,7 @@ class AuthInterceptor @Inject constructor(
                 }
                 try {
                     val response = tokenApiNoAuth.get()
-                        .refreshTokenCompanyAccountTokenRefreshPost(
+                        .refreshAccessToken(
                             refreshToken = refreshToken,
                             grantType = GrantType.refresh_token
                         )
