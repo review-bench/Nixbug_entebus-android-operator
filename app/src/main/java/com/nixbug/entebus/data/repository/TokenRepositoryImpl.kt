@@ -1,7 +1,7 @@
 package com.nixbug.entebus.data.repository
 
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
-import com.nixbug.entebus.data.local.mapper.toDomain
+import com.nixbug.entebus.data.local.datastore.mapper.toDomain
 import com.nixbug.entebus.data.mapper.toTokenDomain
 import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
 import com.nixbug.entebus.data.remote.operator.model.token.PlatformType

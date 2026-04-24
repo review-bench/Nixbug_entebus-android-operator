@@ -1,4 +1,4 @@
-package com.nixbug.entebus.data.local.model
+package com.nixbug.entebus.data.local.datastore.model
 
 data class AuthTokenLocal(
     val operatorId: Int?,

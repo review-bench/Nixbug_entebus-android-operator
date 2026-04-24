@@ -3,7 +3,7 @@ package com.nixbug.entebus.data.local.datastore.token
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import com.nixbug.entebus.data.local.model.AuthTokenLocal
+import com.nixbug.entebus.data.local.datastore.model.AuthTokenLocal
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

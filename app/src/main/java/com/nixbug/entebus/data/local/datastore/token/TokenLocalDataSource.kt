@@ -1,6 +1,6 @@
 package com.nixbug.entebus.data.local.datastore.token
 
-import com.nixbug.entebus.data.local.model.AuthTokenLocal
+import com.nixbug.entebus.data.local.datastore.model.AuthTokenLocal
 import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.domain.model.CreateTokenModel
 import kotlinx.coroutines.flow.Flow
