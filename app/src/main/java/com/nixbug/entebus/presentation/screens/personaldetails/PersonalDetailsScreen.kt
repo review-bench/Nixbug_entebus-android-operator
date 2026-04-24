@@ -176,12 +176,12 @@ fun PersonalDetailsScreen(
 
                         // Full Name
                         val valueToShow = if (uiState.isEditMode) {
-                            uiState.editedFullName ?: ""
+                            uiState.editedFullName
                         } else {
                             uiState.fullName
                                 ?.replaceFirstChar {
                                     if (it.isLowerCase()) it.titlecase() else it.toString()
-                                } ?: ""
+                                }
                         }
                         EditableInfoRow(
                             placeHolder = "Enter Your Full Name",
