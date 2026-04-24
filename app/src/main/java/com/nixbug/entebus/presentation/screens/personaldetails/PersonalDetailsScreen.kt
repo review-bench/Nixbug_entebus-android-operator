@@ -109,19 +109,10 @@ fun PersonalDetailsScreen(
                     navController.popBackStack()
                 }
             },
-            showTopBarActions = true,
+            showTopBarActions = !uiState.isEditMode,
             primaryActionText = "Edit",
             primaryActionIcon = Icons.Default.Edit,
-            onPrimaryActionClick = {
-                if (uiState.isEditMode) {
-                    SnackbarManager.show(
-                        message = "You are already in edit mode",
-                        type = SnackbarType.INFO
-                    )
-                } else {
-                    viewModel.onStartEdit()
-                }
-            },
+            onPrimaryActionClick = { viewModel.onStartEdit() },
             paddingEnd = 16.dp
         )
 
