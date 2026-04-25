@@ -39,7 +39,7 @@ interface OperatorLandmarkApi {
      * @return [kotlin.collections.List<LandmarkSchema>]
      */
     @GET("landmark")
-    suspend fun fetchLandmarkOperatorLandmarkGet(
+    suspend fun getLandmark(
         @Query("offset") offset: kotlin.Int? = 0,
         @Query("limit") limit: kotlin.Int? = 20,
         @Query("id") id: kotlin.Int? = null,

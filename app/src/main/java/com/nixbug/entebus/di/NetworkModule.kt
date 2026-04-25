@@ -5,6 +5,7 @@ import com.nixbug.entebus.BuildConfig
 import com.nixbug.entebus.data.interceptor.AuthInterceptor
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorLandmarkApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
 import com.nixbug.entebus.data.remote.publicapi.api.PublicCompanyApi
@@ -90,5 +91,9 @@ object NetworkModule {
 
     fun provideServiceApi(@OperatorApi retrofit: Retrofit): OperatorServiceApi {
         return retrofit.create(OperatorServiceApi::class.java)
+    }
+
+    fun provideLandmarkApi(@OperatorApi retrofit: Retrofit): OperatorLandmarkApi {
+        return retrofit.create(OperatorLandmarkApi::class.java)
     }
 }

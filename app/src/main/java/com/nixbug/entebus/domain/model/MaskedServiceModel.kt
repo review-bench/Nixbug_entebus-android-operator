@@ -7,6 +7,12 @@ data class MaskedServiceModel(
     val registrationNumber: String,
     val startingLandmarkId: Int?,
     val endingLandmarkId: Int?,
+
+    val startingLandmarkName: String?,
+    val startingLandmarkAlias: List<String>?,
+    val endingLandmarkName: String?,
+    val endingLandmarkAlias: List<String>?,
+
     val ticketMode: Int,
     val remark: String?,
     val startingAt: String,

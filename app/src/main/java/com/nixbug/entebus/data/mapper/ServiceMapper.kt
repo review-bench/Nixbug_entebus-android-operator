@@ -17,6 +17,11 @@ fun ServiceSchema.toMaskedServiceDomain(): MaskedServiceModel {
         startingAt = startingAt,
         endingAt = endingAt,
         updatedOn = updatedOn,
-        createdOn = createdOn
+        createdOn = createdOn,
+
+        startingLandmarkName = null,
+        startingLandmarkAlias = null,
+        endingLandmarkName = null,
+        endingLandmarkAlias = null,
     )
 }
