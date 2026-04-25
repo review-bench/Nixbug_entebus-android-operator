@@ -1,4 +1,4 @@
-package com.nixbug.entebus.domain.model
+package com.nixbug.entebus.domain.model.local
 
 data class UserModel(
     val companyId: Int?,

@@ -1,7 +1,7 @@
 package com.nixbug.entebus.data.repository
 
 import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
-import com.nixbug.entebus.domain.model.UserModel
+import com.nixbug.entebus.domain.model.local.UserModel
 import com.nixbug.entebus.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject

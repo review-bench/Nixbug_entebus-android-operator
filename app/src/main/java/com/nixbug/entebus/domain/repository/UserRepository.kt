@@ -1,6 +1,6 @@
 package com.nixbug.entebus.domain.repository
 
-import com.nixbug.entebus.domain.model.UserModel
+import com.nixbug.entebus.domain.model.local.UserModel
 import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
