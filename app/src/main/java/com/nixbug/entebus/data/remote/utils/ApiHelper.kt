@@ -1,7 +1,8 @@
-package com.nixbug.entebus.utils.network
+package com.nixbug.entebus.data.remote.utils
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.nixbug.entebus.utils.network.Resource
 import retrofit2.Response
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
@@ -31,6 +32,7 @@ suspend fun <T, R> apiHelper(
                 } catch (e: Exception) {
                     errorBody
                 }
+
             if (responseCode == 401 && errorMessage?.contains(
                     "Invalid token",
                     ignoreCase = true
@@ -67,6 +69,8 @@ suspend fun <T, R> apiHelper(
                 } catch (e: Exception) {
                     errorBody
                 }
+            } else if (responseCode >= 500) {
+                errorMessage = "Server error. Please try again later."
             } else {
                 errorMessage = errorMessage ?: "Request failed (HTTP $responseCode)"
             }

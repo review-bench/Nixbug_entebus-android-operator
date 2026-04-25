@@ -50,7 +50,7 @@ interface OperatorAccountApi {
      * @return [kotlin.collections.List<OperatorSchema>]
      */
     @GET("company/account")
-    suspend fun fetchAccountOperatorCompanyAccountGet(
+    suspend fun getOperatorAccounts(
         @Query("offset") offset: Int? = 0,
         @Query("limit") limit: Int? = 20,
         @Query("id") id: Int? = null,
@@ -89,7 +89,7 @@ interface OperatorAccountApi {
      * @return [OperatorSchema]
      */
     @PATCH("company/account/{id}")
-    suspend fun updateAccountOperatorCompanyAccountIdPatch(
+    suspend fun updateOperatorAccount(
         @Path("id") id: Int,
         @Body body: RequestBody
     ): Response<OperatorSchema>

@@ -7,7 +7,7 @@ import com.nixbug.entebus.data.remote.operator.model.token.GrantType
 import com.nixbug.entebus.di.NoAuthApi
 import com.nixbug.entebus.domain.model.CreateTokenModel
 import com.nixbug.entebus.domain.repository.SessionRepository
-import com.nixbug.entebus.utils.network.RefreshResult
+import com.nixbug.entebus.data.remote.utils.RefreshResult
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -134,7 +134,7 @@ class AuthInterceptor @Inject constructor(
                 }
                 try {
                     val response = tokenApiNoAuth.get()
-                        .refreshTokenCompanyAccountTokenRefreshPost(
+                        .refreshAccessToken(
                             refreshToken = refreshToken,
                             grantType = GrantType.refresh_token
                         )

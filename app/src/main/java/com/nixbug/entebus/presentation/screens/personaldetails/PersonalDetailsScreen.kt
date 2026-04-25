@@ -109,19 +109,10 @@ fun PersonalDetailsScreen(
                     navController.popBackStack()
                 }
             },
-            showTopBarActions = true,
+            showTopBarActions = !uiState.isEditMode && !uiState.isUpdating,
             primaryActionText = "Edit",
             primaryActionIcon = Icons.Default.Edit,
-            onPrimaryActionClick = {
-                if (uiState.isEditMode) {
-                    SnackbarManager.show(
-                        message = "You are already in edit mode",
-                        type = SnackbarType.INFO
-                    )
-                } else {
-                    viewModel.onStartEdit()
-                }
-            },
+            onPrimaryActionClick = { viewModel.onStartEdit() },
             paddingEnd = 16.dp
         )
 
@@ -176,12 +167,12 @@ fun PersonalDetailsScreen(
 
                         // Full Name
                         val valueToShow = if (uiState.isEditMode) {
-                            uiState.editedFullName ?: ""
+                            uiState.editedFullName
                         } else {
                             uiState.fullName
                                 ?.replaceFirstChar {
                                     if (it.isLowerCase()) it.titlecase() else it.toString()
-                                } ?: ""
+                                }
                         }
                         EditableInfoRow(
                             placeHolder = "Enter Your Full Name",

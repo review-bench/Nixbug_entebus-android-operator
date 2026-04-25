@@ -37,7 +37,7 @@ interface PublicCompanyApi {
      * @return [kotlin.collections.List<MaskedCompanySchema>]
      */
     @GET("company")
-    suspend fun fetchCompanyPublicCompanyGet(
+    suspend fun getPublicCompanies(
         @Query("updated_on_ge") updatedOnGe: kotlin.String? = null,
         @Query("updated_on_le") updatedOnLe: kotlin.String? = null,
         @Query("offset") offset: kotlin.Int? = 0,

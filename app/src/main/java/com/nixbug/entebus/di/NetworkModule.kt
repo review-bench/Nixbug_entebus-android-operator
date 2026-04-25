@@ -7,7 +7,7 @@ import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
 import com.nixbug.entebus.data.remote.publicapi.api.PublicCompanyApi
-import com.nixbug.entebus.utils.network.NullOnEmptyConverterFactory
+import com.nixbug.entebus.data.remote.utils.NullOnEmptyConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

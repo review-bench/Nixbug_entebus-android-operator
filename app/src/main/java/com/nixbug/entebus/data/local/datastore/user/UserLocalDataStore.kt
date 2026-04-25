@@ -3,6 +3,7 @@ package com.nixbug.entebus.data.local.datastore.user
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import com.nixbug.entebus.data.local.datastore.model.UserLocalModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

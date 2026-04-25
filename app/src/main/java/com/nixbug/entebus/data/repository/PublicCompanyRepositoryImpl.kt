@@ -6,7 +6,7 @@ import com.nixbug.entebus.data.remote.publicapi.model.company.AppApiCompanyOrder
 import com.nixbug.entebus.data.remote.publicapi.model.company.OrderIn
 import com.nixbug.entebus.domain.repository.PublicCompanyRepository
 import com.nixbug.entebus.utils.network.Resource
-import com.nixbug.entebus.utils.network.apiHelper
+import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.PublicCompanyModel
 import javax.inject.Inject
 
@@ -21,7 +21,7 @@ class PublicCompanyRepositoryImpl @Inject constructor(
     ): Resource<List<PublicCompanyModel>> {
         return apiHelper(
             apiCall = {
-                companyApi.fetchCompanyPublicCompanyGet(
+                companyApi.getPublicCompanies(
                     name = name,
                     location = location,
                     offset = offset,
