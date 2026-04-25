@@ -8,16 +8,19 @@ import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
+import com.nixbug.entebus.data.remote.operator.api.ServiceApi
 import com.nixbug.entebus.data.remote.publicapi.api.PublicCompanyApi
 import com.nixbug.entebus.data.repository.OperatorAccountImageRepositoryImpl
 import com.nixbug.entebus.data.repository.OperatorAccountRepositoryImpl
 import com.nixbug.entebus.data.repository.PublicCompanyRepositoryImpl
+import com.nixbug.entebus.data.repository.ServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.SessionRepositoryImpl
 import com.nixbug.entebus.data.repository.TokenRepositoryImpl
 import com.nixbug.entebus.data.repository.UserRepositoryImpl
 import com.nixbug.entebus.domain.repository.OperatorAccountImageRepository
 import com.nixbug.entebus.domain.repository.OperatorAccountRepository
 import com.nixbug.entebus.domain.repository.PublicCompanyRepository
+import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.domain.repository.SessionRepository
 import com.nixbug.entebus.domain.repository.TokenRepository
 import com.nixbug.entebus.domain.repository.UserRepository
@@ -80,5 +83,11 @@ object RepositoryModule {
         tokenManager: TokenManager
     ): OperatorAccountImageRepository {
         return OperatorAccountImageRepositoryImpl(api, tokenManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideServiceRepository(api: ServiceApi): ServiceRepository {
+        return ServiceRepositoryImpl(api)
     }
 }
