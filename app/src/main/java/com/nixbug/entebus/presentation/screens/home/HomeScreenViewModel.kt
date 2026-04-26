@@ -4,7 +4,9 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
+import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
@@ -23,7 +25,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val printerManager: PrinterManager
+    private val printerManager: PrinterManager,
+    private  val getMaskedServicesUseCase: GetServiceUseCase
 ) : ViewModel() {
 
     // STATE
@@ -216,11 +219,31 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     fun onDownloadService(service: HomeUiModel) {
-        _uiState.update { state ->
-            state.copy(
-                downloadedServiceList = state.downloadedServiceList + service,
-                otherServiceList = state.otherServiceList.filter { it.id != service.id }
-            )
+//        _uiState.update { state ->
+//            state.copy(
+//                downloadedServiceList = state.downloadedServiceList + service,
+//                otherServiceList = state.otherServiceList.filter { it.id != service.id }
+//            )
+//        }
+        viewModelScope.launch {
+            val result = getMaskedServicesUseCase()
+            when (result) {
+                is Resource.Success -> {
+                    val maskedServices = result.data
+                    println("maskedServices ,${maskedServices}")
+                    // Update UI state with masked services if needed
+                }
+                is Resource.Error -> {
+                    SnackbarManager.show(
+                        "Failed to download service details: ${result.message}",
+                        SnackbarType.ERROR
+                    )
+                }
+
+                is Resource.Empty<*> -> TODO()
+                is Resource.Loading<*> -> TODO()
+            }
+            // handle UI state
         }
     }
 

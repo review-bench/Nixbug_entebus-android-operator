@@ -89,10 +89,12 @@ object NetworkModule {
         return retrofit.create(OperatorAccountImageApi::class.java)
     }
 
+    @Provides
     fun provideServiceApi(@OperatorApi retrofit: Retrofit): OperatorServiceApi {
         return retrofit.create(OperatorServiceApi::class.java)
     }
 
+    @Provides
     fun provideLandmarkApi(@OperatorApi retrofit: Retrofit): OperatorLandmarkApi {
         return retrofit.create(OperatorLandmarkApi::class.java)
     }
