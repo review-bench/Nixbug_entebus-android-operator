@@ -8,10 +8,10 @@ data class HomeUiModel(
     val startingLandmarkId: Int?,
     val endingLandmarkId: Int?,
 
-    val startingLandmarkName: String?,
-    val startingLandmarkAlias: List<String>?,
-    val endingLandmarkName: String?,
-    val endingLandmarkAlias: List<String>?,
+    val startingLandmarkName: String = "N/A",
+    val startingLandmarkAlias: List<String> = emptyList(),
+    val endingLandmarkName: String = "N/A",
+    val endingLandmarkAlias: List<String> = emptyList(),
 
     val ticketMode: Int,
     val remark: String?,

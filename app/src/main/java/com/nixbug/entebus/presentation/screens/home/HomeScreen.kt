@@ -259,9 +259,9 @@ fun HomeScreen(
         DialogBox(
             title = "Finish Duty?",
             message = "Are you sure you want to finish your duty on the ${
-                finishDutyService?.startingLandmarkName
+                finishDutyService?.startingLandmarkName ?: "starting point"
             }-> ${
-                finishDutyService?.endingLandmarkName
+                finishDutyService?.endingLandmarkName ?: "ending point"
             } service?",
             confirmText = "Finish",
             onConfirmClick = {
@@ -730,7 +730,7 @@ fun ServiceCard(
 
             //-------------- ROUTE NAME ----------------------//
             Text(
-                text = "${service.startingLandmarkName} -> ${service.endingLandmarkName}",
+                text = "${service.startingLandmarkName ?: "N/A"} -> ${service.endingLandmarkName ?: "N/A"}",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 3.dp),
                 color = Color.Black
