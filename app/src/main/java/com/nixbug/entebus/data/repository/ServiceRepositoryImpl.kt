@@ -1,6 +1,5 @@
 package com.nixbug.entebus.data.repository
 
-import com.nixbug.entebus.data.mapper.toMaskedServiceDomain
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.MaskedServiceModel
@@ -18,7 +17,7 @@ class ServiceRepositoryImpl @Inject constructor(
 
         val serviceResult = apiHelper(
             apiCall = { serviceApi.getMaskedService() },
-            mapper = { it } // no mapping yet
+            mapper = { it }
         )
 
         if (serviceResult !is Resource.Success) {

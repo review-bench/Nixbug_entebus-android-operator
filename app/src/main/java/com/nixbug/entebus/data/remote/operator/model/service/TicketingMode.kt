@@ -38,10 +38,10 @@ enum class TicketingMode(val value: Int) {
          * Returns a valid [TicketingMode] for [data], null otherwise.
          */
         fun decode(data: Any?): TicketingMode? = data?.let {
-          val normalizedData = "$it".lowercase()
-          values().firstOrNull { value ->
-            it == value || normalizedData == "$value".lowercase()
-          }
+            val normalizedData = "$it".lowercase()
+            values().firstOrNull { value ->
+                it == value || normalizedData == "$value".lowercase()
+            }
         }
     }
 }

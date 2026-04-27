@@ -16,7 +16,7 @@ import com.google.gson.annotations.SerializedName
  */
 
 
-data class LandmarkSchema (
+data class LandmarkSchema(
 
     @SerializedName("id")
     val id: Int,

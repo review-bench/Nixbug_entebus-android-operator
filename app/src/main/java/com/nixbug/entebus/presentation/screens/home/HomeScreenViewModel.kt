@@ -240,8 +240,7 @@ class HomeScreenViewModel @Inject constructor(
                     )
                 }
 
-                is Resource.Empty<*> -> TODO()
-                is Resource.Loading<*> -> TODO()
+              else -> {}
             }
             // handle UI state
         }

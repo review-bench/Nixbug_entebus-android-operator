@@ -21,7 +21,7 @@ import com.google.gson.annotations.SerializedName
  */
 
 
-data class ServiceSchema (
+data class ServiceSchema(
 
     @SerializedName("id")
     val id: Int,

@@ -44,10 +44,10 @@ enum class AppApiServiceOrderBy(val value: String) {
          * Returns a valid [AppApiServiceOrderBy] for [data], null otherwise.
          */
         fun decode(data: Any?): AppApiServiceOrderBy? = data?.let {
-          val normalizedData = "$it".lowercase()
-          values().firstOrNull { value ->
-            it == value || normalizedData == "$value".lowercase()
-          }
+            val normalizedData = "$it".lowercase()
+            values().firstOrNull { value ->
+                it == value || normalizedData == "$value".lowercase()
+            }
         }
     }
 }

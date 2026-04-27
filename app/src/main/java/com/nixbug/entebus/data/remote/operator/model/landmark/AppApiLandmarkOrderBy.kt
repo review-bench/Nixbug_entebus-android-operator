@@ -41,10 +41,10 @@ enum class AppApiLandmarkOrderBy(val value: String) {
          * Returns a valid [AppApiLandmarkOrderBy] for [data], null otherwise.
          */
         fun decode(data: Any?): AppApiLandmarkOrderBy? = data?.let {
-          val normalizedData = "$it".lowercase()
-          values().firstOrNull { value ->
-            it == value || normalizedData == "$value".lowercase()
-          }
+            val normalizedData = "$it".lowercase()
+            values().firstOrNull { value ->
+                it == value || normalizedData == "$value".lowercase()
+            }
         }
     }
 }

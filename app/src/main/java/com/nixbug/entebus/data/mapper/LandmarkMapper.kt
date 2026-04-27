@@ -8,6 +8,5 @@ fun LandmarkSchema.toLandmarkDomain(): LandmarkModel {
         id = id,
         name = name,
         aliasNames = aliasNames
-
     )
 }
