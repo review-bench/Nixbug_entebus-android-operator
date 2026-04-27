@@ -1,5 +1,6 @@
 package com.nixbug.entebus.data.remote.operator.api
 
+import com.nixbug.entebus.data.remote.operator.model.service.PrivateServiceSchema
 import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceOrderBy
 import com.nixbug.entebus.data.remote.operator.model.service.ServiceSchema
 import com.nixbug.entebus.data.remote.operator.model.service.ServiceStatus
@@ -7,6 +8,7 @@ import com.nixbug.entebus.data.remote.operator.model.service.TicketingMode
 import com.nixbug.entebus.data.remote.operator.model.service.OrderIn
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface OperatorServiceApi {
@@ -72,4 +74,24 @@ interface OperatorServiceApi {
         @Query("order_in") orderIn: OrderIn? = null,
         @Query("id_excluding") idExcluding: @JvmSuppressWildcards kotlin.collections.List<kotlin.Int>? = null
     ): Response<kotlin.collections.List<ServiceSchema>>
+
+    /**
+     * GET company/service/{id}
+     * Fetch Service Details For Operator
+     * **Fetch a service by its ID.**                 - Requires a valid access token for authentication.                 - If &#x60;marked_as_cached&#x60; query parameter is set to true, and the service status is currently CREATED, the status will be updated to CACHED.
+     * Responses:
+     *  - 200: Successful Response
+     *  - 401: Unauthorized
+     *  - 404: Not Found
+     *  - 422: Validation Error
+     *
+     * @param id
+     * @param markedAsCached  (optional, default to false)
+     * @return [PrivateServiceSchema]
+     */
+    @GET("company/service/{id}")
+    suspend fun getServiceDetailsF(
+        @Path("id") id: kotlin.Int,
+        @Query("marked_as_cached") markedAsCached: kotlin.Boolean? = false
+    ): Response<PrivateServiceSchema>
 }
