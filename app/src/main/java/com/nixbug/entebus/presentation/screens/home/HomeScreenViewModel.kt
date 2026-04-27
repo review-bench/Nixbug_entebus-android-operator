@@ -374,33 +374,6 @@ class HomeScreenViewModel @Inject constructor(
     // HELPERS
 
     /**
-     * Extracts a clean route name from a service name string.
-     *
-     * This function removes:
-     * 1. A leading date and time prefix in the format:
-     *    `yyyy-MM-dd hh:mm AM/PM`
-     * 2. Any trailing registration or metadata enclosed in parentheses.
-     *
-     * Example:
-     * Input:  "2024-12-10 08:30 AM City Center -> Airport (KL-01-AB-1234)"
-     * Output: "City Center -> Airport"
-     *
-     * @param fullName The full service name received from the backend.
-     * @return A trimmed, user-friendly route name.
-     */
-    fun extractRouteName(fullName: String): String {
-        val noDateTime = fullName.replace(
-            Regex("""^\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}\s*(AM|PM)\s*"""), ""
-        )
-
-        val noReg = noDateTime.replace(
-            Regex("""\s*\([^)]*\)\s*$"""), ""
-        )
-
-        return noReg.trim()
-    }
-
-    /**
      * Determines whether a service can be started based on its scheduled start time.
      *
      * A service is eligible to start if its IST start time is within
