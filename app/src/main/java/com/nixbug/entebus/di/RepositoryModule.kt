@@ -90,7 +90,10 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideServiceRepository(api: OperatorServiceApi,landmarkRepository: LandmarkRepository): ServiceRepository {
+    fun provideServiceRepository(
+        api: OperatorServiceApi,
+        landmarkRepository: LandmarkRepository
+    ): ServiceRepository {
         return ServiceRepositoryImpl(
             api,
             landmarkRepository

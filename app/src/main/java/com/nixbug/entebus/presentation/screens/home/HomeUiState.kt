@@ -102,7 +102,7 @@ data class HomeUiState(
 
     val isConnectingPrinter: Boolean = false,
 
-    val otherServiceLoading: Boolean=false,
+    val otherServiceLoading: Boolean = false,
 
     val offset: Int = 0,
     val limit: Int = 20,

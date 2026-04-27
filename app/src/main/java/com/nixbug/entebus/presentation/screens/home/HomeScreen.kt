@@ -626,7 +626,7 @@ fun ServiceTabContent(
         item {
             Spacer(modifier = Modifier.height(10.dp))
 
-            if (onLoadMore != null) {   // 🔥 KEY FIX
+            if (onLoadMore != null) {
 
                 when {
                     isLoadingMore -> {
