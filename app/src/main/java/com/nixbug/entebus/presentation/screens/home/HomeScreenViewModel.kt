@@ -113,6 +113,7 @@ class HomeScreenViewModel @Inject constructor(
                 it.copy(
                     offset = 0,
                     hasMore = true,
+                    otherServiceList = emptyList(),
                     otherServiceLoading = true
                 )
             }
