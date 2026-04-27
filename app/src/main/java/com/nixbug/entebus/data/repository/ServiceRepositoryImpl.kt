@@ -67,8 +67,8 @@ class ServiceRepositoryImpl @Inject constructor(
 
         val finalList = services.map { service ->
 
-            val start = landmarkMap[service.startingLandmarkId]
-            val end = landmarkMap[service.endingLandmarkId]
+            val start = service.startingLandmarkId?.let { landmarkMap[it] }
+            val end = service.endingLandmarkId?.let { landmarkMap[it] }
 
             MaskedServiceModel(
                 id = service.id,
