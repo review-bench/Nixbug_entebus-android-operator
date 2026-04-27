@@ -79,9 +79,9 @@ class ServiceRepositoryImpl @Inject constructor(
                 endingLandmarkId = service.endingLandmarkId,
 
                 startingLandmarkName = start?.name ?: "N/A",
-                startingLandmarkAlias = start?.aliasNames?:emptyList(),
-                endingLandmarkName = end?.name?:"N/A",
-                endingLandmarkAlias = end?.aliasNames?:emptyList(),
+                startingLandmarkAlias = start?.aliasNames ?: emptyList(),
+                endingLandmarkName = end?.name ?: "N/A",
+                endingLandmarkAlias = end?.aliasNames ?: emptyList(),
 
                 ticketMode = service.ticketMode,
                 remark = service.remark,

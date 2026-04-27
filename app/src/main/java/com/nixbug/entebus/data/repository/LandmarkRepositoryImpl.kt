@@ -20,7 +20,7 @@ class LandmarkRepositoryImpl @Inject constructor(
 
         return apiHelper(
             apiCall = {
-                landmarkApi.getLandmark(idList = ids)
+                landmarkApi.getLandmark(idList = ids, limit = ids.size)
             },
             mapper = { response ->
                 response.map { it.toLandmarkDomain() }
