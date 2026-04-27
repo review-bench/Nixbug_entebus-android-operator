@@ -102,11 +102,10 @@ data class HomeUiState(
 
     val isConnectingPrinter: Boolean = false,
 
-    val otherServiceLoading: Boolean=false
+    val otherServiceLoading: Boolean=false,
 
-) {
-    val filteredOtherServices: List<HomeUiModel>
-        get() = otherServiceList.filter {
-            it.registrationNumber.contains(searchQuery, ignoreCase = true)
-        }
-}
+    val offset: Int = 0,
+    val limit: Int = 20,
+    val hasMore: Boolean = true,
+    val isPaginationLoading: Boolean = false,
+)

@@ -13,10 +13,20 @@ class ServiceRepositoryImpl @Inject constructor(
     private val serviceApi: OperatorServiceApi,
     private val landmarkRepository: LandmarkRepository
 ) : ServiceRepository {
-    override suspend fun fetchMaskedService(): Resource<List<MaskedServiceModel>> {
+    override suspend fun fetchMaskedService(
+        offset: Int,
+        limit: Int,
+        search: String?
+    ): Resource<List<MaskedServiceModel>> {
 
         val serviceResult = apiHelper(
-            apiCall = { serviceApi.getMaskedService() },
+            apiCall = {
+                serviceApi.getMaskedService(
+                    offset = offset,
+                    limit = limit,
+                    search = search
+                )
+            },
             mapper = { it }
         )
 

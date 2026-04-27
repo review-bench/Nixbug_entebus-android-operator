@@ -82,6 +82,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.platform.LocalContext
 import com.nixbug.entebus.presentation.components.loadingskeleton.ServiceCardSkeleton
 import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
@@ -212,7 +213,7 @@ fun HomeScreen(
                 assignedServices = state.assignedServiceList,
                 downloadedServices = state.downloadedServiceList,
                 recentServices = state.recentServiceList,
-                otherServices = state.filteredOtherServices,
+                otherServices = state.otherServiceList,
                 onStartAssigned = { service ->
                     val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
                     val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
@@ -247,7 +248,10 @@ fun HomeScreen(
                 canStartService = viewModel::canStartService,
                 modifier = Modifier.weight(1f),
                 selectedTab = state.selectedTab,
-                isOtherServiceLoading = state.otherServiceLoading
+                isOtherServiceLoading = state.otherServiceLoading,
+                onLoadMore = viewModel::loadMoreServices,
+                isLoadingMore = state.isPaginationLoading,
+                hasMore = state.hasMore
             )
         }
     }
@@ -487,6 +491,9 @@ fun ServiceList(
     modifier: Modifier = Modifier,
     selectedTab: Int,
     isOtherServiceLoading: Boolean,
+    onLoadMore: () -> Unit,
+    isLoadingMore: Boolean,
+    hasMore: Boolean
 ) {
 
     val currentList = when (selectedTab) {
@@ -543,7 +550,6 @@ fun ServiceList(
 
         0 -> ServiceTabContent(
             services = assignedServices,
-            visibleCount = 5,
             cardType = CardType.ASSIGNED,
             onActionClick = onStartAssigned,
             canStartService = canStartService,
@@ -552,7 +558,6 @@ fun ServiceList(
 
         1 -> ServiceTabContent(
             services = downloadedServices,
-            visibleCount = 5,
             cardType = CardType.DOWNLOADED,
             onActionClick = onStartDownloaded,
             canStartService = canStartService,
@@ -561,7 +566,6 @@ fun ServiceList(
 
         2 -> ServiceTabContent(
             services = recentServices,
-            visibleCount = 5,
             cardType = CardType.RECENT,
             onActionClick = onRestartRecentService,
             canStartService = canStartService,
@@ -570,11 +574,13 @@ fun ServiceList(
 
         3 -> ServiceTabContent(
             services = otherServices,
-            visibleCount = null,
             cardType = CardType.OTHER,
             onActionClick = onDownload,
             canStartService = canStartService,
-            modifier = modifier.padding(horizontal = 16.dp)
+            modifier = modifier.padding(horizontal = 16.dp),
+            onLoadMore = onLoadMore,
+            isLoadingMore = isLoadingMore,
+            hasMore = hasMore
         )
     }
 }
@@ -582,21 +588,14 @@ fun ServiceList(
 @Composable
 fun ServiceTabContent(
     services: List<HomeUiModel>,
-    visibleCount: Int?,
     cardType: CardType,
     onActionClick: (HomeUiModel) -> Unit,
     canStartService: (String) -> Boolean,
     modifier: Modifier = Modifier,
+    onLoadMore: (() -> Unit)? = null,
+    isLoadingMore: Boolean = false,
+    hasMore: Boolean = true
 ) {
-
-    val defaultVisibleCount = 5
-
-    var isExpanded by rememberSaveable(cardType) { mutableStateOf(false) }
-    val visibleServices = if (visibleCount == null) {
-        services
-    } else {
-        if (isExpanded) services else services.take(defaultVisibleCount)
-    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -605,7 +604,7 @@ fun ServiceTabContent(
 
         item { Spacer(modifier = Modifier.height(10.dp)) }
 
-        items(visibleServices) { service ->
+        items(services) { service ->
 
             val startDateTime = utcToIstConverter(service.startingAt)
 
@@ -625,17 +624,29 @@ fun ServiceTabContent(
 
             Spacer(modifier = Modifier.height(15.dp))
         }
+        item {
+            Spacer(modifier = Modifier.height(10.dp))
 
-        if (visibleCount != null && services.size > defaultVisibleCount) {
-            item {
-                ViewMoreText(
-                    text = if (isExpanded) "View Less" else "View More",
-                    onClick = {
-                        isExpanded = !isExpanded
-                    },
-                    isExpanded = isExpanded
-                )
+            when {
+                isLoadingMore -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                hasMore -> {
+                    ViewMoreText(
+                        text = "Load More",
+                        onClick = { onLoadMore?.invoke() },
+                        isExpanded = false
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
@@ -715,7 +726,7 @@ fun ServiceCard(
 
             //-------------- ROUTE NAME ----------------------//
             Text(
-                text = "${service.endingLandmarkName} -> ${service.startingLandmarkName}",
+                text = "${service.startingLandmarkName} -> ${service.endingLandmarkName}",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 3.dp),
                 color = Color.Black

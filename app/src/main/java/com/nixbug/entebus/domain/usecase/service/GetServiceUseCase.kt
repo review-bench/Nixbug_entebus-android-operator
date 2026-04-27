@@ -6,6 +6,10 @@ import com.nixbug.entebus.utils.network.Resource
 import javax.inject.Inject
 
 class GetServiceUseCase @Inject constructor(private val repository: ServiceRepository) {
-    suspend operator fun invoke(): Resource<List<MaskedServiceModel>> =
-        repository.fetchMaskedService()
+    suspend operator fun invoke(
+        offset: Int = 0,
+        limit: Int = 20,
+        search: String? = null
+    ): Resource<List<MaskedServiceModel>> =
+        repository.fetchMaskedService(offset, limit, search)
 }
