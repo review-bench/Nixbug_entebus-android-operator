@@ -26,7 +26,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager,
-    private  val getMaskedServicesUseCase: GetServiceUseCase
+    private val getMaskedServices: GetServiceUseCase
 ) : ViewModel() {
 
     // STATE
@@ -216,33 +216,50 @@ class HomeScreenViewModel @Inject constructor(
 
     fun onTabSelected(tab: Int) {
         _uiState.update { it.copy(selectedTab = tab) }
+        if (tab == 3) {
+            fetchOtherServices()
+        }
     }
-
-    fun onDownloadService(service: HomeUiModel) {
-//        _uiState.update { state ->
-//            state.copy(
-//                downloadedServiceList = state.downloadedServiceList + service,
-//                otherServiceList = state.otherServiceList.filter { it.id != service.id }
-//            )
-//        }
+    private fun fetchOtherServices() {
         viewModelScope.launch {
-            val result = getMaskedServicesUseCase()
-            when (result) {
+
+            when (val result = getMaskedServices()) {
+
                 is Resource.Success -> {
-                    val maskedServices = result.data
-                    println("maskedServices ,${maskedServices}")
-                    // Update UI state with masked services if needed
+                    val services = result.data ?: emptyList()
+
+                    _uiState.update {
+                        it.copy(
+                            otherServiceList = services.map { service ->
+                                service.toHomeUiModel()
+                            }
+                        )
+                    }
                 }
+
                 is Resource.Error -> {
                     SnackbarManager.show(
-                        "Failed to download service details: ${result.message}",
+                        result.message ?: "Failed to fetch services",
                         SnackbarType.ERROR
                     )
                 }
 
-              else -> {}
+                is Resource.Empty -> {
+                    _uiState.update {
+                        it.copy(otherServiceList = emptyList())
+                    }
+                }
+                else -> {}
             }
-            // handle UI state
+        }
+    }
+
+    fun onDownloadService(service: HomeUiModel) {
+        _uiState.update { state ->
+            state.copy(
+                downloadedServiceList = state.downloadedServiceList + service,
+                otherServiceList = state.otherServiceList.filter { it.id != service.id }
+            )
         }
     }
 

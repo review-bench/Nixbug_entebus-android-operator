@@ -197,7 +197,6 @@ fun HomeScreen(
                     )
                 },
                 onFinishDutyClick = { service -> finishDutyService = service },
-                extractRouteName = viewModel::extractRouteName,
             )
 
             RowTab(
@@ -243,7 +242,6 @@ fun HomeScreen(
                     )
                 },
                 onDownload = viewModel::onDownloadService,
-                extractRouteName = viewModel::extractRouteName,
                 canStartService = viewModel::canStartService,
                 modifier = Modifier.weight(1f),
                 selectedTab = state.selectedTab
@@ -344,7 +342,6 @@ fun OngoingServiceSection(
     ongoingService: HomeUiModel?,
     onResumeService: () -> Unit,
     onFinishDutyClick: (HomeUiModel) -> Unit,
-    extractRouteName: (String) -> String,
 ) {
     Column(
         modifier = Modifier
@@ -368,7 +365,6 @@ fun OngoingServiceSection(
                 onActionClick = { onResumeService() },
                 date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
                 time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                routeName = extractRouteName(service.name),
                 isEnabled = true,
                 onFinishDutyClick = { onFinishDutyClick(service) }
             )
@@ -484,7 +480,6 @@ fun ServiceList(
     onStartDownloaded: (HomeUiModel) -> Unit,
     onRestartRecentService: (HomeUiModel) -> Unit,
     onDownload: (HomeUiModel) -> Unit,
-    extractRouteName: (String) -> String,
     canStartService: (String) -> Boolean,
     modifier: Modifier = Modifier,
     selectedTab: Int,
@@ -527,7 +522,6 @@ fun ServiceList(
             visibleCount = 5,
             cardType = CardType.ASSIGNED,
             onActionClick = onStartAssigned,
-            extractRouteName = extractRouteName,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp)
         )
@@ -537,7 +531,6 @@ fun ServiceList(
             visibleCount = 5,
             cardType = CardType.DOWNLOADED,
             onActionClick = onStartDownloaded,
-            extractRouteName = extractRouteName,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp)
         )
@@ -547,7 +540,6 @@ fun ServiceList(
             visibleCount = 5,
             cardType = CardType.RECENT,
             onActionClick = onRestartRecentService,
-            extractRouteName = extractRouteName,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp)
         )
@@ -557,7 +549,6 @@ fun ServiceList(
             visibleCount = null,
             cardType = CardType.OTHER,
             onActionClick = onDownload,
-            extractRouteName = extractRouteName,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp)
         )
@@ -570,7 +561,6 @@ fun ServiceTabContent(
     visibleCount: Int?,
     cardType: CardType,
     onActionClick: (HomeUiModel) -> Unit,
-    extractRouteName: (String) -> String,
     canStartService: (String) -> Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -601,7 +591,6 @@ fun ServiceTabContent(
                 onActionClick = { onActionClick(service) },
                 date = startDateTime?.first ?: "Date unavailable",
                 time = startDateTime?.second ?: "Time unavailable",
-                routeName = extractRouteName(service.name),
                 isEnabled = when (cardType) {
                     CardType.ASSIGNED,
                     CardType.DOWNLOADED -> canStartService(service.startingAt)
@@ -677,7 +666,6 @@ fun ServiceCard(
     onActionClick: () -> Unit,
     date: String,
     time: String,
-    routeName: String,
     isEnabled: Boolean,
     onFinishDutyClick: ((HomeUiModel) -> Unit)? = null
 ) {
@@ -703,7 +691,7 @@ fun ServiceCard(
 
             //-------------- ROUTE NAME ----------------------//
             Text(
-                text = routeName,
+                text = "${service.endingLandmarkName} -> ${service.startingLandmarkName}",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 3.dp),
                 color = Color.Black
@@ -742,7 +730,7 @@ fun ServiceCard(
                             )
                             Spacer(Modifier.width(5.dp))
                             Text(
-                                service.regNo,
+                                service.registrationNumber,
                                 style = MaterialTheme.typography.labelLarge,
                                 color = Color.DarkGray
                             )
