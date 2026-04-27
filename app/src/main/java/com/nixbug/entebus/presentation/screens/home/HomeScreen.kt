@@ -259,7 +259,9 @@ fun HomeScreen(
         DialogBox(
             title = "Finish Duty?",
             message = "Are you sure you want to finish your duty on the ${
-                viewModel.extractRouteName(service.name)
+                finishDutyService?.startingLandmarkName
+            }-> ${
+                finishDutyService?.endingLandmarkName
             } service?",
             confirmText = "Finish",
             onConfirmClick = {

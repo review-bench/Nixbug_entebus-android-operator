@@ -75,9 +75,7 @@ class HomeScreenViewModel @Inject constructor(
                 .debounce(500)
                 .distinctUntilChanged()
                 .collectLatest {
-                    fetchOtherServicesInternal(
-                        isPagination = false,
-                    )
+                    fetchOtherServicesInternal(isPagination = false)
                 }
         }
     }
@@ -90,14 +88,18 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     private fun fetchOtherServices() {
-        fetchOtherServicesInternal()
+        viewModelScope.launch {
+            fetchOtherServicesInternal()
+        }
     }
 
     fun loadMoreServices() {
-        fetchOtherServicesInternal(isPagination = true)
+        viewModelScope.launch {
+            fetchOtherServicesInternal(isPagination = true)
+        }
     }
 
-    private fun fetchOtherServicesInternal(
+    private suspend fun fetchOtherServicesInternal(
         isPagination: Boolean = false,
     ) {
         val currentState = _uiState.value
@@ -116,66 +118,74 @@ class HomeScreenViewModel @Inject constructor(
             }
         }
 
-        viewModelScope.launch {
-            try {
-                val result = getMaskedServices(
-                    offset = if (isPagination) currentState.offset else 0,
-                    limit = currentState.limit,
-                    search = searchQuery.value
-                )
+        try {
+            val result = getMaskedServices(
+                offset = if (isPagination) currentState.offset else 0,
+                limit = currentState.limit,
+                search = searchQuery.value
+            )
 
-                when (result) {
+            when (result) {
 
-                    is Resource.Success -> {
-                        val newList = result.data ?: emptyList()
+                is Resource.Success -> {
+                    val newList = result.data ?: emptyList()
 
-                        _uiState.update {
+                    _uiState.update {
+                        it.copy(
+                            otherServiceList = if (isPagination)
+                                it.otherServiceList + newList.map { service -> service.toHomeUiModel() }
+                            else
+                                newList.map { service -> service.toHomeUiModel() },
+
+                            offset = if (isPagination)
+                                it.offset + it.limit
+                            else
+                                it.limit,
+
+                            hasMore = newList.size == it.limit
+                        )
+                    }
+                }
+
+                is Resource.Error -> {
+                    SnackbarManager.show(
+                        result.message ?: "Failed to fetch services",
+                        SnackbarType.ERROR
+                    )
+                }
+
+                is Resource.Empty -> {
+                    _uiState.update {
+                        if (isPagination) {
                             it.copy(
-                                otherServiceList = if (isPagination)
-                                    it.otherServiceList + newList.map { service -> service.toHomeUiModel() }
-                                else
-                                    newList.map { service -> service.toHomeUiModel() },
-
-                                offset = if (isPagination)
-                                    it.offset + it.limit
-                                else
-                                    it.limit,
-
-                                hasMore = newList.size == it.limit
+                                hasMore = false
+                            )
+                        } else {
+                            it.copy(
+                                otherServiceList = emptyList(),
+                                hasMore = false
                             )
                         }
                     }
-
-                    is Resource.Error -> {
-                        SnackbarManager.show(
-                            result.message ?: "Failed to fetch services",
-                            SnackbarType.ERROR
-                        )
-                    }
-
-                    is Resource.Empty -> {
-                        if (!isPagination) {
-                            _uiState.update { it.copy(otherServiceList = emptyList()) }
-                        }
-                    }
-
-                    else -> {}
                 }
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
 
-                SnackbarManager.show(
-                    e.message ?: "Something went wrong",
-                    SnackbarType.ERROR
-                )
-            } finally {
-                if (isPagination) {
-                    _uiState.update { it.copy(isPaginationLoading = false) }
-                } else {
-                    _uiState.update { it.copy(otherServiceLoading = false) }
-                }
+                else -> {}
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+
+            SnackbarManager.show(
+                e.message ?: "Something went wrong",
+                SnackbarType.ERROR
+            )
+        } finally {
+            if (isPagination) {
+                _uiState.update { it.copy(isPaginationLoading = false) }
+            } else {
+                _uiState.update { it.copy(otherServiceLoading = false) }
             }
         }
+
     }
 
 
