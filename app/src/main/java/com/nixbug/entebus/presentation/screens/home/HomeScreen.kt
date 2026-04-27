@@ -83,6 +83,8 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
+import com.nixbug.entebus.presentation.components.loadingskeleton.ServiceCardSkeleton
+import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.presentation.components.printer.PrinterPickerDialog
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
@@ -244,7 +246,8 @@ fun HomeScreen(
                 onDownload = viewModel::onDownloadService,
                 canStartService = viewModel::canStartService,
                 modifier = Modifier.weight(1f),
-                selectedTab = state.selectedTab
+                selectedTab = state.selectedTab,
+                isOtherServiceLoading = state.otherServiceLoading
             )
         }
     }
@@ -483,6 +486,7 @@ fun ServiceList(
     canStartService: (String) -> Boolean,
     modifier: Modifier = Modifier,
     selectedTab: Int,
+    isOtherServiceLoading: Boolean,
 ) {
 
     val currentList = when (selectedTab) {
@@ -490,6 +494,26 @@ fun ServiceList(
         1 -> downloadedServices
         2 -> recentServices
         else -> otherServices
+    }
+
+    if (selectedTab == 3 && isOtherServiceLoading) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            contentAlignment = Alignment.Center
+
+        ) {
+            val shimmerBrush = rememberShimmerBrush()
+
+            Column {
+                repeat(5) {
+                    ServiceCardSkeleton(shimmerBrush = shimmerBrush)
+                }
+            }
+        }
+        return
     }
 
     if (currentList.isEmpty()) {

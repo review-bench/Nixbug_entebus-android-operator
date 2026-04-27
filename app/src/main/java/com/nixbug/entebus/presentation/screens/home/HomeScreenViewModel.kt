@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
@@ -220,36 +221,45 @@ class HomeScreenViewModel @Inject constructor(
             fetchOtherServices()
         }
     }
+
     private fun fetchOtherServices() {
         viewModelScope.launch {
+            _uiState.update { it.copy(otherServiceLoading = true) }
+            try {
+                when (val result = getMaskedServices()) {
 
-            when (val result = getMaskedServices()) {
+                    is Resource.Success -> {
+                        val services = result.data ?: emptyList()
 
-                is Resource.Success -> {
-                    val services = result.data ?: emptyList()
+                        _uiState.update {
+                            it.copy(
+                                otherServiceList = services.map { service ->
+                                    service.toHomeUiModel()
+                                }
+                            )
+                        }
+                    }
 
-                    _uiState.update {
-                        it.copy(
-                            otherServiceList = services.map { service ->
-                                service.toHomeUiModel()
-                            }
+                    is Resource.Error -> {
+                        SnackbarManager.show(
+                            result.message ?: "Failed to fetch services",
+                            SnackbarType.ERROR
                         )
                     }
-                }
 
-                is Resource.Error -> {
-                    SnackbarManager.show(
-                        result.message ?: "Failed to fetch services",
-                        SnackbarType.ERROR
-                    )
-                }
-
-                is Resource.Empty -> {
-                    _uiState.update {
-                        it.copy(otherServiceList = emptyList())
+                    is Resource.Empty -> {
+                        _uiState.update {
+                            it.copy(otherServiceList = emptyList())
+                        }
                     }
+
+                    else -> {}
                 }
-                else -> {}
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(e.message ?: "Something went wrong", SnackbarType.ERROR)
+            } finally {
+                _uiState.update { it.copy(otherServiceLoading = false) }
             }
         }
     }

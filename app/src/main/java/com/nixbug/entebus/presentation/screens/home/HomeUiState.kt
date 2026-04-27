@@ -86,9 +86,9 @@ data class HomeUiState(
         ),
     ),
 
-    val downloadedServiceList: List<HomeUiModel> = listOf(),
+    val downloadedServiceList: List<HomeUiModel> = emptyList<HomeUiModel>(),
 
-    val recentServiceList: List<HomeUiModel> = listOf(),
+    val recentServiceList: List<HomeUiModel> = emptyList<HomeUiModel>(),
 
     val otherServiceList: List<HomeUiModel> = emptyList<HomeUiModel>(),
 
@@ -100,7 +100,9 @@ data class HomeUiState(
 
     val showPrinterPicker: Boolean = false,
 
-    val isConnectingPrinter: Boolean = false
+    val isConnectingPrinter: Boolean = false,
+
+    val otherServiceLoading: Boolean=false
 
 ) {
     val filteredOtherServices: List<HomeUiModel>
