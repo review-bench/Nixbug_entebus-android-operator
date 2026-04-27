@@ -55,7 +55,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -627,22 +626,25 @@ fun ServiceTabContent(
         item {
             Spacer(modifier = Modifier.height(10.dp))
 
-            when {
-                isLoadingMore -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
+            if (onLoadMore != null) {   // 🔥 KEY FIX
 
-                hasMore -> {
-                    ViewMoreText(
-                        text = "Load More",
-                        onClick = { onLoadMore?.invoke() },
-                        isExpanded = false
-                    )
+                when {
+                    isLoadingMore -> {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    hasMore -> {
+                        ViewMoreText(
+                            text = "Load More",
+                            onClick = onLoadMore,
+                            isExpanded = false
+                        )
+                    }
                 }
             }
 

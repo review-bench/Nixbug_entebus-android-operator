@@ -13,6 +13,11 @@ class LandmarkRepositoryImpl @Inject constructor(
 ) : LandmarkRepository {
 
     override suspend fun getLandmarksByIds(ids: List<Int>): Resource<List<LandmarkModel>> {
+
+        if (ids.isEmpty()) {
+            return Resource.Success(emptyList())
+        }
+
         return apiHelper(
             apiCall = {
                 landmarkApi.getLandmark(idList = ids)

@@ -1,7 +1,5 @@
 package com.nixbug.entebus.presentation.screens.home
 
-import com.google.gson.annotations.SerializedName
-
 data class HomeUiModel(
     val id: Int,
     val name: String,

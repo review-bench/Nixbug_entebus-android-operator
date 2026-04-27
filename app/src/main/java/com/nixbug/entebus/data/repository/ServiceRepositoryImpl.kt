@@ -52,11 +52,17 @@ class ServiceRepositoryImpl @Inject constructor(
             listOfNotNull(it.startingLandmarkId, it.endingLandmarkId)
         }.distinct()
 
-        val landmarkResult = landmarkRepository.getLandmarksByIds(landmarkIds)
+        val landmarkMap = if (landmarkIds.isNotEmpty()) {
 
-        val landmarkMap = when (landmarkResult) {
-            is Resource.Success -> landmarkResult.data?.associateBy { it.id } ?: emptyMap()
-            else -> emptyMap()
+            val landmarkResult = landmarkRepository.getLandmarksByIds(landmarkIds)
+
+            when (landmarkResult) {
+                is Resource.Success -> landmarkResult.data?.associateBy { it.id } ?: emptyMap()
+                else -> emptyMap()
+            }
+
+        } else {
+            emptyMap()
         }
 
         val finalList = services.map { service ->

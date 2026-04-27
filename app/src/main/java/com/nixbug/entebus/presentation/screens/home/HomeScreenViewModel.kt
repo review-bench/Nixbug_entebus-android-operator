@@ -4,7 +4,6 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nixbug.entebus.domain.model.MaskedServiceModel
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.network.Resource
@@ -14,7 +13,6 @@ import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -79,7 +77,6 @@ class HomeScreenViewModel @Inject constructor(
                 .collectLatest {
                     fetchOtherServicesInternal(
                         isPagination = false,
-                        isSearching = true
                     )
                 }
         }
@@ -102,7 +99,6 @@ class HomeScreenViewModel @Inject constructor(
 
     private fun fetchOtherServicesInternal(
         isPagination: Boolean = false,
-        isSearching: Boolean = false
     ) {
         val currentState = _uiState.value
 
