@@ -106,7 +106,10 @@ dependencies {
     implementation(libs.mlkit.barcode)
 
     implementation(libs.coil.compose)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
 
+    ksp(libs.room.compiler)
 }
 
 tasks.register<Exec>("generateOperatorApiClient") {
