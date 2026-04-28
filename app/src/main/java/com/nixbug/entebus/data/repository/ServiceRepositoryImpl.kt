@@ -1,6 +1,5 @@
 package com.nixbug.entebus.data.repository
 
-import com.nixbug.entebus.data.mapper.toDomain
 import com.nixbug.entebus.data.mapper.toDomainWithLandmarks
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.utils.apiHelper
@@ -108,7 +107,7 @@ class ServiceRepositoryImpl @Inject constructor(
                     markedAsCached = true
                 )
             },
-            mapper = { it } // don't map yet
+            mapper = { it }
         )
 
         if (result !is Resource.Success) {
@@ -129,14 +128,12 @@ class ServiceRepositoryImpl @Inject constructor(
 
         val service = result.data ?: return Resource.Error("No data")
 
-        // ✅ Collect all landmark IDs
         val landmarkIds = buildList {
             service.startingLandmarkId?.let { add(it) }
             service.endingLandmarkId?.let { add(it) }
-            service.route.mapNotNullTo(this) { it.landmarkId }
+            service.route.mapTo(this) { it.landmarkId }
         }.distinct()
 
-        // ✅ Fetch landmark map
         val landmarkMap = if (landmarkIds.isNotEmpty()) {
             when (val landmarkResult = landmarkRepository.getLandmarksByIds(landmarkIds)) {
                 is Resource.Success -> landmarkResult.data?.associateBy { it.id } ?: emptyMap()
@@ -146,7 +143,6 @@ class ServiceRepositoryImpl @Inject constructor(
             emptyMap()
         }
 
-        // ✅ Map to domain with enrichment
         val domain = service.toDomainWithLandmarks(landmarkMap)
 
         return Resource.Success(domain)

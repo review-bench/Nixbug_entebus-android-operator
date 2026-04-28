@@ -9,7 +9,6 @@ import com.google.gson.annotations.SerializedName
  * @param name
  */
 
-
 data class TicketTypesInAttribute(
 
     @SerializedName("id")

@@ -24,7 +24,6 @@ import com.google.gson.annotations.SerializedName
  * @param publicKey
  */
 
-
 data class PrivateServiceSchema(
 
     @SerializedName("id")
