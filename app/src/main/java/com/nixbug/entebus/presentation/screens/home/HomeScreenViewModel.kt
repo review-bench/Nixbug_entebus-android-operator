@@ -74,7 +74,19 @@ class HomeScreenViewModel @Inject constructor(
                     is Resource.Success -> {
                         Log.d(
                             "SERVICE_DETAIL",
-                            "Service detail fetched successfully: ${result.data}"
+                            "Service detail fetched successfully: ${result.data?.fare}"
+                        )
+                        Log.d(
+                            "SERVICE_DETAIL",
+                            "Service detail fetched successfully: ${result.data?.vehicle}"
+                        )
+                        Log.d(
+                            "SERVICE_DETAIL",
+                            "Service detail fetched successfully: ${result.data?.route}"
+                        )
+                        Log.d(
+                            "SERVICE_DETAIL",
+                            "Service detail fetched successfully: ${result.data?.startingLandmarkName}"
                         )
                     }
 

@@ -1,6 +1,7 @@
 package com.nixbug.entebus.data.repository
 
 import com.nixbug.entebus.data.mapper.toDomain
+import com.nixbug.entebus.data.mapper.toDomainWithLandmarks
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.MaskedServiceModel
@@ -99,15 +100,56 @@ class ServiceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun fetchServiceDetails(id: Int): Resource<ServiceDetailModel> {
-        return apiHelper(
+
+        val result = apiHelper(
             apiCall = {
                 serviceApi.getServiceDetails(
                     id = id,
                     markedAsCached = true
                 )
             },
-            mapper = { it.toDomain() }
+            mapper = { it } // don't map yet
         )
+
+        if (result !is Resource.Success) {
+            return when (result) {
+
+                is Resource.Error -> Resource.Error(
+                    message = result.message,
+                    statusCode = result.statusCode
+                )
+
+                is Resource.Empty -> Resource.Empty(
+                    statusCode = result.statusCode ?: 204
+                )
+
+                else -> Resource.Error("Unknown error")
+            }
+        }
+
+        val service = result.data ?: return Resource.Error("No data")
+
+        // ✅ Collect all landmark IDs
+        val landmarkIds = buildList {
+            service.startingLandmarkId?.let { add(it) }
+            service.endingLandmarkId?.let { add(it) }
+            service.route.mapNotNullTo(this) { it.landmarkId }
+        }.distinct()
+
+        // ✅ Fetch landmark map
+        val landmarkMap = if (landmarkIds.isNotEmpty()) {
+            when (val landmarkResult = landmarkRepository.getLandmarksByIds(landmarkIds)) {
+                is Resource.Success -> landmarkResult.data?.associateBy { it.id } ?: emptyMap()
+                else -> emptyMap()
+            }
+        } else {
+            emptyMap()
+        }
+
+        // ✅ Map to domain with enrichment
+        val domain = service.toDomainWithLandmarks(landmarkMap)
+
+        return Resource.Success(domain)
     }
 
 }

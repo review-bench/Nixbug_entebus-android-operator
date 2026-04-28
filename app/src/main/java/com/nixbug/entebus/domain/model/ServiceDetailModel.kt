@@ -16,7 +16,11 @@ data class ServiceDetailModel(
     val fare: Fare,
     val vehicle: Vehicle,
     val route: List<Route>,
-    val publicKey: String
+    val publicKey: String,
+    val startingLandmarkName: String,
+    val startingLandmarkAlias: List<String>,
+    val endingLandmarkName: String,
+    val endingLandmarkAlias: List<String>,
 )
 
 data class Fare(
@@ -46,7 +50,9 @@ data class Route(
     val landmarkId: Int,
     val distanceFromStart: Int,
     val arrivalAt: String,
-    val departureAt: String
+    val departureAt: String,
+    val landmarkName: String,
+    val landmarkAlias: List<String>,
 )
 
 data class Vehicle(

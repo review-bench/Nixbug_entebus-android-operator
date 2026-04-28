@@ -8,12 +8,19 @@ import com.nixbug.entebus.data.remote.operator.model.service.PrivateServiceSchem
 import com.nixbug.entebus.data.remote.operator.model.service.TicketTypesInAttribute
 import com.nixbug.entebus.domain.model.Fare
 import com.nixbug.entebus.domain.model.FareAttributesModel
+import com.nixbug.entebus.domain.model.LandmarkModel
 import com.nixbug.entebus.domain.model.Route
 import com.nixbug.entebus.domain.model.ServiceDetailModel
 import com.nixbug.entebus.domain.model.TicketType
 import com.nixbug.entebus.domain.model.Vehicle
 
-fun PrivateServiceSchema.toDomain(): ServiceDetailModel {
+fun PrivateServiceSchema.toDomainWithLandmarks(
+    landmarkMap: Map<Int, LandmarkModel>
+): ServiceDetailModel {
+
+    val start = startingLandmarkId?.let { landmarkMap[it] }
+    val end = endingLandmarkId?.let { landmarkMap[it] }
+
     return ServiceDetailModel(
         id = id,
         name = name,
@@ -21,6 +28,11 @@ fun PrivateServiceSchema.toDomain(): ServiceDetailModel {
         registrationNumber = registrationNumber,
         startingLandmarkId = startingLandmarkId,
         endingLandmarkId = endingLandmarkId,
+        startingLandmarkName = start?.name ?: "N/A",
+        startingLandmarkAlias = start?.aliasNames ?: emptyList(),
+        endingLandmarkName = end?.name ?: "N/A",
+        endingLandmarkAlias = end?.aliasNames ?: emptyList(),
+
         ticketMode = ticketMode,
         remark = remark,
         startingAt = startingAt,
@@ -28,7 +40,7 @@ fun PrivateServiceSchema.toDomain(): ServiceDetailModel {
         createdOn = createdOn,
         fare = fare.toDomain(),
         vehicle = vehicle.toDomain(),
-        route = route.map { it.toDomain() },
+        route = route.map { it.toDomainWithLandmarks(landmarkMap) },
         publicKey = publicKey
     )
 }
@@ -61,10 +73,17 @@ fun TicketTypesInAttribute.toDomain(): TicketType {
     )
 }
 
-fun AppApiServiceRouteSchema.toDomain(): Route {
+fun AppApiServiceRouteSchema.toDomainWithLandmarks(
+    landmarkMap: Map<Int, LandmarkModel>
+): Route {
+
+    val landmark = landmarkMap[landmarkId]
+
     return Route(
         serviceId = serviceId,
         landmarkId = landmarkId,
+        landmarkName = landmark?.name ?: "N/A",
+        landmarkAlias = landmark?.aliasNames ?: emptyList(),
         distanceFromStart = distanceFromStart,
         arrivalAt = arrivalAt,
         departureAt = departureAt
