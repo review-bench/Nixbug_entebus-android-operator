@@ -87,6 +87,7 @@ class AuthViewModel @Inject constructor(
                             onSuccess()
                         } catch (e: Exception) {
                             _uiState.update { it.copy(locationFetchLoading = false) }
+                            fetchPublicCompanies()
                             SnackbarManager.show(
                                 message = "Failed to fetch location",
                                 type = SnackbarType.ERROR
@@ -101,6 +102,7 @@ class AuthViewModel @Inject constructor(
                 onError = { err ->
                     _uiState.update { it.copy(locationFetchLoading = false) }
                     isFetching = false
+                    fetchPublicCompanies()
                     SnackbarManager.show(
                         message = "Failed to fetch location",
                         type = SnackbarType.ERROR
@@ -111,6 +113,7 @@ class AuthViewModel @Inject constructor(
         } catch (e: Exception) {
             _uiState.update { it.copy(locationFetchLoading = false) }
             isFetching = false
+            fetchPublicCompanies()
             SnackbarManager.show(message = "Failed to fetch location", type = SnackbarType.ERROR)
             onError("Failed to process location")
         }
