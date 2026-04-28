@@ -90,7 +90,7 @@ interface OperatorServiceApi {
      * @return [PrivateServiceSchema]
      */
     @GET("company/service/{id}")
-    suspend fun getServiceDetailsF(
+    suspend fun getServiceDetails(
         @Path("id") id: kotlin.Int,
         @Query("marked_as_cached") markedAsCached: kotlin.Boolean? = false
     ): Response<PrivateServiceSchema>

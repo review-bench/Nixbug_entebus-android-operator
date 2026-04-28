@@ -1,8 +1,10 @@
 package com.nixbug.entebus.data.repository
 
+import com.nixbug.entebus.data.mapper.toDomain
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.MaskedServiceModel
+import com.nixbug.entebus.domain.model.ServiceDetailModel
 import com.nixbug.entebus.domain.repository.LandmarkRepository
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.utils.network.Resource
@@ -13,6 +15,7 @@ class ServiceRepositoryImpl @Inject constructor(
     private val serviceApi: OperatorServiceApi,
     private val landmarkRepository: LandmarkRepository
 ) : ServiceRepository {
+
     override suspend fun fetchMaskedService(
         offset: Int,
         limit: Int,
@@ -94,4 +97,17 @@ class ServiceRepositoryImpl @Inject constructor(
 
         return Resource.Success(finalList)
     }
+
+    override suspend fun fetchServiceDetails(id: Int): Resource<ServiceDetailModel> {
+        return apiHelper(
+            apiCall = {
+                serviceApi.getServiceDetails(
+                    id = id,
+                    markedAsCached = true
+                )
+            },
+            mapper = { it.toDomain() }
+        )
+    }
+
 }

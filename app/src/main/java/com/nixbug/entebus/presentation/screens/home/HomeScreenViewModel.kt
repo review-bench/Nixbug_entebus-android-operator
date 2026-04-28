@@ -2,8 +2,10 @@ package com.nixbug.entebus.presentation.screens.home
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.network.Resource
@@ -32,7 +34,8 @@ import kotlin.coroutines.cancellation.CancellationException
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager,
-    private val getMaskedServices: GetServiceUseCase
+    private val getMaskedServices: GetServiceUseCase,
+    private val getServiceDetail: GetServiceDetailUseCase
 ) : ViewModel() {
 
     // STATE
@@ -56,6 +59,47 @@ class HomeScreenViewModel @Inject constructor(
 
     private var pendingAction: ServiceAction? = null
     private var pendingService: HomeUiModel? = null
+
+    fun onDownloadService(service: HomeUiModel) {
+        _uiState.update { state ->
+            state.copy(
+                downloadedServiceList = state.downloadedServiceList + service,
+                otherServiceList = state.otherServiceList.filter { it.id != service.id }
+            )
+        }
+        viewModelScope.launch {
+            try {
+                val result = getServiceDetail(service.id)
+                when (result) {
+                    is Resource.Success -> {
+                        Log.d(
+                            "SERVICE_DETAIL",
+                            "Service detail fetched successfully: ${result.data}"
+                        )
+                    }
+
+                    is Resource.Error -> {
+                        SnackbarManager.show(
+                            result.message ?: "Failed to download services",
+                            SnackbarType.ERROR
+                        )
+                    }
+
+                    is Resource.Empty<*> -> {
+                        SnackbarManager.show(
+                            "Service details not found",
+                            SnackbarType.ERROR
+                        )
+                    }
+
+                    else -> {}
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(e.message ?: "Something went wrong", SnackbarType.ERROR)
+            }
+        }
+    }
 
 
     fun onSearchQueryChange(query: String) {
@@ -351,15 +395,6 @@ class HomeScreenViewModel @Inject constructor(
 
     // OTHER UI STATE HANDLERS
 
-
-    fun onDownloadService(service: HomeUiModel) {
-        _uiState.update { state ->
-            state.copy(
-                downloadedServiceList = state.downloadedServiceList + service,
-                otherServiceList = state.otherServiceList.filter { it.id != service.id }
-            )
-        }
-    }
 
     fun onFinishDuty(service: HomeUiModel) {
         printerManager.closeConnection()
