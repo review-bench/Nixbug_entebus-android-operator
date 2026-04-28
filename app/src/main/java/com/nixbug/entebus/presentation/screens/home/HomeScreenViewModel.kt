@@ -92,7 +92,7 @@ class HomeScreenViewModel @Inject constructor(
 
                     is Resource.Error -> {
                         SnackbarManager.show(
-                            result.message ?: "Failed to download services",
+                            result.message ?: "Failed to download service",
                             SnackbarType.ERROR
                         )
                     }

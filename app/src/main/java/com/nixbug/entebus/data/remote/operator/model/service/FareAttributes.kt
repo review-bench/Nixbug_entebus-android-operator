@@ -19,7 +19,7 @@ data class FareAttributes(
     val dfVersion: Int,
 
     @SerializedName("ticket_types")
-    val ticketTypes: List<TicketTypesInAttribute>,
+    val ticketTypes: List<TicketTypeInAttribute>,
 
     @SerializedName("currency_type")
     val currencyType: String,

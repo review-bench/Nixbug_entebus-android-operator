@@ -5,7 +5,7 @@ import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceRouteS
 import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceVehicleSchema
 import com.nixbug.entebus.data.remote.operator.model.service.FareAttributes
 import com.nixbug.entebus.data.remote.operator.model.service.PrivateServiceSchema
-import com.nixbug.entebus.data.remote.operator.model.service.TicketTypesInAttribute
+import com.nixbug.entebus.data.remote.operator.model.service.TicketTypeInAttribute
 import com.nixbug.entebus.domain.model.Fare
 import com.nixbug.entebus.domain.model.FareAttributesModel
 import com.nixbug.entebus.domain.model.LandmarkModel
@@ -23,6 +23,7 @@ fun PrivateServiceSchema.toDomainWithLandmarks(
 
     return ServiceDetailModel(
         id = id,
+        companyId = companyId,
         name = name,
         status = status,
         registrationNumber = registrationNumber,
@@ -38,6 +39,7 @@ fun PrivateServiceSchema.toDomainWithLandmarks(
         startingAt = startingAt,
         endingAt = endingAt,
         createdOn = createdOn,
+        updatedOn = updatedOn,
         fare = fare.toDomain(),
         vehicle = vehicle.toDomain(),
         route = route.map { it.toDomainWithLandmarks(landmarkMap) },
@@ -66,7 +68,7 @@ fun FareAttributes.toDomain(): FareAttributesModel {
     )
 }
 
-fun TicketTypesInAttribute.toDomain(): TicketType {
+fun TicketTypeInAttribute.toDomain(): TicketType {
     return TicketType(
         id = id,
         name = name

@@ -3,6 +3,7 @@ package com.nixbug.entebus.domain.model
 
 data class ServiceDetailModel(
     val id: Int,
+    val companyId: Int,
     val name: String,
     val status: Int,
     val registrationNumber: String,
@@ -13,6 +14,7 @@ data class ServiceDetailModel(
     val startingAt: String,
     val endingAt: String,
     val createdOn: String,
+    val updatedOn: String?,
     val fare: Fare,
     val vehicle: Vehicle,
     val route: List<Route>,
