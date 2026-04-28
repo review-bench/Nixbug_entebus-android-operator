@@ -1,8 +1,10 @@
 package com.nixbug.entebus.data.repository
 
+import com.nixbug.entebus.data.mapper.toDomainWithLandmarks
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.MaskedServiceModel
+import com.nixbug.entebus.domain.model.ServiceDetailModel
 import com.nixbug.entebus.domain.repository.LandmarkRepository
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.utils.network.Resource
@@ -13,6 +15,7 @@ class ServiceRepositoryImpl @Inject constructor(
     private val serviceApi: OperatorServiceApi,
     private val landmarkRepository: LandmarkRepository
 ) : ServiceRepository {
+
     override suspend fun fetchMaskedService(
         offset: Int,
         limit: Int,
@@ -94,4 +97,55 @@ class ServiceRepositoryImpl @Inject constructor(
 
         return Resource.Success(finalList)
     }
+
+    override suspend fun fetchServiceDetails(id: Int): Resource<ServiceDetailModel> {
+
+        val result = apiHelper(
+            apiCall = {
+                serviceApi.getServiceDetails(
+                    id = id,
+                    markedAsCached = true
+                )
+            },
+            mapper = { it }
+        )
+
+        if (result !is Resource.Success) {
+            return when (result) {
+
+                is Resource.Error -> Resource.Error(
+                    message = result.message,
+                    statusCode = result.statusCode
+                )
+
+                is Resource.Empty -> Resource.Empty(
+                    statusCode = result.statusCode ?: 204
+                )
+
+                else -> Resource.Error("Unknown error")
+            }
+        }
+
+        val service = result.data ?: return Resource.Error("No data")
+
+        val landmarkIds = buildList {
+            service.startingLandmarkId?.let { add(it) }
+            service.endingLandmarkId?.let { add(it) }
+            service.route.mapTo(this) { it.landmarkId }
+        }.distinct()
+
+        val landmarkMap = if (landmarkIds.isNotEmpty()) {
+            when (val landmarkResult = landmarkRepository.getLandmarksByIds(landmarkIds)) {
+                is Resource.Success -> landmarkResult.data?.associateBy { it.id } ?: emptyMap()
+                else -> emptyMap()
+            }
+        } else {
+            emptyMap()
+        }
+
+        val domain = service.toDomainWithLandmarks(landmarkMap)
+
+        return Resource.Success(domain)
+    }
+
 }
