@@ -61,12 +61,6 @@ class HomeScreenViewModel @Inject constructor(
     private var pendingService: HomeUiModel? = null
 
     fun onDownloadService(service: HomeUiModel) {
-        _uiState.update { state ->
-            state.copy(
-                downloadedServiceList = state.downloadedServiceList + service,
-                otherServiceList = state.otherServiceList.filter { it.id != service.id }
-            )
-        }
         viewModelScope.launch {
             try {
                 val result = getServiceDetail(service.id)
@@ -88,6 +82,12 @@ class HomeScreenViewModel @Inject constructor(
                             "SERVICE_DETAIL",
                             "Service detail fetched successfully: ${result.data?.startingLandmarkName}"
                         )
+                        _uiState.update { state ->
+                            state.copy(
+                                downloadedServiceList = state.downloadedServiceList + service,
+                                otherServiceList = state.otherServiceList.filter { it.id != service.id }
+                            )
+                        }
                     }
 
                     is Resource.Error -> {
