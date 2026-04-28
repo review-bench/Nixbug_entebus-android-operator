@@ -4,26 +4,35 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
+import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val printerManager: PrinterManager
+    private val printerManager: PrinterManager,
+    private val getMaskedServices: GetServiceUseCase
 ) : ViewModel() {
 
     // STATE
@@ -34,6 +43,8 @@ class HomeScreenViewModel @Inject constructor(
     private val _events = MutableSharedFlow<HomeUiEvent>()
     val events: SharedFlow<HomeUiEvent> = _events.asSharedFlow()
 
+    private val searchQuery = MutableStateFlow("")
+    private var searchJob: Job? = null
     // SERVICE ACTION ENUM
 
     enum class ServiceAction {
@@ -45,6 +56,139 @@ class HomeScreenViewModel @Inject constructor(
 
     private var pendingAction: ServiceAction? = null
     private var pendingService: HomeUiModel? = null
+
+
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        searchQuery.value = query
+
+        if (searchJob == null) {
+            observeSearch()
+        }
+    }
+
+    @OptIn(FlowPreview::class)
+    private fun observeSearch() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            searchQuery
+                .debounce(500)
+                .distinctUntilChanged()
+                .collectLatest {
+                    fetchOtherServicesInternal(isPagination = false)
+                }
+        }
+    }
+
+    fun onTabSelected(tab: Int) {
+        _uiState.update { it.copy(selectedTab = tab) }
+        if (tab == 3) {
+            fetchOtherServices()
+        }
+    }
+
+    private fun fetchOtherServices() {
+        viewModelScope.launch {
+            fetchOtherServicesInternal()
+        }
+    }
+
+    fun loadMoreServices() {
+        viewModelScope.launch {
+            fetchOtherServicesInternal(isPagination = true)
+        }
+    }
+
+    private suspend fun fetchOtherServicesInternal(
+        isPagination: Boolean = false,
+    ) {
+        val currentState = _uiState.value
+
+        if (isPagination && (currentState.isPaginationLoading || !currentState.hasMore)) return
+
+        if (isPagination) {
+            _uiState.update { it.copy(isPaginationLoading = true) }
+        } else {
+            _uiState.update {
+                it.copy(
+                    offset = 0,
+                    hasMore = true,
+                    otherServiceList = emptyList(),
+                    otherServiceLoading = true
+                )
+            }
+        }
+
+        try {
+            val result = getMaskedServices(
+                offset = if (isPagination) currentState.offset else 0,
+                limit = currentState.limit,
+                search = searchQuery.value
+            )
+
+            when (result) {
+
+                is Resource.Success -> {
+                    val newList = result.data ?: emptyList()
+
+                    _uiState.update {
+                        it.copy(
+                            otherServiceList = if (isPagination)
+                                it.otherServiceList + newList.map { service -> service.toHomeUiModel() }
+                            else
+                                newList.map { service -> service.toHomeUiModel() },
+
+                            offset = if (isPagination)
+                                it.offset + it.limit
+                            else
+                                it.limit,
+
+                            hasMore = newList.size == it.limit
+                        )
+                    }
+                }
+
+                is Resource.Error -> {
+                    SnackbarManager.show(
+                        result.message ?: "Failed to fetch services",
+                        SnackbarType.ERROR
+                    )
+                }
+
+                is Resource.Empty -> {
+                    _uiState.update {
+                        if (isPagination) {
+                            it.copy(
+                                hasMore = false
+                            )
+                        } else {
+                            it.copy(
+                                otherServiceList = emptyList(),
+                                hasMore = false
+                            )
+                        }
+                    }
+                }
+
+                else -> {}
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+
+            SnackbarManager.show(
+                e.message ?: "Something went wrong",
+                SnackbarType.ERROR
+            )
+        } finally {
+            if (isPagination) {
+                _uiState.update { it.copy(isPaginationLoading = false) }
+            } else {
+                _uiState.update { it.copy(otherServiceLoading = false) }
+            }
+        }
+
+    }
+
 
     // MAIN UNIFIED ENTRY POINT
 
@@ -207,13 +351,6 @@ class HomeScreenViewModel @Inject constructor(
 
     // OTHER UI STATE HANDLERS
 
-    fun onSearchQueryChange(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
-    }
-
-    fun onTabSelected(tab: Int) {
-        _uiState.update { it.copy(selectedTab = tab) }
-    }
 
     fun onDownloadService(service: HomeUiModel) {
         _uiState.update { state ->
@@ -236,33 +373,6 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     // HELPERS
-
-    /**
-     * Extracts a clean route name from a service name string.
-     *
-     * This function removes:
-     * 1. A leading date and time prefix in the format:
-     *    `yyyy-MM-dd hh:mm AM/PM`
-     * 2. Any trailing registration or metadata enclosed in parentheses.
-     *
-     * Example:
-     * Input:  "2024-12-10 08:30 AM City Center -> Airport (KL-01-AB-1234)"
-     * Output: "City Center -> Airport"
-     *
-     * @param fullName The full service name received from the backend.
-     * @return A trimmed, user-friendly route name.
-     */
-    fun extractRouteName(fullName: String): String {
-        val noDateTime = fullName.replace(
-            Regex("""^\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}\s*(AM|PM)\s*"""), ""
-        )
-
-        val noReg = noDateTime.replace(
-            Regex("""\s*\([^)]*\)\s*$"""), ""
-        )
-
-        return noReg.trim()
-    }
 
     /**
      * Determines whether a service can be started based on its scheduled start time.

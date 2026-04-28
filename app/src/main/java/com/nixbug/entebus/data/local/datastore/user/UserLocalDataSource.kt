@@ -1,6 +1,6 @@
 package com.nixbug.entebus.data.local.datastore.user
 
-import com.nixbug.entebus.domain.model.UserModel
+import com.nixbug.entebus.domain.model.local.UserModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

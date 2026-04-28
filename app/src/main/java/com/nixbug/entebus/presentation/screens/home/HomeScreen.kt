@@ -55,7 +55,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,7 +81,10 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.platform.LocalContext
+import com.nixbug.entebus.presentation.components.loadingskeleton.ServiceCardSkeleton
+import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.presentation.components.printer.PrinterPickerDialog
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
@@ -197,7 +199,6 @@ fun HomeScreen(
                     )
                 },
                 onFinishDutyClick = { service -> finishDutyService = service },
-                extractRouteName = viewModel::extractRouteName,
             )
 
             RowTab(
@@ -211,7 +212,7 @@ fun HomeScreen(
                 assignedServices = state.assignedServiceList,
                 downloadedServices = state.downloadedServiceList,
                 recentServices = state.recentServiceList,
-                otherServices = state.filteredOtherServices,
+                otherServices = state.otherServiceList,
                 onStartAssigned = { service ->
                     val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
                     val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
@@ -243,10 +244,13 @@ fun HomeScreen(
                     )
                 },
                 onDownload = viewModel::onDownloadService,
-                extractRouteName = viewModel::extractRouteName,
                 canStartService = viewModel::canStartService,
                 modifier = Modifier.weight(1f),
-                selectedTab = state.selectedTab
+                selectedTab = state.selectedTab,
+                isOtherServiceLoading = state.otherServiceLoading,
+                onLoadMore = viewModel::loadMoreServices,
+                isLoadingMore = state.isPaginationLoading,
+                hasMore = state.hasMore
             )
         }
     }
@@ -255,7 +259,9 @@ fun HomeScreen(
         DialogBox(
             title = "Finish Duty?",
             message = "Are you sure you want to finish your duty on the ${
-                viewModel.extractRouteName(service.name)
+                finishDutyService?.startingLandmarkName ?: "starting point"
+            }-> ${
+                finishDutyService?.endingLandmarkName ?: "ending point"
             } service?",
             confirmText = "Finish",
             onConfirmClick = {
@@ -344,7 +350,6 @@ fun OngoingServiceSection(
     ongoingService: HomeUiModel?,
     onResumeService: () -> Unit,
     onFinishDutyClick: (HomeUiModel) -> Unit,
-    extractRouteName: (String) -> String,
 ) {
     Column(
         modifier = Modifier
@@ -368,7 +373,6 @@ fun OngoingServiceSection(
                 onActionClick = { onResumeService() },
                 date = startDateTime?.let { (date, _) -> date } ?: "Date unavailable",
                 time = startDateTime?.let { (_, time) -> time } ?: "Time unavailable",
-                routeName = extractRouteName(service.name),
                 isEnabled = true,
                 onFinishDutyClick = { onFinishDutyClick(service) }
             )
@@ -484,10 +488,13 @@ fun ServiceList(
     onStartDownloaded: (HomeUiModel) -> Unit,
     onRestartRecentService: (HomeUiModel) -> Unit,
     onDownload: (HomeUiModel) -> Unit,
-    extractRouteName: (String) -> String,
     canStartService: (String) -> Boolean,
     modifier: Modifier = Modifier,
     selectedTab: Int,
+    isOtherServiceLoading: Boolean,
+    onLoadMore: () -> Unit,
+    isLoadingMore: Boolean,
+    hasMore: Boolean
 ) {
 
     val currentList = when (selectedTab) {
@@ -495,6 +502,26 @@ fun ServiceList(
         1 -> downloadedServices
         2 -> recentServices
         else -> otherServices
+    }
+
+    if (selectedTab == 3 && isOtherServiceLoading) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            contentAlignment = Alignment.Center
+
+        ) {
+            val shimmerBrush = rememberShimmerBrush()
+
+            Column {
+                repeat(5) {
+                    ServiceCardSkeleton(shimmerBrush = shimmerBrush)
+                }
+            }
+        }
+        return
     }
 
     if (currentList.isEmpty()) {
@@ -524,42 +551,37 @@ fun ServiceList(
 
         0 -> ServiceTabContent(
             services = assignedServices,
-            visibleCount = 5,
             cardType = CardType.ASSIGNED,
             onActionClick = onStartAssigned,
-            extractRouteName = extractRouteName,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp)
         )
 
         1 -> ServiceTabContent(
             services = downloadedServices,
-            visibleCount = 5,
             cardType = CardType.DOWNLOADED,
             onActionClick = onStartDownloaded,
-            extractRouteName = extractRouteName,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp)
         )
 
         2 -> ServiceTabContent(
             services = recentServices,
-            visibleCount = 5,
             cardType = CardType.RECENT,
             onActionClick = onRestartRecentService,
-            extractRouteName = extractRouteName,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp)
         )
 
         3 -> ServiceTabContent(
             services = otherServices,
-            visibleCount = null,
             cardType = CardType.OTHER,
             onActionClick = onDownload,
-            extractRouteName = extractRouteName,
             canStartService = canStartService,
-            modifier = modifier.padding(horizontal = 16.dp)
+            modifier = modifier.padding(horizontal = 16.dp),
+            onLoadMore = onLoadMore,
+            isLoadingMore = isLoadingMore,
+            hasMore = hasMore
         )
     }
 }
@@ -567,22 +589,14 @@ fun ServiceList(
 @Composable
 fun ServiceTabContent(
     services: List<HomeUiModel>,
-    visibleCount: Int?,
     cardType: CardType,
     onActionClick: (HomeUiModel) -> Unit,
-    extractRouteName: (String) -> String,
     canStartService: (String) -> Boolean,
     modifier: Modifier = Modifier,
+    onLoadMore: (() -> Unit)? = null,
+    isLoadingMore: Boolean = false,
+    hasMore: Boolean = true
 ) {
-
-    val defaultVisibleCount = 5
-
-    var isExpanded by rememberSaveable(cardType) { mutableStateOf(false) }
-    val visibleServices = if (visibleCount == null) {
-        services
-    } else {
-        if (isExpanded) services else services.take(defaultVisibleCount)
-    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -591,7 +605,7 @@ fun ServiceTabContent(
 
         item { Spacer(modifier = Modifier.height(10.dp)) }
 
-        items(visibleServices) { service ->
+        items(services) { service ->
 
             val startDateTime = utcToIstConverter(service.startingAt)
 
@@ -601,7 +615,6 @@ fun ServiceTabContent(
                 onActionClick = { onActionClick(service) },
                 date = startDateTime?.first ?: "Date unavailable",
                 time = startDateTime?.second ?: "Time unavailable",
-                routeName = extractRouteName(service.name),
                 isEnabled = when (cardType) {
                     CardType.ASSIGNED,
                     CardType.DOWNLOADED -> canStartService(service.startingAt)
@@ -612,17 +625,32 @@ fun ServiceTabContent(
 
             Spacer(modifier = Modifier.height(15.dp))
         }
+        item {
+            Spacer(modifier = Modifier.height(10.dp))
 
-        if (visibleCount != null && services.size > defaultVisibleCount) {
-            item {
-                ViewMoreText(
-                    text = if (isExpanded) "View Less" else "View More",
-                    onClick = {
-                        isExpanded = !isExpanded
-                    },
-                    isExpanded = isExpanded
-                )
+            if (onLoadMore != null) {
+
+                when {
+                    isLoadingMore -> {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    hasMore -> {
+                        ViewMoreText(
+                            text = "Load More",
+                            onClick = onLoadMore,
+                            isExpanded = false
+                        )
+                    }
+                }
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
@@ -677,7 +705,6 @@ fun ServiceCard(
     onActionClick: () -> Unit,
     date: String,
     time: String,
-    routeName: String,
     isEnabled: Boolean,
     onFinishDutyClick: ((HomeUiModel) -> Unit)? = null
 ) {
@@ -703,7 +730,7 @@ fun ServiceCard(
 
             //-------------- ROUTE NAME ----------------------//
             Text(
-                text = routeName,
+                text = "${service.startingLandmarkName ?: "N/A"} -> ${service.endingLandmarkName ?: "N/A"}",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 3.dp),
                 color = Color.Black
@@ -742,7 +769,7 @@ fun ServiceCard(
                             )
                             Spacer(Modifier.width(5.dp))
                             Text(
-                                service.regNo,
+                                service.registrationNumber,
                                 style = MaterialTheme.typography.labelLarge,
                                 color = Color.DarkGray
                             )
