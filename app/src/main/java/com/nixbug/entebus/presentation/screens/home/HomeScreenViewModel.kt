@@ -73,6 +73,9 @@ class HomeScreenViewModel @Inject constructor(
                                 otherServiceList = state.otherServiceList.filter { it.id != service.id }
                             )
                         }
+                        if (_uiState.value.otherServiceList.isEmpty() && _uiState.value.hasMore) {
+                            loadMoreServices()
+                        }
                     }
 
                     is Resource.Error -> {
