@@ -33,7 +33,8 @@ class ServiceRepositoryImpl @Inject constructor(
         limit: Int,
         search: String?
     ): Resource<List<MaskedServiceModel>> {
-
+        val excludedIds = serviceDao.getAllServiceIds()
+        val safeExcludedIds = excludedIds.ifEmpty { null }
         val serviceResult = apiHelper(
             apiCall = {
                 serviceApi.getMaskedService(
@@ -42,7 +43,8 @@ class ServiceRepositoryImpl @Inject constructor(
                     search = search,
                     orderBy = AppApiServiceOrderBy.starting_at,
                     orderIn = OrderIn.desc,
-                    statusList = listOf(ServiceStatus._1, ServiceStatus._2, ServiceStatus._3)
+                    statusList = listOf(ServiceStatus._1, ServiceStatus._2, ServiceStatus._3),
+                    idExcluding = safeExcludedIds
                 )
             },
             mapper = { it }

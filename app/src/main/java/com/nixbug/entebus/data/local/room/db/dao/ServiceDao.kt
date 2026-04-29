@@ -42,4 +42,7 @@ interface ServiceDao {
     @Transaction
     @Query("SELECT * FROM services WHERE id = :serviceId")
     suspend fun getServiceWithDetails(serviceId: Int): ServiceWithDetails?
+
+    @Query("SELECT id FROM services")
+    suspend fun getAllServiceIds(): List<Int>
 }
