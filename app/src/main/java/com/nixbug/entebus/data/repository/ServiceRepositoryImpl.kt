@@ -1,6 +1,13 @@
 package com.nixbug.entebus.data.repository
 
+import android.util.Log
+import com.google.gson.Gson
+import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
 import com.nixbug.entebus.data.mapper.toDomainWithLandmarks
+import com.nixbug.entebus.data.mapper.toFareEntity
+import com.nixbug.entebus.data.mapper.toLandmarkEntities
+import com.nixbug.entebus.data.mapper.toServiceEntity
+import com.nixbug.entebus.data.mapper.toVehicleEntity
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.MaskedServiceModel
@@ -13,7 +20,9 @@ import javax.inject.Inject
 
 class ServiceRepositoryImpl @Inject constructor(
     private val serviceApi: OperatorServiceApi,
-    private val landmarkRepository: LandmarkRepository
+    private val landmarkRepository: LandmarkRepository,
+    private val serviceDao: ServiceDao,
+    private val gson: Gson
 ) : ServiceRepository {
 
     override suspend fun fetchMaskedService(
@@ -145,7 +154,22 @@ class ServiceRepositoryImpl @Inject constructor(
 
         val domain = service.toDomainWithLandmarks(landmarkMap)
 
+        saveServiceToDb(domain)
+
         return Resource.Success(domain)
+    }
+
+    private suspend fun saveServiceToDb(domain: ServiceDetailModel) {
+        try {
+            serviceDao.insertFullService(
+                service = domain.toServiceEntity(),
+                landmarks = domain.toLandmarkEntities(),
+                fare = domain.toFareEntity(gson),
+                vehicle = domain.toVehicleEntity()
+            )
+        } catch (e: Exception) {
+            Log.e("DB_SAVE", "Failed to save service", e)
+        }
     }
 
 }
