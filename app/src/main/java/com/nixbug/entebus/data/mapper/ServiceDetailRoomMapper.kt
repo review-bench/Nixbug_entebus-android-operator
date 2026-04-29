@@ -7,11 +7,12 @@ import com.nixbug.entebus.data.local.room.db.entity.VehicleEntity
 import com.nixbug.entebus.domain.model.ServiceDetailModel
 import com.google.gson.Gson
 
-fun ServiceDetailModel.toServiceEntity() = ServiceEntity(
+fun ServiceDetailModel.toServiceEntity(localStatus: String) = ServiceEntity(
     id = id,
     companyId = companyId,
     name = name,
     status = status,
+    localStatus = localStatus,
     registrationNumber = registrationNumber,
     startingLandmarkId = startingLandmarkId,
     endingLandmarkId = endingLandmarkId,

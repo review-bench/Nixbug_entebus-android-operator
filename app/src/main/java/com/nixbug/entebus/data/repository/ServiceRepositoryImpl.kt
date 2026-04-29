@@ -113,7 +113,10 @@ class ServiceRepositoryImpl @Inject constructor(
         return Resource.Success(finalList)
     }
 
-    override suspend fun fetchServiceDetails(id: Int): Resource<ServiceDetailModel> {
+    override suspend fun fetchServiceDetails(
+        id: Int,
+        localStatus: String
+    ): Resource<ServiceDetailModel> {
 
         val result = apiHelper(
             apiCall = {
@@ -160,15 +163,15 @@ class ServiceRepositoryImpl @Inject constructor(
 
         val domain = service.toDomainWithLandmarks(landmarkMap)
 
-        saveServiceToDb(domain)
+        saveServiceToDb(domain, localStatus)
 
         return Resource.Success(domain)
     }
 
-    private suspend fun saveServiceToDb(domain: ServiceDetailModel) {
+    private suspend fun saveServiceToDb(domain: ServiceDetailModel, status: String) {
         try {
             serviceDao.insertFullService(
-                service = domain.toServiceEntity(),
+                service = domain.toServiceEntity(status),
                 landmarks = domain.toLandmarkEntities(),
                 fare = domain.toFareEntity(gson),
                 vehicle = domain.toVehicleEntity()

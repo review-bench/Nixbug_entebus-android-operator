@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
@@ -35,7 +36,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class HomeScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager,
     private val getMaskedServices: GetServiceUseCase,
-    private val getServiceDetail: GetServiceDetailUseCase
+    private val getServiceDetail: GetServiceDetailUseCase,
 ) : ViewModel() {
 
     // STATE
@@ -62,7 +63,7 @@ class HomeScreenViewModel @Inject constructor(
     fun onDownloadService(service: HomeUiModel) {
         viewModelScope.launch {
             try {
-                val result = getServiceDetail(service.id)
+                val result = getServiceDetail(service.id, LocalServiceStatus.DOWNLOADED)
                 when (result) {
                     is Resource.Success -> {
                         _uiState.update { state ->

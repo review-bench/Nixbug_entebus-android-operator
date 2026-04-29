@@ -9,6 +9,7 @@ data class ServiceEntity(
     val companyId: Int,
     val name: String,
     val status: Int,
+    val localStatus: String,
     val registrationNumber: String,
     val startingLandmarkId: Int?,
     val endingLandmarkId: Int?,
