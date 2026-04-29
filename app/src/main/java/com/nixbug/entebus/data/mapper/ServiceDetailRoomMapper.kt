@@ -32,7 +32,7 @@ fun ServiceDetailModel.toServiceEntity(localStatus: String) = ServiceEntity(
 fun ServiceDetailModel.toLandmarkEntities(): List<LandmarkEntity> {
     return route.map {
         LandmarkEntity(
-            serviceId =it.serviceId ,
+            serviceId = it.serviceId,
             landmarkId = it.landmarkId,
             landmarkName = it.landmarkName,
             aliasName = it.landmarkAlias.firstOrNull(),
@@ -44,7 +44,6 @@ fun ServiceDetailModel.toLandmarkEntities(): List<LandmarkEntity> {
 }
 
 fun ServiceDetailModel.toFareEntity(gson: Gson) = FareEntity(
-    id = fare.id,
     fareId = fare.fareId,
     serviceId = id,
     name = fare.name,
@@ -57,7 +56,6 @@ fun ServiceDetailModel.toFareEntity(gson: Gson) = FareEntity(
 )
 
 fun ServiceDetailModel.toVehicleEntity() = VehicleEntity(
-    id = vehicle.id,
     vehicleId = vehicle.vehicleId,
     serviceId = id,
     name = vehicle.name,

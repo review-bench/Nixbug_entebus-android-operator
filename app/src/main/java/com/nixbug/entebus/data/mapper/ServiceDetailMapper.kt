@@ -64,7 +64,7 @@ fun FareAttributes.toDomain(): FareAttributesModel {
         ticketTypes = ticketTypes.map { it.toDomain() },
         currencyType = currencyType,
         distanceUnit = distanceUnit,
-        extra = extra
+        extras = extras ?: emptyMap()
     )
 }
 

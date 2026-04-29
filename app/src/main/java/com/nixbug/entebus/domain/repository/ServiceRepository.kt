@@ -11,5 +11,9 @@ interface ServiceRepository {
         search: String?
     ): Resource<List<MaskedServiceModel>>
 
-    suspend fun fetchServiceDetails(id: Int,localStatus: String): Resource<ServiceDetailModel>
+    suspend fun fetchServiceDetails(id: Int, localStatus: String): Resource<ServiceDetailModel>
+
+    suspend fun getLocalServicesByStatus(
+        status: String
+    ): List<ServiceDetailModel>
 }

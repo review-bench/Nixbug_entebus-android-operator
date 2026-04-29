@@ -3,6 +3,7 @@ package com.nixbug.entebus.data.repository
 import android.util.Log
 import com.google.gson.Gson
 import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
+import com.nixbug.entebus.data.local.room.mapper.toDomain
 import com.nixbug.entebus.data.mapper.toDomainWithLandmarks
 import com.nixbug.entebus.data.mapper.toFareEntity
 import com.nixbug.entebus.data.mapper.toLandmarkEntities
@@ -19,7 +20,6 @@ import com.nixbug.entebus.domain.repository.LandmarkRepository
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.utils.network.Resource
 import javax.inject.Inject
-
 
 class ServiceRepositoryImpl @Inject constructor(
     private val serviceApi: OperatorServiceApi,
@@ -181,6 +181,15 @@ class ServiceRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e("DB_SAVE", "Failed to save service", e)
         }
+    }
+
+    override suspend fun getLocalServicesByStatus(
+        status: String
+    ): List<ServiceDetailModel> {
+
+        val localData = serviceDao.getServicesByStatus(status)
+
+        return localData.map { it.toDomain(gson) }
     }
 
 }

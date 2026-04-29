@@ -18,7 +18,8 @@ import androidx.room.PrimaryKey
     indices = [Index("serviceId")]
 )
 data class FareEntity(
-    @PrimaryKey val id: Int,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
     val fareId: Int,
     val serviceId: Int,
     val name: String,

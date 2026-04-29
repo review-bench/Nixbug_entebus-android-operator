@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName
  * @param ticketTypes
  * @param currencyType
  * @param distanceUnit
- * @param extra
+ * @param extras
  */
 
 
@@ -28,6 +28,6 @@ data class FareAttributes(
     val distanceUnit: String,
 
     @SerializedName("extra")
-    val extra: Map<String, Any>
+    val extras: Map<String, Any>?
 
 )

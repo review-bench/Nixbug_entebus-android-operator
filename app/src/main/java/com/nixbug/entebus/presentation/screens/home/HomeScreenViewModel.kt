@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.service.GetLocalServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
@@ -37,6 +38,7 @@ class HomeScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager,
     private val getMaskedServices: GetServiceUseCase,
     private val getServiceDetail: GetServiceDetailUseCase,
+    private val getLocalServices: GetLocalServicesUseCase
 ) : ViewModel() {
 
     // STATE
@@ -96,6 +98,19 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
+    fun onTabSelected(tab: Int) {
+        _uiState.update { it.copy(selectedTab = tab) }
+        if (tab == 1) {
+            viewModelScope.launch {
+                val services = getLocalServices(LocalServiceStatus.DOWNLOADED)
+                Log.d("TAG Home", "onTabSelected: $services")
+            }
+        }
+        if (tab == 3) {
+            fetchOtherServices()
+        }
+    }
+
     fun onSearchQueryChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
         searchQuery.value = query
@@ -115,13 +130,6 @@ class HomeScreenViewModel @Inject constructor(
                 .collectLatest {
                     fetchOtherServicesInternal(isPagination = false)
                 }
-        }
-    }
-
-    fun onTabSelected(tab: Int) {
-        _uiState.update { it.copy(selectedTab = tab) }
-        if (tab == 3) {
-            fetchOtherServices()
         }
     }
 
