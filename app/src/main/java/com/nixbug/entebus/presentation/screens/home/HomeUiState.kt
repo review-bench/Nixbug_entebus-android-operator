@@ -6,13 +6,13 @@ data class HomeUiState(
 
     val ongoingService: HomeUiModel? = null,
 
-    val assignedServiceList: List<HomeUiModel> = emptyList<HomeUiModel>(),
+    val assignedServiceList: List<HomeUiModel> = emptyList(),
 
-    val downloadedServiceList: List<HomeUiModel> = emptyList<HomeUiModel>(),
+    val downloadedServiceList: List<HomeUiModel> = emptyList(),
 
-    val recentServiceList: List<HomeUiModel> = emptyList<HomeUiModel>(),
+    val recentServiceList: List<HomeUiModel> = emptyList(),
 
-    val otherServiceList: List<HomeUiModel> = emptyList<HomeUiModel>(),
+    val otherServiceList: List<HomeUiModel> = emptyList(),
 
     val searchQuery: String = "",
 
@@ -25,6 +25,8 @@ data class HomeUiState(
     val isConnectingPrinter: Boolean = false,
 
     val otherServiceLoading: Boolean = false,
+    val downloadedServiceLoading: Boolean = false,
+    val downloadingServiceId: Int? = null,
 
     val offset: Int = 0,
     val limit: Int = 20,

@@ -62,6 +62,7 @@ class HomeScreenViewModel @Inject constructor(
     private var pendingService: HomeUiModel? = null
 
     fun onDownloadService(service: HomeUiModel) {
+        _uiState.update { it.copy(downloadingServiceId = service.id) }
         viewModelScope.launch {
             try {
                 val result = getServiceDetail(service.id, LocalServiceStatus.DOWNLOADED)
@@ -93,6 +94,8 @@ class HomeScreenViewModel @Inject constructor(
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 SnackbarManager.show(e.message ?: "Something went wrong", SnackbarType.ERROR)
+            } finally {
+                _uiState.update { it.copy(downloadingServiceId = null) }
             }
         }
     }
