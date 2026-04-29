@@ -102,9 +102,9 @@ class HomeScreenViewModel @Inject constructor(
 
     private fun fetchDownloadedServices() {
         viewModelScope.launch {
+            _uiState.update { it.copy(serviceLoading = true) }
             try {
                 val services = getLocalServices(LocalServiceStatus.DOWNLOADED)
-
                 _uiState.update {
                     it.copy(
                         downloadedServiceList = services.map { service ->
@@ -112,12 +112,13 @@ class HomeScreenViewModel @Inject constructor(
                         }
                     )
                 }
-
             } catch (e: Exception) {
                 SnackbarManager.show(
                     e.message ?: "Failed to load downloaded services",
                     SnackbarType.ERROR
                 )
+            } finally {
+                _uiState.update { it.copy(serviceLoading = false) }
             }
         }
     }
@@ -181,7 +182,7 @@ class HomeScreenViewModel @Inject constructor(
                     offset = 0,
                     hasMore = true,
                     otherServiceList = emptyList(),
-                    otherServiceLoading = true
+                    serviceLoading = true
                 )
             }
         }
@@ -250,7 +251,7 @@ class HomeScreenViewModel @Inject constructor(
             if (isPagination) {
                 _uiState.update { it.copy(isPaginationLoading = false) }
             } else {
-                _uiState.update { it.copy(otherServiceLoading = false) }
+                _uiState.update { it.copy(serviceLoading = false) }
             }
         }
 

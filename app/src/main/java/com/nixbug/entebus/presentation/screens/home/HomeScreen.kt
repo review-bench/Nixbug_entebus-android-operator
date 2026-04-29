@@ -247,7 +247,7 @@ fun HomeScreen(
                 canStartService = viewModel::canStartService,
                 modifier = Modifier.weight(1f),
                 selectedTab = state.selectedTab,
-                isOtherServiceLoading = state.otherServiceLoading,
+                isServiceLoading = state.serviceLoading,
                 onLoadMore = viewModel::loadMoreServices,
                 isLoadingMore = state.isPaginationLoading,
                 downloadingServiceId = state.downloadingServiceId,
@@ -492,7 +492,7 @@ fun ServiceList(
     canStartService: (String) -> Boolean,
     modifier: Modifier = Modifier,
     selectedTab: Int,
-    isOtherServiceLoading: Boolean,
+    isServiceLoading: Boolean,
     onLoadMore: () -> Unit,
     isLoadingMore: Boolean,
     hasMore: Boolean,
@@ -506,7 +506,7 @@ fun ServiceList(
         else -> otherServices
     }
 
-    if (selectedTab == 3 && isOtherServiceLoading) {
+    if ( isServiceLoading) {
         Box(
             modifier = modifier
                 .fillMaxSize()
