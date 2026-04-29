@@ -2,7 +2,6 @@ package com.nixbug.entebus.presentation.screens.home
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.LocalServiceStatus
@@ -98,13 +97,32 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
+    private fun fetchDownloadedServices() {
+        viewModelScope.launch {
+            try {
+                val services = getLocalServices(LocalServiceStatus.DOWNLOADED)
+
+                _uiState.update {
+                    it.copy(
+                        downloadedServiceList = services.map { service ->
+                            service.toHomeUiModel()
+                        }
+                    )
+                }
+
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    e.message ?: "Failed to load downloaded services",
+                    SnackbarType.ERROR
+                )
+            }
+        }
+    }
+
     fun onTabSelected(tab: Int) {
         _uiState.update { it.copy(selectedTab = tab) }
         if (tab == 1) {
-            viewModelScope.launch {
-                val services = getLocalServices(LocalServiceStatus.DOWNLOADED)
-                Log.d("TAG Home", "onTabSelected: $services")
-            }
+            fetchDownloadedServices()
         }
         if (tab == 3) {
             fetchOtherServices()
@@ -234,7 +252,6 @@ class HomeScreenViewModel @Inject constructor(
         }
 
     }
-
 
     // MAIN UNIFIED ENTRY POINT
 

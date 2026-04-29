@@ -183,13 +183,9 @@ class ServiceRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getLocalServicesByStatus(
-        status: String
-    ): List<ServiceDetailModel> {
-
+    override suspend fun getLocalServicesByStatus(status: String): List<MaskedServiceModel> {
         val localData = serviceDao.getServicesByStatus(status)
-
-        return localData.map { it.toDomain(gson) }
+        return localData.map { it.toDomain() }
     }
 
 }
