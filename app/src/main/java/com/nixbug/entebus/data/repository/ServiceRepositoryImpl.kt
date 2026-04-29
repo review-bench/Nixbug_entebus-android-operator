@@ -9,6 +9,9 @@ import com.nixbug.entebus.data.mapper.toLandmarkEntities
 import com.nixbug.entebus.data.mapper.toServiceEntity
 import com.nixbug.entebus.data.mapper.toVehicleEntity
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
+import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceOrderBy
+import com.nixbug.entebus.data.remote.operator.model.service.OrderIn
+import com.nixbug.entebus.data.remote.operator.model.service.ServiceStatus
 import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.MaskedServiceModel
 import com.nixbug.entebus.domain.model.ServiceDetailModel
@@ -36,7 +39,10 @@ class ServiceRepositoryImpl @Inject constructor(
                 serviceApi.getMaskedService(
                     offset = offset,
                     limit = limit,
-                    search = search
+                    search = search,
+                    orderBy = AppApiServiceOrderBy.starting_at,
+                    orderIn = OrderIn.desc,
+                    statusList = listOf(ServiceStatus._1, ServiceStatus._2, ServiceStatus._3)
                 )
             },
             mapper = { it }

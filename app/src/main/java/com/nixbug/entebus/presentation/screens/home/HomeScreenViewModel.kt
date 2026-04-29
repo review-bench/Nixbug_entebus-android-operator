@@ -39,7 +39,6 @@ class HomeScreenViewModel @Inject constructor(
 ) : ViewModel() {
 
     // STATE
-
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -66,25 +65,8 @@ class HomeScreenViewModel @Inject constructor(
                 val result = getServiceDetail(service.id)
                 when (result) {
                     is Resource.Success -> {
-                        Log.d(
-                            "SERVICE_DETAIL",
-                            "Service detail fetched successfully: ${result.data?.fare}"
-                        )
-                        Log.d(
-                            "SERVICE_DETAIL",
-                            "Service detail fetched successfully: ${result.data?.vehicle}"
-                        )
-                        Log.d(
-                            "SERVICE_DETAIL",
-                            "Service detail fetched successfully: ${result.data?.route}"
-                        )
-                        Log.d(
-                            "SERVICE_DETAIL",
-                            "Service detail fetched successfully: ${result.data?.startingLandmarkName}"
-                        )
                         _uiState.update { state ->
                             state.copy(
-                                downloadedServiceList = state.downloadedServiceList + service,
                                 otherServiceList = state.otherServiceList.filter { it.id != service.id }
                             )
                         }
@@ -112,7 +94,6 @@ class HomeScreenViewModel @Inject constructor(
             }
         }
     }
-
 
     fun onSearchQueryChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
