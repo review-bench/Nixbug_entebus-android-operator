@@ -506,7 +506,7 @@ fun ServiceList(
         else -> otherServices
     }
 
-    if ( isServiceLoading) {
+    if (isServiceLoading) {
         Box(
             modifier = modifier
                 .fillMaxSize()

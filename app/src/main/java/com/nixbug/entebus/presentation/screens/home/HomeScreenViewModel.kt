@@ -5,7 +5,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.LocalServiceStatus
-import com.nixbug.entebus.domain.usecase.service.GetLocalServicesUseCase
+import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
@@ -37,7 +37,7 @@ class HomeScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager,
     private val getMaskedServices: GetServiceUseCase,
     private val getServiceDetail: GetServiceDetailUseCase,
-    private val getLocalServices: GetLocalServicesUseCase
+    private val getLocalServices: GetLocalServicesByStatusUseCase
 ) : ViewModel() {
 
     // STATE

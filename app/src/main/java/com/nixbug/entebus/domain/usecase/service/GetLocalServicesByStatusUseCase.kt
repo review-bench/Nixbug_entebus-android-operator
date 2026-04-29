@@ -4,7 +4,7 @@ import com.nixbug.entebus.domain.model.MaskedServiceModel
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import javax.inject.Inject
 
-class GetLocalServicesUseCase @Inject constructor(
+class GetLocalServicesByStatusUseCase @Inject constructor(
     private val repository: ServiceRepository
 ) {
     suspend operator fun invoke(status: String): List<MaskedServiceModel> {

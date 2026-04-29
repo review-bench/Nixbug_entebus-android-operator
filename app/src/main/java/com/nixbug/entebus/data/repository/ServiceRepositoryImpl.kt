@@ -1,6 +1,5 @@
 package com.nixbug.entebus.data.repository
 
-import android.util.Log
 import com.google.gson.Gson
 import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
 import com.nixbug.entebus.data.local.room.mapper.toDomain
@@ -179,7 +178,7 @@ class ServiceRepositoryImpl @Inject constructor(
                 vehicle = domain.toVehicleEntity()
             )
         } catch (e: Exception) {
-            Log.e("DB_SAVE", "Failed to save service", e)
+            throw (e)
         }
     }
 
