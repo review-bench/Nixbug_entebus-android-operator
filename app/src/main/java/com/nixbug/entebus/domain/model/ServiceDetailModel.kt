@@ -39,7 +39,7 @@ data class FareAttributesModel(
     val ticketTypes: List<TicketType>,
     val currencyType: String,
     val distanceUnit: String,
-    val extra: Map<String, Any>
+    val extras: Map<String, Any>
 )
 
 data class TicketType(

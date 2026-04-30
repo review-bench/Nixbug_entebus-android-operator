@@ -3,6 +3,7 @@ package com.nixbug.entebus.di
 import com.google.gson.Gson
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
+import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
 import com.nixbug.entebus.data.manager.SessionManager
 import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
@@ -92,11 +93,15 @@ object RepositoryModule {
     @Singleton
     fun provideServiceRepository(
         api: OperatorServiceApi,
-        landmarkRepository: LandmarkRepository
+        landmarkRepository: LandmarkRepository,
+        serviceDao: ServiceDao,
+        gson: Gson
     ): ServiceRepository {
         return ServiceRepositoryImpl(
             api,
-            landmarkRepository
+            landmarkRepository,
+            serviceDao,
+            gson
         )
     }
 

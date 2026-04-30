@@ -8,6 +8,7 @@ import javax.inject.Inject
 
 class GetServiceDetailUseCase @Inject constructor(private val repository: ServiceRepository) {
     suspend operator fun invoke(
-        id: Int
-    ): Resource<ServiceDetailModel> = repository.fetchServiceDetails(id)
+        id: Int,
+        localStatus: String
+    ): Resource<ServiceDetailModel> = repository.fetchServiceDetails(id, localStatus)
 }

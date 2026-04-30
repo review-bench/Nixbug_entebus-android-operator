@@ -2,9 +2,10 @@ package com.nixbug.entebus.presentation.screens.home
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
@@ -35,11 +36,11 @@ import kotlin.coroutines.cancellation.CancellationException
 class HomeScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager,
     private val getMaskedServices: GetServiceUseCase,
-    private val getServiceDetail: GetServiceDetailUseCase
+    private val getServiceDetail: GetServiceDetailUseCase,
+    private val getLocalServices: GetLocalServicesByStatusUseCase
 ) : ViewModel() {
 
     // STATE
-
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -61,32 +62,19 @@ class HomeScreenViewModel @Inject constructor(
     private var pendingService: HomeUiModel? = null
 
     fun onDownloadService(service: HomeUiModel) {
+        _uiState.update { it.copy(downloadingServiceId = service.id) }
         viewModelScope.launch {
             try {
-                val result = getServiceDetail(service.id)
+                val result = getServiceDetail(service.id, LocalServiceStatus.DOWNLOADED)
                 when (result) {
                     is Resource.Success -> {
-                        Log.d(
-                            "SERVICE_DETAIL",
-                            "Service detail fetched successfully: ${result.data?.fare}"
-                        )
-                        Log.d(
-                            "SERVICE_DETAIL",
-                            "Service detail fetched successfully: ${result.data?.vehicle}"
-                        )
-                        Log.d(
-                            "SERVICE_DETAIL",
-                            "Service detail fetched successfully: ${result.data?.route}"
-                        )
-                        Log.d(
-                            "SERVICE_DETAIL",
-                            "Service detail fetched successfully: ${result.data?.startingLandmarkName}"
-                        )
                         _uiState.update { state ->
                             state.copy(
-                                downloadedServiceList = state.downloadedServiceList + service,
                                 otherServiceList = state.otherServiceList.filter { it.id != service.id }
                             )
+                        }
+                        if (_uiState.value.otherServiceList.isEmpty() && _uiState.value.hasMore) {
+                            loadMoreServices()
                         }
                     }
 
@@ -109,10 +97,44 @@ class HomeScreenViewModel @Inject constructor(
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 SnackbarManager.show(e.message ?: "Something went wrong", SnackbarType.ERROR)
+            } finally {
+                _uiState.update { it.copy(downloadingServiceId = null) }
             }
         }
     }
 
+    private fun fetchDownloadedServices() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(serviceLoading = true) }
+            try {
+                val services = getLocalServices(LocalServiceStatus.DOWNLOADED)
+                _uiState.update {
+                    it.copy(
+                        downloadedServiceList = services.map { service ->
+                            service.toHomeUiModel()
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    e.message ?: "Failed to load downloaded services",
+                    SnackbarType.ERROR
+                )
+            } finally {
+                _uiState.update { it.copy(serviceLoading = false) }
+            }
+        }
+    }
+
+    fun onTabSelected(tab: Int) {
+        _uiState.update { it.copy(selectedTab = tab) }
+        if (tab == 1) {
+            fetchDownloadedServices()
+        }
+        if (tab == 3) {
+            fetchOtherServices()
+        }
+    }
 
     fun onSearchQueryChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
@@ -133,13 +155,6 @@ class HomeScreenViewModel @Inject constructor(
                 .collectLatest {
                     fetchOtherServicesInternal(isPagination = false)
                 }
-        }
-    }
-
-    fun onTabSelected(tab: Int) {
-        _uiState.update { it.copy(selectedTab = tab) }
-        if (tab == 3) {
-            fetchOtherServices()
         }
     }
 
@@ -170,7 +185,7 @@ class HomeScreenViewModel @Inject constructor(
                     offset = 0,
                     hasMore = true,
                     otherServiceList = emptyList(),
-                    otherServiceLoading = true
+                    serviceLoading = true
                 )
             }
         }
@@ -239,12 +254,11 @@ class HomeScreenViewModel @Inject constructor(
             if (isPagination) {
                 _uiState.update { it.copy(isPaginationLoading = false) }
             } else {
-                _uiState.update { it.copy(otherServiceLoading = false) }
+                _uiState.update { it.copy(serviceLoading = false) }
             }
         }
 
     }
-
 
     // MAIN UNIFIED ENTRY POINT
 

@@ -247,10 +247,11 @@ fun HomeScreen(
                 canStartService = viewModel::canStartService,
                 modifier = Modifier.weight(1f),
                 selectedTab = state.selectedTab,
-                isOtherServiceLoading = state.otherServiceLoading,
+                isServiceLoading = state.serviceLoading,
                 onLoadMore = viewModel::loadMoreServices,
                 isLoadingMore = state.isPaginationLoading,
-                hasMore = state.hasMore
+                downloadingServiceId = state.downloadingServiceId,
+                hasMore = state.hasMore,
             )
         }
     }
@@ -491,10 +492,11 @@ fun ServiceList(
     canStartService: (String) -> Boolean,
     modifier: Modifier = Modifier,
     selectedTab: Int,
-    isOtherServiceLoading: Boolean,
+    isServiceLoading: Boolean,
     onLoadMore: () -> Unit,
     isLoadingMore: Boolean,
-    hasMore: Boolean
+    hasMore: Boolean,
+    downloadingServiceId: Int?,
 ) {
 
     val currentList = when (selectedTab) {
@@ -504,7 +506,7 @@ fun ServiceList(
         else -> otherServices
     }
 
-    if (selectedTab == 3 && isOtherServiceLoading) {
+    if (isServiceLoading) {
         Box(
             modifier = modifier
                 .fillMaxSize()
@@ -554,7 +556,8 @@ fun ServiceList(
             cardType = CardType.ASSIGNED,
             onActionClick = onStartAssigned,
             canStartService = canStartService,
-            modifier = modifier.padding(horizontal = 16.dp)
+            modifier = modifier.padding(horizontal = 16.dp),
+            downloadingServiceId = downloadingServiceId
         )
 
         1 -> ServiceTabContent(
@@ -562,7 +565,8 @@ fun ServiceList(
             cardType = CardType.DOWNLOADED,
             onActionClick = onStartDownloaded,
             canStartService = canStartService,
-            modifier = modifier.padding(horizontal = 16.dp)
+            modifier = modifier.padding(horizontal = 16.dp),
+            downloadingServiceId = downloadingServiceId
         )
 
         2 -> ServiceTabContent(
@@ -570,7 +574,8 @@ fun ServiceList(
             cardType = CardType.RECENT,
             onActionClick = onRestartRecentService,
             canStartService = canStartService,
-            modifier = modifier.padding(horizontal = 16.dp)
+            modifier = modifier.padding(horizontal = 16.dp),
+            downloadingServiceId = downloadingServiceId
         )
 
         3 -> ServiceTabContent(
@@ -581,7 +586,8 @@ fun ServiceList(
             modifier = modifier.padding(horizontal = 16.dp),
             onLoadMore = onLoadMore,
             isLoadingMore = isLoadingMore,
-            hasMore = hasMore
+            downloadingServiceId = downloadingServiceId,
+            hasMore = hasMore,
         )
     }
 }
@@ -595,7 +601,8 @@ fun ServiceTabContent(
     modifier: Modifier = Modifier,
     onLoadMore: (() -> Unit)? = null,
     isLoadingMore: Boolean = false,
-    hasMore: Boolean = true
+    hasMore: Boolean = true,
+    downloadingServiceId: Int?
 ) {
 
     LazyColumn(
@@ -608,6 +615,7 @@ fun ServiceTabContent(
         items(services) { service ->
 
             val startDateTime = utcToIstConverter(service.startingAt)
+            val isAnyDownloading = downloadingServiceId != null
 
             ServiceCard(
                 service = service,
@@ -615,12 +623,14 @@ fun ServiceTabContent(
                 onActionClick = { onActionClick(service) },
                 date = startDateTime?.first ?: "Date unavailable",
                 time = startDateTime?.second ?: "Time unavailable",
+                isDownloading = service.id == downloadingServiceId,
                 isEnabled = when (cardType) {
                     CardType.ASSIGNED,
                     CardType.DOWNLOADED -> canStartService(service.startingAt)
 
                     else -> true
-                }
+                },
+                isAnyDownloading = isAnyDownloading
             )
 
             Spacer(modifier = Modifier.height(15.dp))
@@ -706,7 +716,9 @@ fun ServiceCard(
     date: String,
     time: String,
     isEnabled: Boolean,
-    onFinishDutyClick: ((HomeUiModel) -> Unit)? = null
+    onFinishDutyClick: ((HomeUiModel) -> Unit)? = null,
+    isDownloading: Boolean = false,
+    isAnyDownloading: Boolean = false
 ) {
 
     Card(
@@ -730,7 +742,7 @@ fun ServiceCard(
 
             //-------------- ROUTE NAME ----------------------//
             Text(
-                text = "${service.startingLandmarkName ?: "N/A"} -> ${service.endingLandmarkName ?: "N/A"}",
+                text = "${service.startingLandmarkName} -> ${service.endingLandmarkName}",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 3.dp),
                 color = Color.Black
@@ -798,7 +810,14 @@ fun ServiceCard(
                     //-------------- START/DOWNLOAD BUTTON ----------------------//
                     if (cardType != CardType.ONGOING) {
                         Spacer(Modifier.height(10.dp))
-                        SmallCardButton(cardType, onActionClick, enabled = isEnabled)
+                        val isActionEnabled =
+                            isEnabled && (cardType != CardType.OTHER || !isAnyDownloading)
+                        SmallCardButton(
+                            cardType,
+                            onActionClick,
+                            enabled = isActionEnabled,
+                            isLoading = isDownloading
+                        )
                     }
                 }
 
@@ -818,7 +837,12 @@ fun ServiceCard(
 }
 
 @Composable
-fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
+fun SmallCardButton(
+    cardType: CardType,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    isLoading: Boolean = false
+) {
 
     val text = when (cardType) {
         CardType.ASSIGNED -> "Start"
@@ -841,11 +865,19 @@ fun SmallCardButton(cardType: CardType, onClick: () -> Unit, enabled: Boolean) {
         shape = RoundedCornerShape(10.dp),
         contentPadding = PaddingValues(0.dp)
     ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.White
-        )
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = Color.White
+            )
+        } else {
+            Text(
+                text,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
+            )
+        }
     }
 }
 

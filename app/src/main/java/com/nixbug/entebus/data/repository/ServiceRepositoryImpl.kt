@@ -1,7 +1,17 @@
 package com.nixbug.entebus.data.repository
 
+import com.google.gson.Gson
+import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
+import com.nixbug.entebus.data.local.room.mapper.toDomain
 import com.nixbug.entebus.data.mapper.toDomainWithLandmarks
+import com.nixbug.entebus.data.mapper.toFareEntity
+import com.nixbug.entebus.data.mapper.toLandmarkEntities
+import com.nixbug.entebus.data.mapper.toServiceEntity
+import com.nixbug.entebus.data.mapper.toVehicleEntity
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
+import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceOrderBy
+import com.nixbug.entebus.data.remote.operator.model.service.OrderIn
+import com.nixbug.entebus.data.remote.operator.model.service.ServiceStatus
 import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.MaskedServiceModel
 import com.nixbug.entebus.domain.model.ServiceDetailModel
@@ -10,10 +20,11 @@ import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.utils.network.Resource
 import javax.inject.Inject
 
-
 class ServiceRepositoryImpl @Inject constructor(
     private val serviceApi: OperatorServiceApi,
-    private val landmarkRepository: LandmarkRepository
+    private val landmarkRepository: LandmarkRepository,
+    private val serviceDao: ServiceDao,
+    private val gson: Gson
 ) : ServiceRepository {
 
     override suspend fun fetchMaskedService(
@@ -21,13 +32,18 @@ class ServiceRepositoryImpl @Inject constructor(
         limit: Int,
         search: String?
     ): Resource<List<MaskedServiceModel>> {
-
+        val excludedIds = serviceDao.getAllServiceIds()
+        val safeExcludedIds = excludedIds.ifEmpty { null }
         val serviceResult = apiHelper(
             apiCall = {
                 serviceApi.getMaskedService(
                     offset = offset,
                     limit = limit,
-                    search = search
+                    search = search,
+                    orderBy = AppApiServiceOrderBy.starting_at,
+                    orderIn = OrderIn.desc,
+                    statusList = listOf(ServiceStatus._1, ServiceStatus._2, ServiceStatus._3),
+                    idExcluding = safeExcludedIds
                 )
             },
             mapper = { it }
@@ -98,7 +114,10 @@ class ServiceRepositoryImpl @Inject constructor(
         return Resource.Success(finalList)
     }
 
-    override suspend fun fetchServiceDetails(id: Int): Resource<ServiceDetailModel> {
+    override suspend fun fetchServiceDetails(
+        id: Int,
+        localStatus: String
+    ): Resource<ServiceDetailModel> {
 
         val result = apiHelper(
             apiCall = {
@@ -145,7 +164,27 @@ class ServiceRepositoryImpl @Inject constructor(
 
         val domain = service.toDomainWithLandmarks(landmarkMap)
 
+        saveServiceToDb(domain, localStatus)
+
         return Resource.Success(domain)
+    }
+
+    private suspend fun saveServiceToDb(domain: ServiceDetailModel, status: String) {
+        try {
+            serviceDao.insertFullService(
+                service = domain.toServiceEntity(status, gson),
+                landmarks = domain.toLandmarkEntities(),
+                fare = domain.toFareEntity(gson),
+                vehicle = domain.toVehicleEntity()
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override suspend fun getLocalServicesByStatus(status: String): List<MaskedServiceModel> {
+        val localData = serviceDao.getServicesByStatus(status)
+        return localData.map { it.toDomain(gson) }
     }
 
 }
