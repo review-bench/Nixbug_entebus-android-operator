@@ -128,6 +128,29 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
+    private fun fetchRecentServices() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(serviceLoading = true) }
+            try {
+                val services = getLocalServices(LocalServiceStatus.RECENT)
+                _uiState.update {
+                    it.copy(
+                        recentServiceList = services.map { service ->
+                            service.toHomeUiModel()
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    e.message ?: "Failed to load recent services",
+                    SnackbarType.ERROR
+                )
+            } finally {
+                _uiState.update { it.copy(serviceLoading = false) }
+            }
+        }
+    }
+
     init {
         viewModelScope.launch {
             val res = getAssignedServices()
@@ -151,6 +174,7 @@ class HomeScreenViewModel @Inject constructor(
             }
         }
     }
+
     fun onTabSelected(tab: Int) {
         _uiState.update { it.copy(selectedTab = tab) }
         if (tab == 0) {
@@ -178,6 +202,9 @@ class HomeScreenViewModel @Inject constructor(
         }
         if (tab == 1) {
             fetchDownloadedServices()
+        }
+        if (tab == 2) {
+            fetchRecentServices()
         }
         if (tab == 3) {
             fetchOtherServices()

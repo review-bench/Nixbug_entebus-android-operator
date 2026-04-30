@@ -7,11 +7,8 @@ data class HomeUiState(
     val ongoingService: HomeUiModel? = null,
 
     val assignedServiceList: List<HomeUiModel> = emptyList(),
-
     val downloadedServiceList: List<HomeUiModel> = emptyList(),
-
     val recentServiceList: List<HomeUiModel> = emptyList(),
-
     val otherServiceList: List<HomeUiModel> = emptyList(),
 
     val searchQuery: String = "",
