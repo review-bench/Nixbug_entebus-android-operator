@@ -810,10 +810,12 @@ fun ServiceCard(
                     //-------------- START/DOWNLOAD BUTTON ----------------------//
                     if (cardType != CardType.ONGOING) {
                         Spacer(Modifier.height(10.dp))
+                        val isActionEnabled =
+                            isEnabled && (cardType != CardType.OTHER || !isAnyDownloading)
                         SmallCardButton(
                             cardType,
                             onActionClick,
-                            enabled = isEnabled && !isAnyDownloading,
+                            enabled = isActionEnabled,
                             isLoading = isDownloading
                         )
                     }

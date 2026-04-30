@@ -178,7 +178,7 @@ class ServiceRepositoryImpl @Inject constructor(
                 vehicle = domain.toVehicleEntity()
             )
         } catch (e: Exception) {
-            throw (e)
+            e.printStackTrace()
         }
     }
 
