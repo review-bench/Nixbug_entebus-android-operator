@@ -7,7 +7,7 @@ import com.nixbug.entebus.data.local.room.db.entity.VehicleEntity
 import com.nixbug.entebus.domain.model.ServiceDetailModel
 import com.google.gson.Gson
 
-fun ServiceDetailModel.toServiceEntity(localStatus: String) = ServiceEntity(
+fun ServiceDetailModel.toServiceEntity(localStatus: String,gson: Gson) = ServiceEntity(
     id = id,
     companyId = companyId,
     name = name,
@@ -25,8 +25,8 @@ fun ServiceDetailModel.toServiceEntity(localStatus: String) = ServiceEntity(
     publicKey = publicKey,
     startingLandmarkName = startingLandmarkName,
     endingLandmarkName = endingLandmarkName,
-    startingLandmarkAlias = startingLandmarkAlias.firstOrNull(),
-    endingLandmarkAlias = endingLandmarkAlias.firstOrNull()
+    startingLandmarkAlias = gson.toJson(startingLandmarkAlias),
+    endingLandmarkAlias = gson.toJson(endingLandmarkAlias)
 )
 
 fun ServiceDetailModel.toLandmarkEntities(): List<LandmarkEntity> {

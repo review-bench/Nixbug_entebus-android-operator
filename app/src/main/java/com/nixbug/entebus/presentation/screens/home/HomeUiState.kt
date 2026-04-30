@@ -25,7 +25,6 @@ data class HomeUiState(
     val isConnectingPrinter: Boolean = false,
 
     val serviceLoading: Boolean = false,
-    val downloadedServiceLoading: Boolean = false,
     val downloadingServiceId: Int? = null,
 
     val offset: Int = 0,
