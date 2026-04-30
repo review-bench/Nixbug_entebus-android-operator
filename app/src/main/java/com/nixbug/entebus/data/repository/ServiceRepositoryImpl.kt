@@ -172,7 +172,7 @@ class ServiceRepositoryImpl @Inject constructor(
     private suspend fun saveServiceToDb(domain: ServiceDetailModel, status: String) {
         try {
             serviceDao.insertFullService(
-                service = domain.toServiceEntity(status),
+                service = domain.toServiceEntity(status, gson),
                 landmarks = domain.toLandmarkEntities(),
                 fare = domain.toFareEntity(gson),
                 vehicle = domain.toVehicleEntity()
@@ -184,7 +184,7 @@ class ServiceRepositoryImpl @Inject constructor(
 
     override suspend fun getLocalServicesByStatus(status: String): List<MaskedServiceModel> {
         val localData = serviceDao.getServicesByStatus(status)
-        return localData.map { it.toDomain() }
+        return localData.map { it.toDomain(gson) }
     }
 
 }

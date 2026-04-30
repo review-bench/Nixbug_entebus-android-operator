@@ -1,9 +1,10 @@
 package com.nixbug.entebus.data.local.room.mapper
 
+import com.google.gson.Gson
 import com.nixbug.entebus.data.local.room.db.entity.ServiceWithDetails
 import com.nixbug.entebus.domain.model.MaskedServiceModel
 
-fun ServiceWithDetails.toDomain(): MaskedServiceModel {
+fun ServiceWithDetails.toDomain(gson: Gson): MaskedServiceModel {
     return MaskedServiceModel(
         id = service.id,
         name = service.name,
@@ -19,13 +20,14 @@ fun ServiceWithDetails.toDomain(): MaskedServiceModel {
         updatedOn = service.updatedOn,
         startingLandmarkName = service.startingLandmarkName,
         endingLandmarkName = service.endingLandmarkName,
-        startingLandmarkAlias = service.startingLandmarkAlias.toString()
-            .takeIf { it.isNotBlank() }
-            ?.split(",")
-            ?: emptyList(),
-        endingLandmarkAlias = service.endingLandmarkAlias.toString()
-            .takeIf { it.isNotBlank() }
-            ?.split(",")
-            ?: emptyList()
+        startingLandmarkAlias =
+            service.startingLandmarkAlias
+                ?.let { gson.fromJson(it, Array<String>::class.java).toList() }
+                ?: emptyList(),
+
+        endingLandmarkAlias =
+            service.endingLandmarkAlias
+                ?.let { gson.fromJson(it, Array<String>::class.java).toList() }
+                ?: emptyList()
     )
 }
