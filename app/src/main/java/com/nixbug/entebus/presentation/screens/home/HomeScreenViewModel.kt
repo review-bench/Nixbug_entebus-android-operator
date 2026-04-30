@@ -9,6 +9,7 @@ import com.nixbug.entebus.domain.usecase.service.GetAssignedServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
+import com.nixbug.entebus.domain.usecase.service.UpdateLocalStatusUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.printer.PrinterManager
@@ -39,7 +40,8 @@ class HomeScreenViewModel @Inject constructor(
     private val getMaskedServices: GetServiceUseCase,
     private val getServiceDetail: GetServiceDetailUseCase,
     private val getLocalServices: GetLocalServicesByStatusUseCase,
-    private val getAssignedServices: GetAssignedServiceUseCase
+    private val getAssignedServices: GetAssignedServiceUseCase,
+    private val updateLocalStatusUseCase: UpdateLocalStatusUseCase
 ) : ViewModel() {
 
     // STATE
@@ -153,11 +155,16 @@ class HomeScreenViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            val currentService = getLocalServices(LocalServiceStatus.STARTED)
+            val ongoing = currentService.firstOrNull()
+            _uiState.update { state ->
+                state.copy(ongoingService = ongoing?.toHomeUiModel())
+            }
+
             val res = getAssignedServices()
             when (res) {
                 is Resource.Success -> {
-                    println("Suiiii")
-                    println("TAG Home $res")
+                    println("Assigned Services $res")
                 }
 
                 is Resource.Error -> {
@@ -167,10 +174,7 @@ class HomeScreenViewModel @Inject constructor(
                     )
                 }
 
-                else -> {
-                    println("Suiiii")
-
-                }
+                else -> {}
             }
         }
     }
@@ -446,16 +450,19 @@ class HomeScreenViewModel @Inject constructor(
     private fun confirmServiceStart() {
         val service = pendingService ?: return
 
-        _uiState.update { state ->
-            state.copy(
-                ongoingService = service,
-                assignedServiceList = state.assignedServiceList.filter { it.id != service.id },
-                downloadedServiceList = state.downloadedServiceList.filter { it.id != service.id },
-                recentServiceList = state.recentServiceList.filter { it.id != service.id }
-            )
-        }
+        viewModelScope.launch {
+            updateLocalStatusUseCase(service.id, LocalServiceStatus.STARTED)
 
-        navigateToTicketScreen()
+            _uiState.update { state ->
+                state.copy(
+                    ongoingService = service,
+                    assignedServiceList = state.assignedServiceList.filter { it.id != service.id },
+                    downloadedServiceList = state.downloadedServiceList.filter { it.id != service.id },
+                    recentServiceList = state.recentServiceList.filter { it.id != service.id }
+                )
+            }
+            navigateToTicketScreen()
+        }
     }
 
     private fun checkIfServiceAlreadyRunning(): Boolean {
@@ -497,14 +504,17 @@ class HomeScreenViewModel @Inject constructor(
     // OTHER UI STATE HANDLERS
 
 
-    fun onFinishDuty(service: HomeUiModel) {
+    fun onFinishService(service: HomeUiModel) {
         printerManager.closeConnection()
 
-        _uiState.update { state ->
-            state.copy(
-                recentServiceList = state.recentServiceList + service,
-                ongoingService = null
-            )
+        viewModelScope.launch {
+            updateLocalStatusUseCase(service.id, LocalServiceStatus.RECENT)
+            _uiState.update { state ->
+                state.copy(
+                    recentServiceList = state.recentServiceList + service,
+                    ongoingService = null
+                )
+            }
         }
     }
 

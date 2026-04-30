@@ -258,15 +258,15 @@ fun HomeScreen(
 
     finishDutyService?.let { service ->
         DialogBox(
-            title = "Finish Duty?",
-            message = "Are you sure you want to finish your duty on the ${
+            title = "Finish Service?",
+            message = "Are you sure you want to finish the service from ${
                 finishDutyService?.startingLandmarkName ?: "starting point"
-            }-> ${
+            } to ${
                 finishDutyService?.endingLandmarkName ?: "ending point"
-            } service?",
+            }?",
             confirmText = "Finish",
             onConfirmClick = {
-                viewModel.onFinishDuty(service)
+                viewModel.onFinishService(service)
                 finishDutyService = null
             },
             dismissible = true,

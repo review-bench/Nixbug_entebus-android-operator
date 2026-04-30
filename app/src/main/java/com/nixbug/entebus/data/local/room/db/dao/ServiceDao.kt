@@ -56,4 +56,7 @@ interface ServiceDao {
 
     @Query("DELETE FROM landmarks WHERE serviceId = :serviceId")
     suspend fun deleteLandmarksByServiceId(serviceId: Int)
+
+    @Query("UPDATE services SET localStatus = :status WHERE id = :serviceId")
+    suspend fun updateLocalServiceStatus(serviceId: Int, status: String)
 }

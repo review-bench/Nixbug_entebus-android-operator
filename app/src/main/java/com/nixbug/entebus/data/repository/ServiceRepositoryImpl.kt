@@ -187,4 +187,8 @@ class ServiceRepositoryImpl @Inject constructor(
         return localData.map { it.toDomain(gson) }
     }
 
+    override suspend fun updateLocalServiceStatus(serviceId: Int, status: String) {
+        serviceDao.updateLocalServiceStatus(serviceId, status)
+    }
+
 }
