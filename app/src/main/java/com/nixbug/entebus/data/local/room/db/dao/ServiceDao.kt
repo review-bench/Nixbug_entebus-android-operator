@@ -34,6 +34,7 @@ interface ServiceDao {
         vehicle: VehicleEntity
     ) {
         insertService(service)
+        deleteLandmarksByServiceId(service.id)
         insertLandmarks(landmarks)
         insertFare(fare)
         insertVehicle(vehicle)
@@ -43,7 +44,7 @@ interface ServiceDao {
     @Query("SELECT * FROM services WHERE id = :serviceId")
     suspend fun getServiceWithDetails(serviceId: Int): ServiceWithDetails?
 
-    @Query("SELECT * FROM services WHERE localStatus = :status")
+    @Query("SELECT * FROM services WHERE localStatus = :status ORDER BY startingAt DESC")
     suspend fun getServicesByStatus(status: String): List<ServiceEntity>
 
     @Transaction
@@ -52,4 +53,7 @@ interface ServiceDao {
 
     @Query("SELECT id FROM services")
     suspend fun getAllServiceIds(): List<Int>
+
+    @Query("DELETE FROM landmarks WHERE serviceId = :serviceId")
+    suspend fun deleteLandmarksByServiceId(serviceId: Int)
 }
