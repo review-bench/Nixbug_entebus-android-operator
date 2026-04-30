@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.service.GetAssignedServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
@@ -37,7 +38,8 @@ class HomeScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager,
     private val getMaskedServices: GetServiceUseCase,
     private val getServiceDetail: GetServiceDetailUseCase,
-    private val getLocalServices: GetLocalServicesByStatusUseCase
+    private val getLocalServices: GetLocalServicesByStatusUseCase,
+    private val getAssignedServices: GetAssignedServiceUseCase
 ) : ViewModel() {
 
     // STATE
@@ -126,8 +128,54 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
+    init {
+        viewModelScope.launch {
+            val res = getAssignedServices()
+            when (res) {
+                is Resource.Success -> {
+                    println("Suiiii")
+                    println("TAG Home $res")
+                }
+
+                is Resource.Error -> {
+                    SnackbarManager.show(
+                        res.message ?: "Failed to load assigned services",
+                        SnackbarType.ERROR
+                    )
+                }
+
+                else -> {
+                    println("Suiiii")
+
+                }
+            }
+        }
+    }
     fun onTabSelected(tab: Int) {
         _uiState.update { it.copy(selectedTab = tab) }
+        if (tab == 0) {
+            viewModelScope.launch {
+                val res = getAssignedServices()
+                when (res) {
+                    is Resource.Success -> {
+                        println("Suiiii")
+                        println("TAG Home $res")
+                    }
+
+                    is Resource.Error -> {
+                        SnackbarManager.show(
+                            res.message ?: "Failed to load assigned services",
+                            SnackbarType.ERROR
+                        )
+                    }
+
+                    else -> {
+                        println("Suiiii")
+
+                    }
+                }
+            }
+        }
         if (tab == 1) {
             fetchDownloadedServices()
         }
