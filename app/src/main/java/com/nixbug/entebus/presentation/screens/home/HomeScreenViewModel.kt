@@ -189,11 +189,7 @@ class HomeScreenViewModel @Inject constructor(
 
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-
-                SnackbarManager.show(
-                    e.message ?: "Something went wrong",
-                    SnackbarType.ERROR
-                )
+                val services = getLocalServices(LocalServiceStatus.ASSIGNED)
 
             } finally {
                 if (isPagination) {
@@ -466,6 +462,15 @@ class HomeScreenViewModel @Inject constructor(
         pendingAction = action
         pendingService = service
 
+        if (service != null && action != ServiceAction.RESUME) {
+            _uiState.update {
+                it.copy(
+                    startingServiceId = service.id,
+                    isStarting = true
+                )
+            }
+        }
+
         if (!hasPermission) {
             emitPermissionRequest()
             return
@@ -533,7 +538,13 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     fun hidePrinterPicker() {
-        _uiState.update { it.copy(showPrinterPicker = false) }
+        _uiState.update {
+            it.copy(
+                showPrinterPicker = false,
+                startingServiceId = null,
+                isStarting = false
+            )
+        }
         pendingService = null
         pendingAction = null
     }
@@ -548,7 +559,14 @@ class HomeScreenViewModel @Inject constructor(
                 _uiState.update { it.copy(isConnectingPrinter = false) }
                 _uiState.update { it.copy(showPrinterPicker = false) }
             } else {
-                _uiState.update { it.copy(isConnectingPrinter = false) }
+                _uiState.update {
+                    it.copy(
+                        isConnectingPrinter = false,
+                        showPrinterPicker = false,
+                        startingServiceId = null,
+                        isStarting = false
+                    )
+                }
                 _uiState.update { it.copy(showPrinterPicker = false) }
                 SnackbarManager.show(
                     "Unable to connect to printer, make sure your printer is powered on",
@@ -565,13 +583,14 @@ class HomeScreenViewModel @Inject constructor(
 
         viewModelScope.launch {
             updateLocalStatusUseCase(service.id, LocalServiceStatus.STARTED)
-
             _uiState.update { state ->
                 state.copy(
                     ongoingService = service,
                     assignedServiceList = state.assignedServiceList.filter { it.id != service.id },
                     downloadedServiceList = state.downloadedServiceList.filter { it.id != service.id },
-                    recentServiceList = state.recentServiceList.filter { it.id != service.id }
+                    recentServiceList = state.recentServiceList.filter { it.id != service.id },
+                    startingServiceId = null,
+                    isStarting = false
                 )
             }
             navigateToTicketScreen()
