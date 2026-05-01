@@ -11,11 +11,17 @@ class AssignedServiceRepositoryImpl @Inject constructor(
     private val serviceAssignmentApi: OperatorServiceAssignmentApi
 ) : AssignedServiceRepository {
 
-    override suspend fun fetchAssignedServices(): Resource<List<ServiceAssignmentSchema>> {
+    override suspend fun fetchAssignedServices(
+        offset: Int,
+        limit: Int,
+    ): Resource<List<ServiceAssignmentSchema>> {
 
         return apiHelper(
             apiCall = {
-                serviceAssignmentApi.getAssignedServices()
+                serviceAssignmentApi.getAssignedServices(
+                    offset = offset,
+                    limit = limit
+                )
             },
             mapper = { responseList ->
                 responseList.map { it }

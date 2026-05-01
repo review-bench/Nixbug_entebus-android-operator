@@ -68,37 +68,71 @@ class HomeScreenViewModel @Inject constructor(
     private var pendingAction: ServiceAction? = null
     private var pendingService: HomeUiModel? = null
 
+    fun loadMoreAssignedServices() {
+        fetchAssignedService(isPagination = true)
+    }
 
-    private fun fetchAssignedService() {
-        _uiState.update { it.copy(serviceLoading = true) }
+    private fun fetchAssignedService(isPagination: Boolean = false) {
         viewModelScope.launch {
+
+            val currentState = _uiState.value
+
+            if (isPagination && (currentState.isAssignedPaginationLoading || !currentState.assignedHasMore)) {
+                return@launch
+            }
+
+            if (isPagination) {
+                _uiState.update { it.copy(isAssignedPaginationLoading = true) }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        assignedOffset = 0,
+                        assignedHasMore = true,
+                        assignedServiceList = emptyList(),
+                        serviceLoading = true
+                    )
+                }
+            }
+
             try {
-                val assistedServicesResult = getAssignedServices()
-                when (assistedServicesResult) {
+                val result = getAssignedServices(
+                    offset = if (isPagination) currentState.assignedOffset else 0,
+                    limit = currentState.assignedLimit
+                )
+
+                when (result) {
+
                     is Resource.Success -> {
-                        val services = assistedServicesResult.data ?: emptyList()
+                        val services = result.data ?: emptyList()
+
                         val detailedServices = services.mapNotNull { service ->
-                            val result = fetchServiceDetailsForHomeUseCase(
+                            val detailResult = fetchServiceDetailsForHomeUseCase(
                                 service.serviceId,
                                 LocalServiceStatus.ASSIGNED
                             )
 
-                            when (result) {
-                                is Resource.Success -> {
-                                    result.data?.toHomeUiModel()
-                                }
-
-                                is Resource.Error -> {
-                                    null
-                                }
-
-                                else -> {
-                                    null
-                                }
+                            when (detailResult) {
+                                is Resource.Success -> detailResult.data?.toHomeUiModel()
+                                else -> null
                             }
                         }
+
                         _uiState.update {
-                            it.copy(assignedServiceList = detailedServices)
+                            it.copy(
+                                assignedServiceList =
+                                    if (isPagination)
+                                        it.assignedServiceList + detailedServices
+                                    else
+                                        detailedServices,
+
+                                assignedOffset =
+                                    if (isPagination)
+                                        it.assignedOffset + it.assignedLimit
+                                    else
+                                        it.assignedLimit,
+
+                                assignedHasMore = services.size == it.assignedLimit
+                            )
                         }
                     }
 
@@ -107,27 +141,42 @@ class HomeScreenViewModel @Inject constructor(
 
                         _uiState.update {
                             it.copy(
+                                assignedHasMore = false,
                                 assignedServiceList = services.map { it.toHomeUiModel() }
                             )
                         }
+                    }
 
-                        SnackbarManager.show(
-                            assistedServicesResult.message
-                                ?: "Failed to load assigned services",
-                            SnackbarType.ERROR
-                        )
+                    is Resource.Empty -> {
+                        _uiState.update {
+                            if (isPagination) {
+                                it.copy(assignedHasMore = false)
+                            } else {
+                                it.copy(
+                                    assignedServiceList = emptyList(),
+                                    assignedHasMore = false
+                                )
+                            }
+                        }
                     }
 
                     else -> {}
                 }
 
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
+
                 SnackbarManager.show(
-                    e.message ?: "Failed to load assigned services",
+                    e.message ?: "Something went wrong",
                     SnackbarType.ERROR
                 )
+
             } finally {
-                _uiState.update { it.copy(serviceLoading = false) }
+                if (isPagination) {
+                    _uiState.update { it.copy(isAssignedPaginationLoading = false) }
+                } else {
+                    _uiState.update { it.copy(serviceLoading = false) }
+                }
             }
         }
     }

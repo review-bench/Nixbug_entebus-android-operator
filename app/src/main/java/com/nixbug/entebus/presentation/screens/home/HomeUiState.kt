@@ -30,7 +30,7 @@ data class HomeUiState(
     val isPaginationLoading: Boolean = false,
 
     val assignedOffset: Int = 0,
-    val assignedLimit: Int = 20,
+    val assignedLimit: Int = 10,
     val assignedHasMore: Boolean = true,
     val isAssignedPaginationLoading: Boolean = false,
 )

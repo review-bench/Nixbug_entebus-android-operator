@@ -5,5 +5,6 @@ import com.nixbug.entebus.utils.network.Resource
 
 
 interface AssignedServiceRepository {
-    suspend fun fetchAssignedServices(): Resource<List<ServiceAssignmentSchema>>
+    suspend fun fetchAssignedServices( offset: Int,
+                                       limit: Int): Resource<List<ServiceAssignmentSchema>>
 }

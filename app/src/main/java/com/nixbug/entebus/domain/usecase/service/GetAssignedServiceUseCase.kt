@@ -9,7 +9,10 @@ import javax.inject.Inject
 class GetAssignedServiceUseCase @Inject constructor(
     private val repository: AssignedServiceRepository
 ) {
-    suspend operator fun invoke(): Resource<List<ServiceAssignmentSchema>> {
-        return repository.fetchAssignedServices()
+    suspend operator fun invoke(
+        offset: Int = 0,
+        limit: Int = 10
+    ): Resource<List<ServiceAssignmentSchema>> {
+        return repository.fetchAssignedServices(offset,limit)
     }
 }

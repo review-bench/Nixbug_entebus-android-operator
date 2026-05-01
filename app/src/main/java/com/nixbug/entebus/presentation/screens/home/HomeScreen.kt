@@ -252,6 +252,10 @@ fun HomeScreen(
                 isLoadingMore = state.isPaginationLoading,
                 downloadingServiceId = state.downloadingServiceId,
                 hasMore = state.hasMore,
+                onLoadMoreAssigned = viewModel::loadMoreAssignedServices,
+                isAssignedLoadingMore = state.isAssignedPaginationLoading,
+                assignedHasMore = state.assignedHasMore,
+
             )
         }
     }
@@ -496,6 +500,10 @@ fun ServiceList(
     onLoadMore: () -> Unit,
     isLoadingMore: Boolean,
     hasMore: Boolean,
+    onLoadMoreAssigned: () -> Unit,
+    isAssignedLoadingMore: Boolean,
+    assignedHasMore: Boolean,
+
     downloadingServiceId: Int?,
 ) {
 
@@ -557,8 +565,12 @@ fun ServiceList(
             onActionClick = onStartAssigned,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp),
-            downloadingServiceId = downloadingServiceId
-        )
+            downloadingServiceId = downloadingServiceId,
+            onLoadMore = onLoadMoreAssigned,
+            isLoadingMore = isAssignedLoadingMore,
+            hasMore = assignedHasMore,
+
+            )
 
         1 -> ServiceTabContent(
             services = downloadedServices,
@@ -635,6 +647,7 @@ fun ServiceTabContent(
 
             Spacer(modifier = Modifier.height(15.dp))
         }
+
         item {
             Spacer(modifier = Modifier.height(10.dp))
 
