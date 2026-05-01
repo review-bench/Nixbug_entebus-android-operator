@@ -1,6 +1,6 @@
 package com.nixbug.entebus.domain.usecase.service
 
-import com.nixbug.entebus.data.remote.operator.model.serviceassignment.ServiceAssignmentSchema
+import com.nixbug.entebus.domain.model.AssignedServiceModel
 import com.nixbug.entebus.domain.repository.AssignedServiceRepository
 import com.nixbug.entebus.utils.network.Resource
 import javax.inject.Inject
@@ -12,7 +12,7 @@ class GetAssignedServiceUseCase @Inject constructor(
     suspend operator fun invoke(
         offset: Int = 0,
         limit: Int = 10
-    ): Resource<List<ServiceAssignmentSchema>> {
-        return repository.fetchAssignedServices(offset,limit)
+    ): Resource<List<AssignedServiceModel>> {
+        return repository.fetchAssignedServices(offset, limit)
     }
 }
