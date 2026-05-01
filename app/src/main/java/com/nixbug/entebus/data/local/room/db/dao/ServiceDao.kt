@@ -63,10 +63,12 @@ interface ServiceDao {
     @Query(" DELETE FROM services WHERE startingAt < :cutoffDate AND localStatus != :startedStatus")
     suspend fun deleteOldServices(cutoffDate: String, startedStatus: String)
 
-    @Query("""
+    @Query(
+        """
     DELETE FROM services 
     WHERE id NOT IN (:ids) 
     AND localStatus = :status
-""")
+"""
+    )
     suspend fun deleteServicesNotIn(ids: List<Int>, status: String)
 }

@@ -1,4 +1,4 @@
-package com.nixbug.entebus.domain.usecase.AssignedService
+package com.nixbug.entebus.domain.usecase.assignedservice
 
 import com.nixbug.entebus.domain.model.AssignedServiceModel
 import com.nixbug.entebus.domain.repository.AssignedServiceRepository

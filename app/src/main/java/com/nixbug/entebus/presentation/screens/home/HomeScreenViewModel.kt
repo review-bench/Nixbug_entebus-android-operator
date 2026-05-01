@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
-import com.nixbug.entebus.domain.usecase.AssignedService.GetAssignedServiceUseCase
+import com.nixbug.entebus.domain.usecase.assignedservice.GetAssignedServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailsForHomeUseCase
@@ -163,10 +163,10 @@ class HomeScreenViewModel @Inject constructor(
                     is Resource.Error -> {
                         val services = getLocalServices(LocalServiceStatus.ASSIGNED)
 
-                        _uiState.update {
-                            it.copy(
+                        _uiState.update { state ->
+                            state.copy(
                                 assignedHasMore = false,
-                                assignedServiceList = services.map { it.toHomeUiModel() }
+                                assignedServiceList = services.map { service -> service.toHomeUiModel() }
                             )
                         }
                     }
@@ -190,7 +190,12 @@ class HomeScreenViewModel @Inject constructor(
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 val services = getLocalServices(LocalServiceStatus.ASSIGNED)
-
+                _uiState.update { state ->
+                    state.copy(
+                        assignedHasMore = false,
+                        assignedServiceList = services.map { service -> service.toHomeUiModel() }
+                    )
+                }
             } finally {
                 if (isPagination) {
                     _uiState.update { it.copy(isAssignedPaginationLoading = false) }
