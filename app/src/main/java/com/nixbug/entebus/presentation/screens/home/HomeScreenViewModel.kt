@@ -156,6 +156,7 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     private fun fetchAssignedService() {
+        _uiState.update { it.copy(serviceLoading = true) }
         viewModelScope.launch {
             try {
                 val assistedServicesResult = getAssignedServices()
@@ -178,11 +179,14 @@ class HomeScreenViewModel @Inject constructor(
                     e.message ?: "Failed to load assigned services",
                     SnackbarType.ERROR
                 )
+            } finally {
+                _uiState.update { it.copy(serviceLoading = false) }
             }
         }
     }
 
     init {
+        _uiState.update { it.copy(serviceLoading = true) }
         viewModelScope.launch {
             cleanOldServicesUseCase()
             try {
