@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
+import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.FetchServiceDetailsForHomeUseCase
 import com.nixbug.entebus.domain.usecase.service.GetAssignedServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
@@ -45,7 +46,8 @@ class HomeScreenViewModel @Inject constructor(
     private val getAssignedServices: GetAssignedServiceUseCase,
     private val updateLocalStatusUseCase: UpdateLocalStatusUseCase,
     private val cleanOldServicesUseCase: CleanOldServicesUseCase,
-    private val fetchServiceDetailsForHomeUseCase: FetchServiceDetailsForHomeUseCase
+    private val fetchServiceDetailsForHomeUseCase: FetchServiceDetailsForHomeUseCase,
+    private val deleteAssignedServicesUseCase: DeleteAssignedServicesUseCase
 ) : ViewModel() {
 
     // STATE
@@ -67,9 +69,24 @@ class HomeScreenViewModel @Inject constructor(
 
     private var pendingAction: ServiceAction? = null
     private var pendingService: HomeUiModel? = null
+    private val fetchedAssignedServiceIds = mutableSetOf<Int>()
 
     fun loadMoreAssignedServices() {
         fetchAssignedService(isPagination = true)
+    }
+
+    private fun deleteMissingAssignedServices(ids: List<Int>) {
+        viewModelScope.launch {
+            try {
+                deleteAssignedServicesUseCase(ids)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(
+                    e.message ?: "Failed to sync deleted services",
+                    SnackbarType.ERROR
+                )
+            }
+        }
     }
 
     private fun fetchAssignedService(isPagination: Boolean = false) {
@@ -84,6 +101,7 @@ class HomeScreenViewModel @Inject constructor(
             if (isPagination) {
                 _uiState.update { it.copy(isAssignedPaginationLoading = true) }
             } else {
+                fetchedAssignedServiceIds.clear()
                 _uiState.update {
                     it.copy(
                         assignedOffset = 0,
@@ -104,6 +122,8 @@ class HomeScreenViewModel @Inject constructor(
 
                     is Resource.Success -> {
                         val services = result.data ?: emptyList()
+                        val ids = services.map { it.serviceId }
+                        fetchedAssignedServiceIds.addAll(ids)
 
                         val detailedServices = services.mapNotNull { service ->
                             val detailResult = fetchServiceDetailsForHomeUseCase(
@@ -116,7 +136,7 @@ class HomeScreenViewModel @Inject constructor(
                                 else -> null
                             }
                         }
-
+                        val isLastPage = services.size < currentState.assignedLimit
                         _uiState.update {
                             it.copy(
                                 assignedServiceList =
@@ -133,6 +153,10 @@ class HomeScreenViewModel @Inject constructor(
 
                                 assignedHasMore = services.size == it.assignedLimit
                             )
+                        }
+
+                        if (isLastPage && fetchedAssignedServiceIds.isNotEmpty()) {
+                            deleteMissingAssignedServices(fetchedAssignedServiceIds.toList())
                         }
                     }
 

@@ -197,6 +197,14 @@ class ServiceRepositoryImpl @Inject constructor(
         serviceDao.deleteOldServices(cutoffDate, LocalServiceStatus.STARTED)
     }
 
+    override suspend fun deleteAssignedServicesNotIn(ids: List<Int>) {
+        serviceDao.deleteServicesNotIn(
+            ids = ids,
+            status = LocalServiceStatus.ASSIGNED
+        )
+    }
+
+
     override suspend fun fetchServiceDetailsForHome(
         id: Int,
         localStatus: String

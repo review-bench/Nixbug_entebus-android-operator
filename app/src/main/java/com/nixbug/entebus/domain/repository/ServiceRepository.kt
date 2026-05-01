@@ -23,4 +23,7 @@ interface ServiceRepository {
         id: Int,
         localStatus: String
     ): Resource<MaskedServiceModel>
+
+    suspend fun deleteAssignedServicesNotIn(ids: List<Int>)
+
 }
