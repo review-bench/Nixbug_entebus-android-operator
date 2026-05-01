@@ -225,4 +225,8 @@ class ServiceRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun deleteAssignedServices() {
+        serviceDao.deleteServicesByStatus(status = LocalServiceStatus.ASSIGNED)
+    }
+
 }

@@ -8,6 +8,7 @@ import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.assignedservice.GetAssignedServiceUseCase
+import com.nixbug.entebus.domain.usecase.service.ClearAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailsForHomeUseCase
@@ -21,6 +22,9 @@ import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -47,7 +51,8 @@ class HomeScreenViewModel @Inject constructor(
     private val updateLocalStatusUseCase: UpdateLocalStatusUseCase,
     private val cleanOldServicesUseCase: CleanOldServicesUseCase,
     private val getServiceDetailsForHomeUseCase: GetServiceDetailsForHomeUseCase,
-    private val deleteAssignedServicesUseCase: DeleteAssignedServicesUseCase
+    private val deleteAssignedServicesUseCase: DeleteAssignedServicesUseCase,
+    private val clearAssignedServicesUseCase: ClearAssignedServicesUseCase
 ) : ViewModel() {
 
     // STATE
@@ -73,6 +78,21 @@ class HomeScreenViewModel @Inject constructor(
 
     fun loadMoreAssignedServices() {
         fetchAssignedService(isPagination = true)
+    }
+
+    private fun clearAssignedServices() {
+        viewModelScope.launch {
+            try {
+                clearAssignedServicesUseCase()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+
+                SnackbarManager.show(
+                    e.message ?: "Failed to clear assigned services",
+                    SnackbarType.ERROR
+                )
+            }
+        }
     }
 
     private fun deleteMissingAssignedServices(ids: List<Int>) {
@@ -121,20 +141,35 @@ class HomeScreenViewModel @Inject constructor(
 
                     is Resource.Success -> {
                         val services = result.data ?: emptyList()
+                        if (services.isEmpty()) {
+                            clearAssignedServices()
+                            _uiState.update {
+                                it.copy(
+                                    assignedServiceList = emptyList(),
+                                    assignedHasMore = false
+                                )
+                            }
+                            return@launch
+                        }
                         val ids = services.map { it.serviceId }
                         fetchedAssignedServiceIds.addAll(ids)
 
-                        val detailedServices = services.mapNotNull { service ->
-                            val detailResult = getServiceDetailsForHomeUseCase(
-                                service.serviceId,
-                                LocalServiceStatus.ASSIGNED
-                            )
+                        val detailedServices = coroutineScope {
+                            services.map { service ->
+                                async {
+                                    val detailResult = getServiceDetailsForHomeUseCase(
+                                        service.serviceId,
+                                        LocalServiceStatus.ASSIGNED
+                                    )
 
-                            when (detailResult) {
-                                is Resource.Success -> detailResult.data?.toHomeUiModel()
-                                else -> null
-                            }
+                                    when (detailResult) {
+                                        is Resource.Success -> detailResult.data?.toHomeUiModel()
+                                        else -> null
+                                    }
+                                }
+                            }.awaitAll().filterNotNull()
                         }
+
                         val isLastPage = services.size < currentState.assignedLimit
                         _uiState.update {
                             it.copy(
@@ -160,13 +195,20 @@ class HomeScreenViewModel @Inject constructor(
                     }
 
                     is Resource.Error -> {
-                        val services = getLocalServices(LocalServiceStatus.ASSIGNED)
-
-                        _uiState.update { state ->
-                            state.copy(
-                                assignedHasMore = false,
-                                assignedServiceList = services.map { service -> service.toHomeUiModel() }
-                            )
+                        if (isPagination) {
+                            _uiState.update { state ->
+                                state.copy(
+                                    assignedHasMore = false
+                                )
+                            }
+                        } else {
+                            val services = getLocalServices(LocalServiceStatus.ASSIGNED)
+                            _uiState.update { state ->
+                                state.copy(
+                                    assignedHasMore = false,
+                                    assignedServiceList = services.map { service -> service.toHomeUiModel() }
+                                )
+                            }
                         }
                     }
 
