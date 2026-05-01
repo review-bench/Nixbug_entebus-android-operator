@@ -882,7 +882,7 @@ fun SmallCardButton(
             .width(95.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
-            disabledContainerColor = MaterialTheme.colorScheme.primary
+            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
         ),
         shape = RoundedCornerShape(10.dp),
         contentPadding = PaddingValues(0.dp)

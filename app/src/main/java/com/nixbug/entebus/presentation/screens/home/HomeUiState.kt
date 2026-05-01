@@ -24,7 +24,6 @@ data class HomeUiState(
     val serviceLoading: Boolean = false,
     val downloadingServiceId: Int? = null,
     val startingServiceId: Int? = null,
-    val isStarting: Boolean = false,
 
     val offset: Int = 0,
     val limit: Int = 20,

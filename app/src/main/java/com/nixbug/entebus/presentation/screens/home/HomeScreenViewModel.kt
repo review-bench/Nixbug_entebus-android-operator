@@ -106,7 +106,6 @@ class HomeScreenViewModel @Inject constructor(
                     it.copy(
                         assignedOffset = 0,
                         assignedHasMore = true,
-                        assignedServiceList = emptyList(),
                         serviceLoading = true
                     )
                 }
@@ -209,12 +208,13 @@ class HomeScreenViewModel @Inject constructor(
     init {
         _uiState.update { it.copy(serviceLoading = true) }
         viewModelScope.launch {
-            cleanOldServicesUseCase()
             try {
+                cleanOldServicesUseCase()
                 val currentServiceList = getLocalServices(LocalServiceStatus.STARTED)
                 val currentService = currentServiceList.firstOrNull()
                 _uiState.update { state -> state.copy(ongoingService = currentService?.toHomeUiModel()) }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 SnackbarManager.show(
                     e.message ?: "Failed to load ongoing service",
                     SnackbarType.ERROR
@@ -471,7 +471,6 @@ class HomeScreenViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     startingServiceId = service.id,
-                    isStarting = true
                 )
             }
         }
@@ -547,7 +546,6 @@ class HomeScreenViewModel @Inject constructor(
             it.copy(
                 showPrinterPicker = false,
                 startingServiceId = null,
-                isStarting = false
             )
         }
         pendingService = null
@@ -569,10 +567,8 @@ class HomeScreenViewModel @Inject constructor(
                         isConnectingPrinter = false,
                         showPrinterPicker = false,
                         startingServiceId = null,
-                        isStarting = false
                     )
                 }
-                _uiState.update { it.copy(showPrinterPicker = false) }
                 SnackbarManager.show(
                     "Unable to connect to printer, make sure your printer is powered on",
                     SnackbarType.ERROR
@@ -587,17 +583,26 @@ class HomeScreenViewModel @Inject constructor(
         val service = pendingService ?: return
 
         viewModelScope.launch {
-            navigateToTicketScreen()
-            updateLocalStatusUseCase(service.id, LocalServiceStatus.STARTED)
-            _uiState.update { state ->
-                state.copy(
-                    ongoingService = service,
-                    assignedServiceList = state.assignedServiceList.filter { it.id != service.id },
-                    downloadedServiceList = state.downloadedServiceList.filter { it.id != service.id },
-                    recentServiceList = state.recentServiceList.filter { it.id != service.id },
-                    startingServiceId = null,
-                    isStarting = false
+            try {
+                updateLocalStatusUseCase(service.id, LocalServiceStatus.STARTED)
+                _uiState.update { state ->
+                    state.copy(
+                        ongoingService = service,
+                        assignedServiceList = state.assignedServiceList.filter { it.id != service.id },
+                        downloadedServiceList = state.downloadedServiceList.filter { it.id != service.id },
+                        recentServiceList = state.recentServiceList.filter { it.id != service.id }
+                    )
+                }
+                navigateToTicketScreen()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    "Failed to start service. Please try again.",
+                    SnackbarType.ERROR
                 )
+            } finally {
+                _uiState.update { state -> state.copy(startingServiceId = null) }
             }
         }
     }
@@ -645,11 +650,20 @@ class HomeScreenViewModel @Inject constructor(
         printerManager.closeConnection()
 
         viewModelScope.launch {
-            updateLocalStatusUseCase(service.id, LocalServiceStatus.RECENT)
-            _uiState.update { state ->
-                state.copy(
-                    recentServiceList = state.recentServiceList + service,
-                    ongoingService = null
+            try {
+                updateLocalStatusUseCase(service.id, LocalServiceStatus.RECENT)
+                _uiState.update { state ->
+                    state.copy(
+                        recentServiceList = state.recentServiceList + service,
+                        ongoingService = null
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    "Failed to finish service. Please try again.",
+                    SnackbarType.ERROR
                 )
             }
         }
