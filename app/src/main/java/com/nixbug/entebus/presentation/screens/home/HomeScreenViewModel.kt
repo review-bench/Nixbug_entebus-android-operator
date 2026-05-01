@@ -582,6 +582,7 @@ class HomeScreenViewModel @Inject constructor(
         val service = pendingService ?: return
 
         viewModelScope.launch {
+            navigateToTicketScreen()
             updateLocalStatusUseCase(service.id, LocalServiceStatus.STARTED)
             _uiState.update { state ->
                 state.copy(
@@ -593,7 +594,6 @@ class HomeScreenViewModel @Inject constructor(
                     isStarting = false
                 )
             }
-            navigateToTicketScreen()
         }
     }
 
