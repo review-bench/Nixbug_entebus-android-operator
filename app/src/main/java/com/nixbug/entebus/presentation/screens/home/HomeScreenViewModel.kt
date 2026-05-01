@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
+import com.nixbug.entebus.domain.usecase.service.FetchServiceDetailsForHomeUseCase
 import com.nixbug.entebus.domain.usecase.service.GetAssignedServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
@@ -43,7 +44,8 @@ class HomeScreenViewModel @Inject constructor(
     private val getLocalServices: GetLocalServicesByStatusUseCase,
     private val getAssignedServices: GetAssignedServiceUseCase,
     private val updateLocalStatusUseCase: UpdateLocalStatusUseCase,
-    private val cleanOldServicesUseCase: CleanOldServicesUseCase
+    private val cleanOldServicesUseCase: CleanOldServicesUseCase,
+    private val fetchServiceDetailsForHomeUseCase: FetchServiceDetailsForHomeUseCase
 ) : ViewModel() {
 
     // STATE
@@ -55,7 +57,6 @@ class HomeScreenViewModel @Inject constructor(
 
     private val searchQuery = MutableStateFlow("")
     private var searchJob: Job? = null
-    // SERVICE ACTION ENUM
 
     enum class ServiceAction {
         START_ASSIGNED,
@@ -66,6 +67,105 @@ class HomeScreenViewModel @Inject constructor(
 
     private var pendingAction: ServiceAction? = null
     private var pendingService: HomeUiModel? = null
+
+
+    private fun fetchAssignedService() {
+        _uiState.update { it.copy(serviceLoading = true) }
+        viewModelScope.launch {
+            try {
+                val assistedServicesResult = getAssignedServices()
+                when (assistedServicesResult) {
+                    is Resource.Success -> {
+                        val services = assistedServicesResult.data ?: emptyList()
+                        val detailedServices = services.mapNotNull { service ->
+                            val result = fetchServiceDetailsForHomeUseCase(
+                                service.serviceId,
+                                LocalServiceStatus.ASSIGNED
+                            )
+
+                            when (result) {
+                                is Resource.Success -> {
+                                    result.data?.toHomeUiModel()
+                                }
+
+                                is Resource.Error -> {
+                                    null
+                                }
+
+                                else -> {
+                                    null
+                                }
+                            }
+                        }
+                        _uiState.update {
+                            it.copy(assignedServiceList = detailedServices)
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        val services = getLocalServices(LocalServiceStatus.ASSIGNED)
+
+                        _uiState.update {
+                            it.copy(
+                                assignedServiceList = services.map { it.toHomeUiModel() }
+                            )
+                        }
+
+                        SnackbarManager.show(
+                            assistedServicesResult.message
+                                ?: "Failed to load assigned services",
+                            SnackbarType.ERROR
+                        )
+                    }
+
+                    else -> {}
+                }
+
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    e.message ?: "Failed to load assigned services",
+                    SnackbarType.ERROR
+                )
+            } finally {
+                _uiState.update { it.copy(serviceLoading = false) }
+            }
+        }
+    }
+
+    init {
+        _uiState.update { it.copy(serviceLoading = true) }
+        viewModelScope.launch {
+            cleanOldServicesUseCase()
+            try {
+                val currentServiceList = getLocalServices(LocalServiceStatus.STARTED)
+                val currentService = currentServiceList.firstOrNull()
+                _uiState.update { state -> state.copy(ongoingService = currentService?.toHomeUiModel()) }
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    e.message ?: "Failed to load ongoing service",
+                    SnackbarType.ERROR
+                )
+            }
+        }
+        fetchAssignedService()
+    }
+
+    fun onTabSelected(tab: Int) {
+        _uiState.update { it.copy(selectedTab = tab) }
+        if (tab == 0) {
+            fetchAssignedService()
+        }
+        if (tab == 1) {
+            fetchDownloadedServices()
+        }
+        if (tab == 2) {
+            fetchRecentServices()
+        }
+        if (tab == 3) {
+            fetchOtherServices()
+        }
+    }
+
 
     fun onDownloadService(service: HomeUiModel) {
         _uiState.update { it.copy(downloadingServiceId = service.id) }
@@ -152,70 +252,6 @@ class HomeScreenViewModel @Inject constructor(
             } finally {
                 _uiState.update { it.copy(serviceLoading = false) }
             }
-        }
-    }
-
-    private fun fetchAssignedService() {
-        _uiState.update { it.copy(serviceLoading = true) }
-        viewModelScope.launch {
-            try {
-                val assistedServicesResult = getAssignedServices()
-                when (assistedServicesResult) {
-                    is Resource.Success -> {
-                        println("Assigned Services $assistedServicesResult")
-                    }
-
-                    is Resource.Error -> {
-                        SnackbarManager.show(
-                            assistedServicesResult.message ?: "Failed to load assigned services",
-                            SnackbarType.ERROR
-                        )
-                    }
-
-                    else -> {}
-                }
-            } catch (e: Exception) {
-                SnackbarManager.show(
-                    e.message ?: "Failed to load assigned services",
-                    SnackbarType.ERROR
-                )
-            } finally {
-                _uiState.update { it.copy(serviceLoading = false) }
-            }
-        }
-    }
-
-    init {
-        _uiState.update { it.copy(serviceLoading = true) }
-        viewModelScope.launch {
-            cleanOldServicesUseCase()
-            try {
-                val currentServiceList = getLocalServices(LocalServiceStatus.STARTED)
-                val currentService = currentServiceList.firstOrNull()
-                _uiState.update { state -> state.copy(ongoingService = currentService?.toHomeUiModel()) }
-            } catch (e: Exception) {
-                SnackbarManager.show(
-                    e.message ?: "Failed to load ongoing service",
-                    SnackbarType.ERROR
-                )
-            }
-        }
-        fetchAssignedService()
-    }
-
-    fun onTabSelected(tab: Int) {
-        _uiState.update { it.copy(selectedTab = tab) }
-        if (tab == 0) {
-            fetchAssignedService()
-        }
-        if (tab == 1) {
-            fetchDownloadedServices()
-        }
-        if (tab == 2) {
-            fetchRecentServices()
-        }
-        if (tab == 3) {
-            fetchOtherServices()
         }
     }
 

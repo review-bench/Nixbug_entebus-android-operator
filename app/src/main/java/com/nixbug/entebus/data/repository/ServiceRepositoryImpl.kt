@@ -6,6 +6,7 @@ import com.nixbug.entebus.data.local.room.mapper.toDomain
 import com.nixbug.entebus.data.mapper.toDomainWithLandmarks
 import com.nixbug.entebus.data.mapper.toFareEntity
 import com.nixbug.entebus.data.mapper.toLandmarkEntities
+import com.nixbug.entebus.data.mapper.toMaskedModel
 import com.nixbug.entebus.data.mapper.toServiceEntity
 import com.nixbug.entebus.data.mapper.toVehicleEntity
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
@@ -194,6 +195,34 @@ class ServiceRepositoryImpl @Inject constructor(
 
     override suspend fun deleteOldServices(cutoffDate: String) {
         serviceDao.deleteOldServices(cutoffDate, LocalServiceStatus.STARTED)
+    }
+
+    override suspend fun fetchServiceDetailsForHome(
+        id: Int,
+        localStatus: String
+    ): Resource<MaskedServiceModel> {
+
+        val result = fetchServiceDetails(id, localStatus)
+
+        return when (result) {
+            is Resource.Success -> {
+                val masked = result.data?.toMaskedModel()
+                    ?: return Resource.Error("Mapping failed")
+
+                Resource.Success(masked)
+            }
+
+            is Resource.Error -> Resource.Error(
+                message = result.message,
+                statusCode = result.statusCode
+            )
+
+            is Resource.Empty -> Resource.Empty(
+                statusCode = result.statusCode ?: 204
+            )
+
+            else -> Resource.Error("Unknown error")
+        }
     }
 
 }

@@ -19,4 +19,8 @@ interface ServiceRepository {
 
     suspend fun deleteOldServices(cutoffDate: String)
 
+    suspend fun fetchServiceDetailsForHome(
+        id: Int,
+        localStatus: String
+    ): Resource<MaskedServiceModel>
 }

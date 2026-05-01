@@ -28,4 +28,9 @@ data class HomeUiState(
     val limit: Int = 20,
     val hasMore: Boolean = true,
     val isPaginationLoading: Boolean = false,
+
+    val assignedOffset: Int = 0,
+    val assignedLimit: Int = 20,
+    val assignedHasMore: Boolean = true,
+    val isAssignedPaginationLoading: Boolean = false,
 )
