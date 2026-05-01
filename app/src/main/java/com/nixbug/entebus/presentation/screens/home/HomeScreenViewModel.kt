@@ -142,12 +142,16 @@ class HomeScreenViewModel @Inject constructor(
                     is Resource.Success -> {
                         val services = result.data ?: emptyList()
                         if (services.isEmpty()) {
-                            clearAssignedServices()
-                            _uiState.update {
-                                it.copy(
-                                    assignedServiceList = emptyList(),
-                                    assignedHasMore = false
-                                )
+                            if (isPagination) {
+                                _uiState.update { it.copy(assignedHasMore = false) }
+                            } else {
+                                clearAssignedServices()
+                                _uiState.update {
+                                    it.copy(
+                                        assignedServiceList = emptyList(),
+                                        assignedHasMore = false
+                                    )
+                                }
                             }
                             return@launch
                         }
@@ -361,6 +365,7 @@ class HomeScreenViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 SnackbarManager.show(
                     e.message ?: "Failed to load recent services",
                     SnackbarType.ERROR
