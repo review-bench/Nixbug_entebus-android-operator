@@ -16,18 +16,9 @@ class AssignedServiceRepositoryImpl @Inject constructor(
         offset: Int,
         limit: Int,
     ): Resource<List<AssignedServiceModel>> {
-
         return apiHelper(
-            apiCall = {
-                serviceAssignmentApi.getAssignedServices(
-                    offset = offset,
-                    limit = limit
-                )
-            },
-            mapper = { responseList ->
-                responseList.map { it.toDomain() }
-            }
+            apiCall = { serviceAssignmentApi.getAssignedServices(offset = offset, limit = limit) },
+            mapper = { responseList -> responseList.map { it.toDomain() } }
         )
     }
-
 }

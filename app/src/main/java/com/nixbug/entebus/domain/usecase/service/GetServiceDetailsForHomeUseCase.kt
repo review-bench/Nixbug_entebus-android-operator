@@ -5,9 +5,7 @@ import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.utils.network.Resource
 import javax.inject.Inject
 
-class FetchServiceDetailsForHomeUseCase @Inject constructor(
-    private val repository: ServiceRepository
-) {
+class GetServiceDetailsForHomeUseCase @Inject constructor(private val repository: ServiceRepository) {
     suspend operator fun invoke(
         id: Int,
         localStatus: String

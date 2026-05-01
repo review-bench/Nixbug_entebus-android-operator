@@ -14,7 +14,7 @@ import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceOrderB
 import com.nixbug.entebus.data.remote.operator.model.service.OrderIn
 import com.nixbug.entebus.data.remote.operator.model.service.ServiceStatus
 import com.nixbug.entebus.data.remote.utils.apiHelper
-import com.nixbug.entebus.domain.model.LocalServiceStatus
+import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.model.MaskedServiceModel
 import com.nixbug.entebus.domain.model.ServiceDetailModel
 import com.nixbug.entebus.domain.repository.LandmarkRepository
@@ -34,6 +34,7 @@ class ServiceRepositoryImpl @Inject constructor(
         limit: Int,
         search: String?
     ): Resource<List<MaskedServiceModel>> {
+
         val excludedIds = serviceDao.getAllServiceIds()
         val safeExcludedIds = excludedIds.ifEmpty { null }
         val serviceResult = apiHelper(
@@ -69,9 +70,9 @@ class ServiceRepositoryImpl @Inject constructor(
 
         val services = serviceResult.data ?: emptyList()
 
-        val landmarkIds = services.flatMap {
-            listOfNotNull(it.startingLandmarkId, it.endingLandmarkId)
-        }.distinct()
+        val landmarkIds =
+            services.flatMap { listOfNotNull(it.startingLandmarkId, it.endingLandmarkId) }
+                .distinct()
 
         val landmarkMap = if (landmarkIds.isNotEmpty()) {
 
@@ -98,12 +99,10 @@ class ServiceRepositoryImpl @Inject constructor(
                 registrationNumber = service.registrationNumber,
                 startingLandmarkId = service.startingLandmarkId,
                 endingLandmarkId = service.endingLandmarkId,
-
                 startingLandmarkName = start?.name ?: "N/A",
                 startingLandmarkAlias = start?.aliasNames ?: emptyList(),
                 endingLandmarkName = end?.name ?: "N/A",
                 endingLandmarkAlias = end?.aliasNames ?: emptyList(),
-
                 ticketMode = service.ticketMode,
                 remark = service.remark,
                 startingAt = service.startingAt,
@@ -117,17 +116,11 @@ class ServiceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun fetchServiceDetails(
-        id: Int,
-        localStatus: String
+        id: Int, localStatus: String
     ): Resource<ServiceDetailModel> {
 
         val result = apiHelper(
-            apiCall = {
-                serviceApi.getServiceDetails(
-                    id = id,
-                    markedAsCached = true
-                )
-            },
+            apiCall = { serviceApi.getServiceDetails(id = id, markedAsCached = true) },
             mapper = { it }
         )
 
@@ -171,6 +164,34 @@ class ServiceRepositoryImpl @Inject constructor(
         return Resource.Success(domain)
     }
 
+    override suspend fun fetchServiceDetailsForHome(
+        id: Int,
+        localStatus: String
+    ): Resource<MaskedServiceModel> {
+
+        val result = fetchServiceDetails(id, localStatus)
+
+        return when (result) {
+            is Resource.Success -> {
+                val masked = result.data?.toMaskedModel()
+                    ?: return Resource.Error("Mapping failed")
+
+                Resource.Success(masked)
+            }
+
+            is Resource.Error -> Resource.Error(
+                message = result.message,
+                statusCode = result.statusCode
+            )
+
+            is Resource.Empty -> Resource.Empty(
+                statusCode = result.statusCode ?: 204
+            )
+
+            else -> Resource.Error("Unknown error")
+        }
+    }
+
     private suspend fun saveServiceToDb(domain: ServiceDetailModel, status: String) {
         try {
             serviceDao.insertFullService(
@@ -202,35 +223,6 @@ class ServiceRepositoryImpl @Inject constructor(
             ids = ids,
             status = LocalServiceStatus.ASSIGNED
         )
-    }
-
-
-    override suspend fun fetchServiceDetailsForHome(
-        id: Int,
-        localStatus: String
-    ): Resource<MaskedServiceModel> {
-
-        val result = fetchServiceDetails(id, localStatus)
-
-        return when (result) {
-            is Resource.Success -> {
-                val masked = result.data?.toMaskedModel()
-                    ?: return Resource.Error("Mapping failed")
-
-                Resource.Success(masked)
-            }
-
-            is Resource.Error -> Resource.Error(
-                message = result.message,
-                statusCode = result.statusCode
-            )
-
-            is Resource.Empty -> Resource.Empty(
-                statusCode = result.statusCode ?: 204
-            )
-
-            else -> Resource.Error("Unknown error")
-        }
     }
 
 }

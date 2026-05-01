@@ -11,12 +11,10 @@ fun ServiceDetailModel.toMaskedModel(): MaskedServiceModel {
         registrationNumber = registrationNumber,
         startingLandmarkId = startingLandmarkId,
         endingLandmarkId = endingLandmarkId,
-
         startingLandmarkName = startingLandmarkName,
         startingLandmarkAlias = startingLandmarkAlias,
         endingLandmarkName = endingLandmarkName,
         endingLandmarkAlias = endingLandmarkAlias,
-
         ticketMode = ticketMode,
         remark = remark,
         startingAt = startingAt,

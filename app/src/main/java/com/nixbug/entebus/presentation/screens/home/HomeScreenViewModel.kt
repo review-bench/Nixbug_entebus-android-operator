@@ -4,13 +4,13 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nixbug.entebus.domain.model.LocalServiceStatus
+import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
-import com.nixbug.entebus.domain.usecase.service.FetchServiceDetailsForHomeUseCase
-import com.nixbug.entebus.domain.usecase.service.GetAssignedServiceUseCase
+import com.nixbug.entebus.domain.usecase.AssignedService.GetAssignedServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
+import com.nixbug.entebus.domain.usecase.service.GetServiceDetailsForHomeUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.UpdateLocalStatusUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
@@ -46,7 +46,7 @@ class HomeScreenViewModel @Inject constructor(
     private val getAssignedServices: GetAssignedServiceUseCase,
     private val updateLocalStatusUseCase: UpdateLocalStatusUseCase,
     private val cleanOldServicesUseCase: CleanOldServicesUseCase,
-    private val fetchServiceDetailsForHomeUseCase: FetchServiceDetailsForHomeUseCase,
+    private val getServiceDetailsForHomeUseCase: GetServiceDetailsForHomeUseCase,
     private val deleteAssignedServicesUseCase: DeleteAssignedServicesUseCase
 ) : ViewModel() {
 
@@ -126,7 +126,7 @@ class HomeScreenViewModel @Inject constructor(
                         fetchedAssignedServiceIds.addAll(ids)
 
                         val detailedServices = services.mapNotNull { service ->
-                            val detailResult = fetchServiceDetailsForHomeUseCase(
+                            val detailResult = getServiceDetailsForHomeUseCase(
                                 service.serviceId,
                                 LocalServiceStatus.ASSIGNED
                             )
