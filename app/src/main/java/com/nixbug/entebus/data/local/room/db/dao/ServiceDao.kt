@@ -10,7 +10,6 @@ import com.nixbug.entebus.data.local.room.db.entity.LandmarkEntity
 import com.nixbug.entebus.data.local.room.db.entity.ServiceEntity
 import com.nixbug.entebus.data.local.room.db.entity.ServiceWithDetails
 import com.nixbug.entebus.data.local.room.db.entity.VehicleEntity
-import com.nixbug.entebus.domain.model.LocalServiceStatus
 
 @Dao
 interface ServiceDao {
