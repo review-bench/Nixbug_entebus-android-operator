@@ -13,6 +13,7 @@ import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceOrderB
 import com.nixbug.entebus.data.remote.operator.model.service.OrderIn
 import com.nixbug.entebus.data.remote.operator.model.service.ServiceStatus
 import com.nixbug.entebus.data.remote.utils.apiHelper
+import com.nixbug.entebus.domain.model.LocalServiceStatus
 import com.nixbug.entebus.domain.model.MaskedServiceModel
 import com.nixbug.entebus.domain.model.ServiceDetailModel
 import com.nixbug.entebus.domain.repository.LandmarkRepository
@@ -189,6 +190,10 @@ class ServiceRepositoryImpl @Inject constructor(
 
     override suspend fun updateLocalServiceStatus(serviceId: Int, status: String) {
         serviceDao.updateLocalServiceStatus(serviceId, status)
+    }
+
+    override suspend fun deleteOldServices(cutoffDate: String) {
+        serviceDao.deleteOldServices(cutoffDate, LocalServiceStatus.STARTED)
     }
 
 }

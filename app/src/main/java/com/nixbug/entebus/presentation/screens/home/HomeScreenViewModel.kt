@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.GetAssignedServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
@@ -41,8 +42,9 @@ class HomeScreenViewModel @Inject constructor(
     private val getServiceDetail: GetServiceDetailUseCase,
     private val getLocalServices: GetLocalServicesByStatusUseCase,
     private val getAssignedServices: GetAssignedServiceUseCase,
-    private val updateLocalStatusUseCase: UpdateLocalStatusUseCase
-) : ViewModel() {
+    private val updateLocalStatusUseCase: UpdateLocalStatusUseCase,
+    private val cleanOldServicesUseCase: CleanOldServicesUseCase
+    ) : ViewModel() {
 
     // STATE
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -155,6 +157,7 @@ class HomeScreenViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            cleanOldServicesUseCase()
             val currentService = getLocalServices(LocalServiceStatus.STARTED)
             val ongoing = currentService.firstOrNull()
             _uiState.update { state ->

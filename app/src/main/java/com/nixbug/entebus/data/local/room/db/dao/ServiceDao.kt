@@ -10,6 +10,7 @@ import com.nixbug.entebus.data.local.room.db.entity.LandmarkEntity
 import com.nixbug.entebus.data.local.room.db.entity.ServiceEntity
 import com.nixbug.entebus.data.local.room.db.entity.ServiceWithDetails
 import com.nixbug.entebus.data.local.room.db.entity.VehicleEntity
+import com.nixbug.entebus.domain.model.LocalServiceStatus
 
 @Dao
 interface ServiceDao {
@@ -59,4 +60,7 @@ interface ServiceDao {
 
     @Query("UPDATE services SET localStatus = :status WHERE id = :serviceId")
     suspend fun updateLocalServiceStatus(serviceId: Int, status: String)
+
+    @Query(" DELETE FROM services WHERE startingAt < :cutoffDate AND localStatus != :startedStatus")
+    suspend fun deleteOldServices(cutoffDate: String, startedStatus: String)
 }

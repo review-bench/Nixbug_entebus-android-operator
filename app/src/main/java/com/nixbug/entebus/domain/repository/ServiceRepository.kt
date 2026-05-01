@@ -16,4 +16,7 @@ interface ServiceRepository {
     suspend fun getLocalServicesByStatus(status: String): List<MaskedServiceModel>
 
     suspend fun updateLocalServiceStatus(serviceId: Int, status: String)
+
+    suspend fun deleteOldServices(cutoffDate: String)
+
 }
