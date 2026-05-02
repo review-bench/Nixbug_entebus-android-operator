@@ -1,10 +1,12 @@
 package com.nixbug.entebus.presentation.components.loadingskeleton
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
@@ -87,7 +90,6 @@ fun HistoryCardSkeleton(shimmerBrush: Brush) {
     }
 }
 
-// TODO: Currently unused – will be shown when API integration adds a loading state.
 @Composable
 fun ServiceCardSkeleton(shimmerBrush: Brush) {
     SkeletonCard(
@@ -171,7 +173,6 @@ fun ServiceCardSkeleton(shimmerBrush: Brush) {
     }
 }
 
-// TODO: Currently unused – will be shown when API integration adds a loading state.
 @Composable
 fun PersonalDetailsSkeleton(shimmerBrush: Brush) {
     Column(
@@ -273,6 +274,224 @@ fun PersonalDetailsSkeleton(shimmerBrush: Brush) {
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun TicketScreenSkeleton(shimmerBrush: Brush) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+
+        Row(
+            modifier = Modifier
+                .weight(0.73f)
+                .fillMaxWidth()
+        ) {
+
+            // LANDMARKS
+            SkeletonCard(
+                modifier = Modifier
+                    .weight(0.58f)
+                    .fillMaxHeight()
+                    .padding(horizontal = 5.dp)
+            ) {
+
+                repeat(15) { index ->
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        // Timeline icon
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 20.dp,
+                            height = 20.dp,
+                            cornerRadius = 10.dp
+                        )
+
+                        Spacer(Modifier.width(10.dp))
+
+                        Column {
+
+                            // Optional From / Till tag
+                            if (index == 1 || index == 6) {
+                                SkeletonBlock(
+                                    shimmerBrush = shimmerBrush,
+                                    width = 40.dp,
+                                    height = 10.dp,
+                                    cornerRadius = 4.dp
+                                )
+
+                                Spacer(Modifier.height(4.dp))
+                            }
+
+                            // Landmark name
+                            SkeletonBlock(
+                                shimmerBrush = shimmerBrush,
+                                width = 130.dp,
+                                height = 14.dp,
+                                cornerRadius = 4.dp
+                            )
+                        }
+                    }
+
+                    if (index < 14) {
+                        Spacer(Modifier.height(14.dp))
+                    }
+                }
+            }
+
+            // PASSENGERS
+            Column(
+                modifier = Modifier
+                    .weight(0.42f)
+                    .fillMaxHeight()
+                    .padding(end = 5.dp)
+            ) {
+
+                repeat(4) {
+
+                    SkeletonCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp)
+                    ) {
+
+                        // Passenger type
+                        SkeletonBlock(
+                            shimmerBrush = shimmerBrush,
+                            width = 90.dp,
+                            height = 16.dp,
+                            cornerRadius = 4.dp
+                        )
+
+                        Spacer(Modifier.height(18.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            // Minus
+                            SkeletonBlock(
+                                shimmerBrush = shimmerBrush,
+                                width = 34.dp,
+                                height = 34.dp,
+                                cornerRadius = 8.dp
+                            )
+
+                            // Count
+                            SkeletonBlock(
+                                shimmerBrush = shimmerBrush,
+                                width = 46.dp,
+                                height = 38.dp,
+                                cornerRadius = 6.dp
+                            )
+
+                            // Plus
+                            SkeletonBlock(
+                                shimmerBrush = shimmerBrush,
+                                width = 34.dp,
+                                height = 34.dp,
+                                cornerRadius = 8.dp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // BOTTOM SUMMARY
+        SkeletonCard(
+            modifier = Modifier
+                .weight(0.27f)
+                .padding(10.dp, 8.dp)
+                .fillMaxWidth()
+        ) {
+
+            // Route
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                SkeletonBlock(
+                    shimmerBrush = shimmerBrush,
+                    width = 20.dp,
+                    height = 20.dp,
+                    cornerRadius = 10.dp
+                )
+
+                Spacer(Modifier.width(8.dp))
+
+                SkeletonBlock(
+                    shimmerBrush = shimmerBrush,
+                    width = 180.dp,
+                    height = 14.dp,
+                    cornerRadius = 4.dp
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            HorizontalDivider()
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                Column {
+
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 70.dp,
+                        height = 10.dp
+                    )
+
+                    Spacer(Modifier.height(6.dp))
+
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 80.dp,
+                        height = 18.dp
+                    )
+                }
+
+                Column {
+
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 60.dp,
+                        height = 10.dp
+                    )
+
+                    Spacer(Modifier.height(6.dp))
+
+                    SkeletonBlock(
+                        shimmerBrush = shimmerBrush,
+                        width = 70.dp,
+                        height = 18.dp
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Print button
+            SkeletonBlock(
+                shimmerBrush = shimmerBrush,
+                width = 220.dp,
+                height = 45.dp,
+                cornerRadius = 13.dp
+            )
         }
     }
 }

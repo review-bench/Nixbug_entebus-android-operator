@@ -46,6 +46,9 @@ class TicketViewModel @Inject constructor(
 
     private fun loadStartedService() {
         viewModelScope.launch {
+            _uiState.update {
+                it.copy(isLoading = true)
+            }
             try {
 
                 val services = getDetailedServiceByStatusUseCase(LocalServiceStatus.STARTED)
@@ -76,6 +79,10 @@ class TicketViewModel @Inject constructor(
                     message = "Failed to load service data",
                     type = SnackbarType.ERROR
                 )
+            } finally {
+                _uiState.update {
+                    it.copy(isLoading = false)
+                }
             }
         }
     }
@@ -201,7 +208,9 @@ class TicketViewModel @Inject constructor(
 
     fun printTicket() {
         viewModelScope.launch {
-
+            _uiState.update {
+                it.copy(isPrinting = true)
+            }
             val state = _uiState.value
 
             val startingLandmark = state.startingLandmark
@@ -301,6 +310,10 @@ class TicketViewModel @Inject constructor(
                     SnackbarDuration.Long
                 )
                 emitNavigateBack()
+            } finally {
+                _uiState.update {
+                    it.copy(isPrinting = false)
+                }
             }
         }
     }

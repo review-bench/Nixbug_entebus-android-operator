@@ -8,4 +8,6 @@ data class TicketUiState(
     val startingLandmarkIndex: Int? = null,
     val endingLandmarkIndex: Int? = null,
     val totalDistanceKm: Float = 0f,
+    val isPrinting: Boolean = false,
+    val isLoading: Boolean = false,
 )

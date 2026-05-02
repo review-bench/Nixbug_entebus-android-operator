@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,6 +68,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
 import com.nixbug.entebus.presentation.components.DialogBox
+import com.nixbug.entebus.presentation.components.loadingskeleton.TicketScreenSkeleton
+import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.CameraPermissionHelper
@@ -136,66 +139,78 @@ fun TicketScreen(
             title = "Ticket",
             onBackClick = { navController.popBackStack() },
         )
+        if (state.isLoading) {
+            val shimmerBrush = rememberShimmerBrush()
+            TicketScreenSkeleton(shimmerBrush = shimmerBrush)
+        } else {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            )
+            {
 
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-
-            Row(
-                modifier = Modifier
-                    .weight(0.73f)
-                    .fillMaxWidth()
-            ) {
-
-                // LANDMARK LIST
-                Box(
+                Row(
                     modifier = Modifier
-                        .weight(0.58f)
-                        .fillMaxHeight()
-                        .padding(horizontal = 5.dp)
+                        .weight(0.73f)
+                        .fillMaxWidth()
+                )
+                {
+
+                    // LANDMARK LIST
+                    Box(
+                        modifier = Modifier
+                            .weight(0.58f)
+                            .fillMaxHeight()
+                            .padding(horizontal = 5.dp)
+                    ) {
+                        LandmarkList(
+                            landmarks = state.landmarks,
+                            onToggleLandmarkSelection = { landmark, index ->
+                                viewModel.toggleLandmarkSelection(
+                                    landmark,
+                                    index
+                                )
+                            },
+                            startingLandmark = state.startingLandmark,
+                            endingLandmark = state.endingLandmark,
+                            startingLandmarkIndex = state.startingLandmarkIndex,
+                            endingLandmarkIndex = state.endingLandmarkIndex
+                        )
+                    }
+
+                    // PASSENGER COUNT LIST
+                    Box(
+                        modifier = Modifier
+                            .weight(0.42f)
+                            .fillMaxHeight()
+                    ) {
+                        PassengerCountList(
+                            passengers = state.passengers,
+                            onCountChange = { passenger, newCount ->
+                                viewModel.updatePassengerCount(passenger.id, newCount)
+                            }
+                        )
+                    }
+                }
+                // BOTTOM SUMMARY
+                Surface(
+                    modifier = Modifier
+                        .weight(0.27f)
+                        .padding(10.dp, 8.dp)
+                        .fillMaxSize(),
+                    shape = RoundedCornerShape(22.dp),
+                    tonalElevation = 6.dp,
+                    shadowElevation = 6.dp,
+                    color = Color(0xFFEEF6EE)
                 ) {
-                    LandmarkList(
-                        landmarks = state.landmarks,
-                        onToggleLandmarkSelection = { landmark, index -> viewModel.toggleLandmarkSelection(landmark, index) },
+                    BottomSummaryCard(
                         startingLandmark = state.startingLandmark,
                         endingLandmark = state.endingLandmark,
-                        startingLandmarkIndex = state.startingLandmarkIndex,
-                        endingLandmarkIndex = state.endingLandmarkIndex
-                    )
-                }
-
-                // PASSENGER COUNT LIST
-                Box(
-                    modifier = Modifier
-                        .weight(0.42f)
-                        .fillMaxHeight()
-                ) {
-                    PassengerCountList(
+                        totalDistanceKm = state.totalDistanceKm,
                         passengers = state.passengers,
-                        onCountChange = { passenger, newCount ->
-                            viewModel.updatePassengerCount(passenger.id, newCount)
-                        }
+                        isPrinting = state.isPrinting,
+                        onPrintClick = { viewModel.printTicket() }
                     )
                 }
-            }
-            // BOTTOM SUMMARY
-            Surface(
-                modifier = Modifier
-                    .weight(0.27f)
-                    .padding(10.dp, 8.dp)
-                    .fillMaxSize(),
-                shape = RoundedCornerShape(22.dp),
-                tonalElevation = 6.dp,
-                shadowElevation = 6.dp,
-                color = Color(0xFFEEF6EE)
-            ) {
-                BottomSummaryCard(
-                    startingLandmark = state.startingLandmark,
-                    endingLandmark = state.endingLandmark,
-                    totalDistanceKm = state.totalDistanceKm,
-                    passengers = state.passengers,
-                    onPrintClick = { viewModel.printTicket() }
-                )
             }
         }
     }
@@ -286,7 +301,7 @@ fun LandmarkList(
                             )
                         }
                         Text(
-                            text = "${index+1} ${landmark.name}",
+                            text = "${index + 1} ${landmark.name}",
                             color = Color.Black,
                             style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
@@ -545,7 +560,8 @@ fun BottomSummaryCard(
     endingLandmark: Landmark?,
     totalDistanceKm: Float,
     passengers: List<Passenger>,
-    onPrintClick: () -> Unit
+    onPrintClick: () -> Unit,
+    isPrinting: Boolean
 ) {
     val isTicketValid = startingLandmark != null &&
             endingLandmark != null &&
@@ -620,27 +636,30 @@ fun BottomSummaryCard(
             }
             Spacer(Modifier.height(5.dp))
             Button(
-                onClick = {
-                    onPrintClick()
-                },
+                onClick = { onPrintClick() },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(13.dp),
                 contentPadding = PaddingValues(5.dp),
-                colors = ButtonDefaults.buttonColors(
-                    disabledContainerColor = DisabledButtonColor
-                ),
-                enabled = isTicketValid
+                colors = ButtonDefaults.buttonColors(disabledContainerColor = DisabledButtonColor),
+                enabled = isTicketValid && !isPrinting,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Print,
-                        contentDescription = "Print Ticket",
-                        tint = Color.White,
+                if (isPrinting) {
+                    CircularProgressIndicator(
+                        strokeWidth = 2.dp,
                         modifier = Modifier.size(20.dp)
                     )
-                    Text(
-                        " Print Ticket", style = MaterialTheme.typography.titleMedium
-                    )
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Print,
+                            contentDescription = "Print Ticket",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            " Print Ticket", style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
             }
         }
