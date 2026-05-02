@@ -251,22 +251,27 @@ fun HomeScreen(
                 onLoadMore = viewModel::loadMoreServices,
                 isLoadingMore = state.isPaginationLoading,
                 downloadingServiceId = state.downloadingServiceId,
+                startingServiceId = state.startingServiceId,
                 hasMore = state.hasMore,
-            )
+                onLoadMoreAssigned = viewModel::loadMoreAssignedServices,
+                isAssignedLoadingMore = state.isAssignedPaginationLoading,
+                assignedHasMore = state.assignedHasMore,
+
+                )
         }
     }
 
     finishDutyService?.let { service ->
         DialogBox(
-            title = "Finish Duty?",
-            message = "Are you sure you want to finish your duty on the ${
+            title = "Finish Service?",
+            message = "Are you sure you want to finish the service from ${
                 finishDutyService?.startingLandmarkName ?: "starting point"
-            }-> ${
+            } to ${
                 finishDutyService?.endingLandmarkName ?: "ending point"
-            } service?",
+            }?",
             confirmText = "Finish",
             onConfirmClick = {
-                viewModel.onFinishDuty(service)
+                viewModel.onFinishService(service)
                 finishDutyService = null
             },
             dismissible = true,
@@ -496,6 +501,10 @@ fun ServiceList(
     onLoadMore: () -> Unit,
     isLoadingMore: Boolean,
     hasMore: Boolean,
+    onLoadMoreAssigned: () -> Unit,
+    isAssignedLoadingMore: Boolean,
+    assignedHasMore: Boolean,
+    startingServiceId: Int?,
     downloadingServiceId: Int?,
 ) {
 
@@ -557,7 +566,11 @@ fun ServiceList(
             onActionClick = onStartAssigned,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp),
-            downloadingServiceId = downloadingServiceId
+            downloadingServiceId = downloadingServiceId,
+            onLoadMore = onLoadMoreAssigned,
+            isLoadingMore = isAssignedLoadingMore,
+            hasMore = assignedHasMore,
+            startingServiceId = startingServiceId
         )
 
         1 -> ServiceTabContent(
@@ -566,7 +579,8 @@ fun ServiceList(
             onActionClick = onStartDownloaded,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp),
-            downloadingServiceId = downloadingServiceId
+            downloadingServiceId = downloadingServiceId,
+            startingServiceId = startingServiceId
         )
 
         2 -> ServiceTabContent(
@@ -575,7 +589,8 @@ fun ServiceList(
             onActionClick = onRestartRecentService,
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp),
-            downloadingServiceId = downloadingServiceId
+            downloadingServiceId = downloadingServiceId,
+            startingServiceId = startingServiceId
         )
 
         3 -> ServiceTabContent(
@@ -588,6 +603,7 @@ fun ServiceList(
             isLoadingMore = isLoadingMore,
             downloadingServiceId = downloadingServiceId,
             hasMore = hasMore,
+            startingServiceId = startingServiceId
         )
     }
 }
@@ -602,7 +618,8 @@ fun ServiceTabContent(
     onLoadMore: (() -> Unit)? = null,
     isLoadingMore: Boolean = false,
     hasMore: Boolean = true,
-    downloadingServiceId: Int?
+    downloadingServiceId: Int?,
+    startingServiceId: Int?
 ) {
 
     LazyColumn(
@@ -616,6 +633,7 @@ fun ServiceTabContent(
 
             val startDateTime = utcToIstConverter(service.startingAt)
             val isAnyDownloading = downloadingServiceId != null
+            val isAnyStarting = startingServiceId != null
 
             ServiceCard(
                 service = service,
@@ -624,17 +642,20 @@ fun ServiceTabContent(
                 date = startDateTime?.first ?: "Date unavailable",
                 time = startDateTime?.second ?: "Time unavailable",
                 isDownloading = service.id == downloadingServiceId,
+                isStarting = service.id == startingServiceId,
                 isEnabled = when (cardType) {
                     CardType.ASSIGNED,
                     CardType.DOWNLOADED -> canStartService(service.startingAt)
 
                     else -> true
                 },
-                isAnyDownloading = isAnyDownloading
+                isAnyDownloading = isAnyDownloading,
+                isAnyStarting = isAnyStarting
             )
 
             Spacer(modifier = Modifier.height(15.dp))
         }
+
         item {
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -718,7 +739,9 @@ fun ServiceCard(
     isEnabled: Boolean,
     onFinishDutyClick: ((HomeUiModel) -> Unit)? = null,
     isDownloading: Boolean = false,
-    isAnyDownloading: Boolean = false
+    isAnyDownloading: Boolean = false,
+    isStarting: Boolean = false,
+    isAnyStarting: Boolean = false
 ) {
 
     Card(
@@ -810,13 +833,12 @@ fun ServiceCard(
                     //-------------- START/DOWNLOAD BUTTON ----------------------//
                     if (cardType != CardType.ONGOING) {
                         Spacer(Modifier.height(10.dp))
-                        val isActionEnabled =
-                            isEnabled && (cardType != CardType.OTHER || !isAnyDownloading)
+                        val isActionEnabled = isEnabled && !isAnyDownloading && !isAnyStarting
                         SmallCardButton(
                             cardType,
                             onActionClick,
                             enabled = isActionEnabled,
-                            isLoading = isDownloading
+                            isLoading = isDownloading || isStarting
                         )
                     }
                 }
@@ -860,7 +882,7 @@ fun SmallCardButton(
             .width(95.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
-            disabledContainerColor = DisabledButtonColor
+            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
         ),
         shape = RoundedCornerShape(10.dp),
         contentPadding = PaddingValues(0.dp)

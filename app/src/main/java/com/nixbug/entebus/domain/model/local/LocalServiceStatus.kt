@@ -1,4 +1,4 @@
-package com.nixbug.entebus.domain.model
+package com.nixbug.entebus.domain.model.local
 
 object LocalServiceStatus {
     const val DOWNLOADED = "DOWNLOADED"

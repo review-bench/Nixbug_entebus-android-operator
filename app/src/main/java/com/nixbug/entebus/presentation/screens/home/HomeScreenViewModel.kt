@@ -4,10 +4,16 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nixbug.entebus.domain.model.LocalServiceStatus
+import com.nixbug.entebus.domain.model.local.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
+import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
+import com.nixbug.entebus.domain.usecase.assignedservice.GetAssignedServiceUseCase
+import com.nixbug.entebus.domain.usecase.service.ClearAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
+import com.nixbug.entebus.domain.usecase.service.GetServiceDetailsForHomeUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
+import com.nixbug.entebus.domain.usecase.service.UpdateLocalStatusUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.printer.PrinterManager
@@ -16,6 +22,9 @@ import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -37,7 +46,13 @@ class HomeScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager,
     private val getMaskedServices: GetServiceUseCase,
     private val getServiceDetail: GetServiceDetailUseCase,
-    private val getLocalServices: GetLocalServicesByStatusUseCase
+    private val getLocalServices: GetLocalServicesByStatusUseCase,
+    private val getAssignedServices: GetAssignedServiceUseCase,
+    private val updateLocalStatusUseCase: UpdateLocalStatusUseCase,
+    private val cleanOldServicesUseCase: CleanOldServicesUseCase,
+    private val getServiceDetailsForHomeUseCase: GetServiceDetailsForHomeUseCase,
+    private val deleteAssignedServicesUseCase: DeleteAssignedServicesUseCase,
+    private val clearAssignedServicesUseCase: ClearAssignedServicesUseCase
 ) : ViewModel() {
 
     // STATE
@@ -49,7 +64,6 @@ class HomeScreenViewModel @Inject constructor(
 
     private val searchQuery = MutableStateFlow("")
     private var searchJob: Job? = null
-    // SERVICE ACTION ENUM
 
     enum class ServiceAction {
         START_ASSIGNED,
@@ -60,6 +74,218 @@ class HomeScreenViewModel @Inject constructor(
 
     private var pendingAction: ServiceAction? = null
     private var pendingService: HomeUiModel? = null
+    private val fetchedAssignedServiceIds = mutableSetOf<Int>()
+
+    fun loadMoreAssignedServices() {
+        fetchAssignedService(isPagination = true)
+    }
+
+    private fun clearAssignedServices() {
+        viewModelScope.launch {
+            try {
+                clearAssignedServicesUseCase()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+
+                SnackbarManager.show(
+                    e.message ?: "Failed to clear assigned services",
+                    SnackbarType.ERROR
+                )
+            }
+        }
+    }
+
+    private fun deleteMissingAssignedServices(ids: List<Int>) {
+        viewModelScope.launch {
+            try {
+                deleteAssignedServicesUseCase(ids)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(
+                    e.message ?: "Failed to sync deleted services",
+                    SnackbarType.ERROR
+                )
+            }
+        }
+    }
+
+    private fun fetchAssignedService(isPagination: Boolean = false) {
+        viewModelScope.launch {
+
+            val currentState = _uiState.value
+
+            if (isPagination && (currentState.isAssignedPaginationLoading || !currentState.assignedHasMore)) {
+                return@launch
+            }
+
+            if (isPagination) {
+                _uiState.update { it.copy(isAssignedPaginationLoading = true) }
+            } else {
+                fetchedAssignedServiceIds.clear()
+                _uiState.update {
+                    it.copy(
+                        assignedOffset = 0,
+                        assignedHasMore = true,
+                        serviceLoading = true
+                    )
+                }
+            }
+
+            try {
+                val result = getAssignedServices(
+                    offset = if (isPagination) currentState.assignedOffset else 0,
+                    limit = currentState.assignedLimit
+                )
+
+                when (result) {
+
+                    is Resource.Success -> {
+                        val services = result.data ?: emptyList()
+                        if (services.isEmpty()) {
+                            if (isPagination) {
+                                _uiState.update { it.copy(assignedHasMore = false) }
+                            } else {
+                                clearAssignedServices()
+                                _uiState.update {
+                                    it.copy(
+                                        assignedServiceList = emptyList(),
+                                        assignedHasMore = false
+                                    )
+                                }
+                            }
+                            return@launch
+                        }
+                        val ids = services.map { it.serviceId }
+                        fetchedAssignedServiceIds.addAll(ids)
+
+                        val detailedServices = coroutineScope {
+                            services.map { service ->
+                                async {
+                                    val detailResult = getServiceDetailsForHomeUseCase(
+                                        service.serviceId,
+                                        LocalServiceStatus.ASSIGNED
+                                    )
+
+                                    when (detailResult) {
+                                        is Resource.Success -> detailResult.data?.toHomeUiModel()
+                                        else -> null
+                                    }
+                                }
+                            }.awaitAll().filterNotNull()
+                        }
+
+                        val isLastPage = services.size < currentState.assignedLimit
+                        _uiState.update {
+                            it.copy(
+                                assignedServiceList =
+                                    if (isPagination)
+                                        it.assignedServiceList + detailedServices
+                                    else
+                                        detailedServices,
+
+                                assignedOffset =
+                                    if (isPagination)
+                                        it.assignedOffset + it.assignedLimit
+                                    else
+                                        it.assignedLimit,
+
+                                assignedHasMore = services.size == it.assignedLimit
+                            )
+                        }
+
+                        if (isLastPage && fetchedAssignedServiceIds.isNotEmpty()) {
+                            deleteMissingAssignedServices(fetchedAssignedServiceIds.toList())
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        if (isPagination) {
+                            _uiState.update { state ->
+                                state.copy(
+                                    assignedHasMore = false
+                                )
+                            }
+                        } else {
+                            val services = getLocalServices(LocalServiceStatus.ASSIGNED)
+                            _uiState.update { state ->
+                                state.copy(
+                                    assignedHasMore = false,
+                                    assignedServiceList = services.map { service -> service.toHomeUiModel() }
+                                )
+                            }
+                        }
+                    }
+
+                    is Resource.Empty -> {
+                        _uiState.update {
+                            if (isPagination) {
+                                it.copy(assignedHasMore = false)
+                            } else {
+                                it.copy(
+                                    assignedServiceList = emptyList(),
+                                    assignedHasMore = false
+                                )
+                            }
+                        }
+                    }
+
+                    else -> {}
+                }
+
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                val services = getLocalServices(LocalServiceStatus.ASSIGNED)
+                _uiState.update { state ->
+                    state.copy(
+                        assignedHasMore = false,
+                        assignedServiceList = services.map { service -> service.toHomeUiModel() }
+                    )
+                }
+            } finally {
+                if (isPagination) {
+                    _uiState.update { it.copy(isAssignedPaginationLoading = false) }
+                } else {
+                    _uiState.update { it.copy(serviceLoading = false) }
+                }
+            }
+        }
+    }
+
+    init {
+        _uiState.update { it.copy(serviceLoading = true) }
+        viewModelScope.launch {
+            try {
+                cleanOldServicesUseCase()
+                val currentServiceList = getLocalServices(LocalServiceStatus.STARTED)
+                val currentService = currentServiceList.firstOrNull()
+                _uiState.update { state -> state.copy(ongoingService = currentService?.toHomeUiModel()) }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(
+                    e.message ?: "Failed to load ongoing service",
+                    SnackbarType.ERROR
+                )
+            }
+        }
+        fetchAssignedService()
+    }
+
+    fun onTabSelected(tab: Int) {
+        _uiState.update { it.copy(selectedTab = tab) }
+        if (tab == 0) {
+            fetchAssignedService()
+        }
+        if (tab == 1) {
+            fetchDownloadedServices()
+        }
+        if (tab == 2) {
+            fetchRecentServices()
+        }
+        if (tab == 3) {
+            fetchOtherServices()
+        }
+    }
+
 
     fun onDownloadService(service: HomeUiModel) {
         _uiState.update { it.copy(downloadingServiceId = service.id) }
@@ -126,13 +352,27 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    fun onTabSelected(tab: Int) {
-        _uiState.update { it.copy(selectedTab = tab) }
-        if (tab == 1) {
-            fetchDownloadedServices()
-        }
-        if (tab == 3) {
-            fetchOtherServices()
+    private fun fetchRecentServices() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(serviceLoading = true) }
+            try {
+                val services = getLocalServices(LocalServiceStatus.RECENT)
+                _uiState.update {
+                    it.copy(
+                        recentServiceList = services.map { service ->
+                            service.toHomeUiModel()
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(
+                    e.message ?: "Failed to load recent services",
+                    SnackbarType.ERROR
+                )
+            } finally {
+                _uiState.update { it.copy(serviceLoading = false) }
+            }
         }
     }
 
@@ -274,6 +514,14 @@ class HomeScreenViewModel @Inject constructor(
         pendingAction = action
         pendingService = service
 
+        if (service != null && action != ServiceAction.RESUME) {
+            _uiState.update {
+                it.copy(
+                    startingServiceId = service.id,
+                )
+            }
+        }
+
         if (!hasPermission) {
             emitPermissionRequest()
             return
@@ -341,7 +589,12 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     fun hidePrinterPicker() {
-        _uiState.update { it.copy(showPrinterPicker = false) }
+        _uiState.update {
+            it.copy(
+                showPrinterPicker = false,
+                startingServiceId = null,
+            )
+        }
         pendingService = null
         pendingAction = null
     }
@@ -356,8 +609,13 @@ class HomeScreenViewModel @Inject constructor(
                 _uiState.update { it.copy(isConnectingPrinter = false) }
                 _uiState.update { it.copy(showPrinterPicker = false) }
             } else {
-                _uiState.update { it.copy(isConnectingPrinter = false) }
-                _uiState.update { it.copy(showPrinterPicker = false) }
+                _uiState.update {
+                    it.copy(
+                        isConnectingPrinter = false,
+                        showPrinterPicker = false,
+                        startingServiceId = null,
+                    )
+                }
                 SnackbarManager.show(
                     "Unable to connect to printer, make sure your printer is powered on",
                     SnackbarType.ERROR
@@ -371,16 +629,29 @@ class HomeScreenViewModel @Inject constructor(
     private fun confirmServiceStart() {
         val service = pendingService ?: return
 
-        _uiState.update { state ->
-            state.copy(
-                ongoingService = service,
-                assignedServiceList = state.assignedServiceList.filter { it.id != service.id },
-                downloadedServiceList = state.downloadedServiceList.filter { it.id != service.id },
-                recentServiceList = state.recentServiceList.filter { it.id != service.id }
-            )
+        viewModelScope.launch {
+            try {
+                updateLocalStatusUseCase(service.id, LocalServiceStatus.STARTED)
+                _uiState.update { state ->
+                    state.copy(
+                        ongoingService = service,
+                        assignedServiceList = state.assignedServiceList.filter { it.id != service.id },
+                        downloadedServiceList = state.downloadedServiceList.filter { it.id != service.id },
+                        recentServiceList = state.recentServiceList.filter { it.id != service.id }
+                    )
+                }
+                navigateToTicketScreen()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    "Failed to start service. Please try again.",
+                    SnackbarType.ERROR
+                )
+            } finally {
+                _uiState.update { state -> state.copy(startingServiceId = null) }
+            }
         }
-
-        navigateToTicketScreen()
     }
 
     private fun checkIfServiceAlreadyRunning(): Boolean {
@@ -422,14 +693,26 @@ class HomeScreenViewModel @Inject constructor(
     // OTHER UI STATE HANDLERS
 
 
-    fun onFinishDuty(service: HomeUiModel) {
+    fun onFinishService(service: HomeUiModel) {
         printerManager.closeConnection()
 
-        _uiState.update { state ->
-            state.copy(
-                recentServiceList = state.recentServiceList + service,
-                ongoingService = null
-            )
+        viewModelScope.launch {
+            try {
+                updateLocalStatusUseCase(service.id, LocalServiceStatus.RECENT)
+                _uiState.update { state ->
+                    state.copy(
+                        recentServiceList = state.recentServiceList + service,
+                        ongoingService = null
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    "Failed to finish service. Please try again.",
+                    SnackbarType.ERROR
+                )
+            }
         }
     }
 

@@ -10,12 +10,14 @@ import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorLandmarkApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorServiceAssignmentApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
 import com.nixbug.entebus.data.remote.publicapi.api.PublicCompanyApi
 import com.nixbug.entebus.data.repository.LandmarkRepositoryImpl
 import com.nixbug.entebus.data.repository.OperatorAccountImageRepositoryImpl
 import com.nixbug.entebus.data.repository.OperatorAccountRepositoryImpl
 import com.nixbug.entebus.data.repository.PublicCompanyRepositoryImpl
+import com.nixbug.entebus.data.repository.AssignedServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.ServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.SessionRepositoryImpl
 import com.nixbug.entebus.data.repository.TokenRepositoryImpl
@@ -24,6 +26,7 @@ import com.nixbug.entebus.domain.repository.LandmarkRepository
 import com.nixbug.entebus.domain.repository.OperatorAccountImageRepository
 import com.nixbug.entebus.domain.repository.OperatorAccountRepository
 import com.nixbug.entebus.domain.repository.PublicCompanyRepository
+import com.nixbug.entebus.domain.repository.AssignedServiceRepository
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.domain.repository.SessionRepository
 import com.nixbug.entebus.domain.repository.TokenRepository
@@ -109,5 +112,13 @@ object RepositoryModule {
     @Singleton
     fun provideLandmarkRepository(api: OperatorLandmarkApi): LandmarkRepository {
         return LandmarkRepositoryImpl(api)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAssignedServiceRepository(
+        api: OperatorServiceAssignmentApi
+    ): AssignedServiceRepository {
+        return AssignedServiceRepositoryImpl(api)
     }
 }
