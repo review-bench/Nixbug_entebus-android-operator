@@ -3,6 +3,7 @@ package com.nixbug.entebus.data.repository
 import com.google.gson.Gson
 import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
 import com.nixbug.entebus.data.local.room.mapper.toDomain
+import com.nixbug.entebus.data.mapper.toDomain
 import com.nixbug.entebus.data.mapper.toDomainWithLandmarks
 import com.nixbug.entebus.data.mapper.toFareEntity
 import com.nixbug.entebus.data.mapper.toLandmarkEntities
@@ -17,6 +18,7 @@ import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.model.MaskedServiceModel
 import com.nixbug.entebus.domain.model.ServiceDetailModel
+import com.nixbug.entebus.domain.model.ServiceDetails
 import com.nixbug.entebus.domain.repository.LandmarkRepository
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.utils.network.Resource
@@ -208,6 +210,10 @@ class ServiceRepositoryImpl @Inject constructor(
     override suspend fun getLocalServicesByStatus(status: String): List<MaskedServiceModel> {
         val localData = serviceDao.getServicesByStatus(status)
         return localData.map { it.toDomain(gson) }
+    }
+
+    override suspend fun getServicesWithDetailsByStatus(status: String): List<ServiceDetails> {
+        return serviceDao.getServicesWithDetailsByStatus(status).map { it.toDomain() }
     }
 
     override suspend fun updateLocalServiceStatus(serviceId: Int, status: String) {

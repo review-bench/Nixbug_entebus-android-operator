@@ -3,6 +3,8 @@ package com.nixbug.entebus.presentation.screens.ticket
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.local.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
@@ -25,14 +27,37 @@ private const val METERS_PER_KILOMETER = 1000f
 private val SortedSampleLandmarks = SampleLandmarks.sortedBy { it.distanceFromStart }
 
 @HiltViewModel
-class TicketViewModel @Inject constructor(private val printerManager: PrinterManager) :
-    ViewModel() {
+class TicketViewModel @Inject constructor(
+    private val printerManager: PrinterManager,
+    private val getDetailedServiceByStatusUseCase: GetDetailedServiceByStatusUseCase,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketUiState(landmarks = SortedSampleLandmarks))
     val uiState: StateFlow<TicketUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<TicketUiEvent>()
     val events: SharedFlow<TicketUiEvent> = _events.asSharedFlow()
+
+
+
+    init {
+        viewModelScope.launch {
+            try {
+                val services = getDetailedServiceByStatusUseCase(LocalServiceStatus.STARTED)
+
+                services.forEach { service ->
+                    println("Fare: ${service.fare.ticketTypes}")
+                    println("Fare: ${service.fare.function}")
+                    service.landmarks.forEach { landmark ->
+                        println("Landmark: ${landmark.landmarkName}")
+                    }
+                }
+
+            } catch (e: Exception) {
+                println("Error fetching service details: ${e.message}")
+            }
+        }
+    }
 
     private fun emitNavigateBack() {
         viewModelScope.launch {
