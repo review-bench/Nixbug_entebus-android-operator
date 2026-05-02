@@ -46,7 +46,10 @@ class RhinoFareCalculator @Inject constructor() : FareCalculatorRepository {
                 newScope.get(
                     "getFare",
                     newScope
-                ) as Function
+                ) as? Function
+                    ?: throw IllegalArgumentException(
+                        "Invalid fare script: expected 'getFare' to be defined as a function."
+                    )
 
             currentScript = fareFunction
 

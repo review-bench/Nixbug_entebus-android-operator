@@ -50,7 +50,6 @@ data class DetailedFare(
 )
 
 data class DetailedTicketType(
-
     val id: Int,
     val name: String,
     val price: Double? = null,

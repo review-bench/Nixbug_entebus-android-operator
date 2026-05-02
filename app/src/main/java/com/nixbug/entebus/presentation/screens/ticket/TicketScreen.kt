@@ -53,7 +53,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -66,12 +65,10 @@ import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
-import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.components.loadingskeleton.TicketScreenSkeleton
 import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
-import com.nixbug.entebus.utils.CameraPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
 import java.util.Locale
 
@@ -81,9 +78,7 @@ fun TicketScreen(
     viewModel: TicketViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    var showPermissionDialog by remember { mutableStateOf(false) }
 
 
     LaunchedEffect(Unit) {
@@ -94,26 +89,6 @@ fun TicketScreen(
                 }
             }
         }
-    }
-
-    if (showPermissionDialog) {
-        DialogBox(
-            title = "Permission Required",
-            message = "Camera access is required to scan QR codes.",
-            confirmText = "Open Settings",
-            onConfirmClick = {
-                CameraPermissionHelper.openAppSettings(context)
-                showPermissionDialog = false
-            },
-            dismissible = true,
-            onDismiss = { showPermissionDialog = false },
-            showExitButton = true,
-            exitText = "Cancel",
-            onExitClick = { showPermissionDialog = false },
-            titleColor = MaterialTheme.colorScheme.primary,
-            confirmBtnColor = MaterialTheme.colorScheme.primary,
-            exitBtnBorderColor = MaterialTheme.colorScheme.primary
-        )
     }
 
     SetStatusBarColor(
