@@ -10,4 +10,5 @@ data class TicketUiState(
     val totalDistanceKm: Float = 0f,
     val isPrinting: Boolean = false,
     val isLoading: Boolean = false,
+    val fareFunctionString: String = ""
 )

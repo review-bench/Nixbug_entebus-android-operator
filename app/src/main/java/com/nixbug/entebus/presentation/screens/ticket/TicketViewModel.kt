@@ -69,7 +69,8 @@ class TicketViewModel @Inject constructor(
                             .map { it.toUiModel() },
 
                         passengers = currentService.fare.ticketTypes
-                            .map { it.toUiModel() }
+                            .map { it.toUiModel() },
+                        fareFunctionString = currentService.fare.function
                     )
                 }
 
