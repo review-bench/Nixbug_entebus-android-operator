@@ -30,7 +30,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AdsClick
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -277,7 +276,10 @@ fun LandmarkList(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LandmarksTimelineIcons(
-                            isFirst, isLast, isStart,
+                            index = index + 1,
+                            isFirst,
+                            isLast,
+                            isStart,
                             isEnd,
                             inBetween
                         )
@@ -301,7 +303,13 @@ fun LandmarkList(
                             )
                         }
                         Text(
-                            text = "${index + 1} ${landmark.name}",
+                            text = landmark.name.replaceFirstChar {
+                                if (it.isLowerCase()) {
+                                    it.titlecase()
+                                } else {
+                                    it.toString()
+                                }
+                            },
                             color = Color.Black,
                             style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
@@ -317,6 +325,7 @@ fun LandmarkList(
 
 @Composable
 fun LandmarksTimelineIcons(
+    index: Int,
     isFirst: Boolean,
     isLast: Boolean,
     isStart: Boolean,
@@ -324,90 +333,61 @@ fun LandmarksTimelineIcons(
     inBetween: Boolean,
 ) {
 
-    val outerColor = when {
-        isStart || isEnd || inBetween -> Color(0x48974B00)
-        else -> DisabledButtonColor
-    }
-
-    val innerColor = when {
+    val circleColor = when {
         isStart || isEnd || inBetween -> Color(0x6B974B00)
         else -> MaterialTheme.colorScheme.primary
     }
 
-    if (!isFirst) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        // Top line
         Box(
             modifier = Modifier
                 .width(2.dp)
                 .height(15.dp)
-                .background(Color.Gray)
+                .background(
+                    if (isFirst) Color.Transparent else Color.Gray
+                )
         )
-    }
 
-    if (isFirst) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .width(2.dp)
-                    .height(15.dp)
-                    .background(Color.Transparent)
-            )
-            Icon(
-                imageVector = Icons.Default.MyLocation,
-                contentDescription = "Start",
-                tint = innerColor,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-    } else if (isLast) {
-        Column {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = "End",
-                tint = innerColor,
-                modifier = Modifier.size(20.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .width(2.dp)
-                    .height(15.dp)
-                    .background(Color.Transparent)
-            )
-        }
-    } else {
+        // Middle icon
         if (inBetween) {
             Icon(
                 imageVector = Icons.Default.KeyboardDoubleArrowDown,
-                contentDescription = "End",
+                contentDescription = null,
                 tint = DarkOrange,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(24.dp)
             )
         } else {
             Box(
                 modifier = Modifier
-                    .size(20.dp)
+                    .size(24.dp)
                     .background(
-                        color = outerColor,
+                        color = circleColor,
                         shape = CircleShape
-                    ), contentAlignment = Alignment.Center
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(
-                            color = innerColor,
-                            shape = CircleShape
-                        )
+                Text(
+                    text = index.toString(),
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 10.sp
                 )
             }
         }
-    }
-    if (!isLast) {
+
+        // Bottom line
         Box(
             modifier = Modifier
                 .width(2.dp)
                 .height(15.dp)
-                .background(Color.Gray)
+                .background(
+                    if (isLast) Color.Transparent else Color.Gray
+                )
         )
     }
 }
