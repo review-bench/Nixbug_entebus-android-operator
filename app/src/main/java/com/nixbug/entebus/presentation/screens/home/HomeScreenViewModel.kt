@@ -158,12 +158,24 @@ class HomeScreenViewModel @Inject constructor(
                         val ids = services.map { it.serviceId }
                         fetchedAssignedServiceIds.addAll(ids)
 
+                        val startedServiceIds = getLocalServices(LocalServiceStatus.STARTED)
+                            .map { it.id }
+                            .toSet()
+
                         val detailedServices = coroutineScope {
                             services.map { service ->
                                 async {
+
+                                    val localStatus =
+                                        if (service.serviceId in startedServiceIds) {
+                                            LocalServiceStatus.STARTED
+                                        } else {
+                                            LocalServiceStatus.ASSIGNED
+                                        }
+
                                     val detailResult = getServiceDetailsForHomeUseCase(
                                         service.serviceId,
-                                        LocalServiceStatus.ASSIGNED
+                                        localStatus
                                     )
 
                                     when (detailResult) {
