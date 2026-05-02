@@ -53,7 +53,6 @@ data class DetailedTicketType(
 
     val id: Int,
     val name: String,
-    // future fields
     val price: Double? = null,
     val count: Int = 0
 )

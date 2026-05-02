@@ -1,8 +1,5 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
-import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,7 +32,6 @@ import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Print
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -71,20 +67,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
 import com.nixbug.entebus.presentation.components.DialogBox
-import com.nixbug.entebus.presentation.navigation.AppNavItem
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.CameraPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
-import com.nixbug.entebus.utils.isCameraAvailable
-import com.nixbug.entebus.utils.snackbar.SnackbarManager
-import com.nixbug.entebus.utils.snackbar.SnackbarType
 import java.util.Locale
 
 @Composable
 fun TicketScreen(
     navController: NavHostController,
-    activity: Activity,
     viewModel: TicketViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -92,20 +83,6 @@ fun TicketScreen(
     val focusManager = LocalFocusManager.current
     var showPermissionDialog by remember { mutableStateOf(false) }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            navController.navigate(AppNavItem.QrScannerScreen.route)
-        } else if (CameraPermissionHelper.isPermissionPermanentlyDenied(activity)) {
-            showPermissionDialog = true
-        } else {
-            SnackbarManager.show(
-                message = "Camera permission is required to scan QR codes",
-                type = SnackbarType.ERROR,
-            )
-        }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -136,10 +113,12 @@ fun TicketScreen(
             exitBtnBorderColor = MaterialTheme.colorScheme.primary
         )
     }
+
     SetStatusBarColor(
         color = Color.White,
         darkIcons = true
     )
+
     Column(
         modifier = Modifier
             .statusBarsPadding()
@@ -156,25 +135,7 @@ fun TicketScreen(
         AppHeader(
             title = "Ticket",
             onBackClick = { navController.popBackStack() },
-            showTopBarActions = true,
-            primaryActionText = "QR",
-            primaryActionIcon = Icons.Default.QrCode,
-            onPrimaryActionClick = {
-                if (isCameraAvailable(context)) {
-                    if (CameraPermissionHelper.hasCameraPermission(context)) {
-                        navController.navigate(AppNavItem.QrScannerScreen.route)
-                    } else {
-                        permissionLauncher.launch(
-                            CameraPermissionHelper.CAMERA_PERMISSION
-                        )
-                    }
-                } else {
-                    SnackbarManager.show(
-                        message = "This device does not have a camera",
-                        type = SnackbarType.ERROR,
-                    )
-                }
-            })
+        )
 
         Column(
             modifier = Modifier.fillMaxSize()
@@ -195,9 +156,7 @@ fun TicketScreen(
                 ) {
                     LandmarkList(
                         landmarks = state.landmarks,
-                        onToggleLandmarkSelection = { landmark, index ->
-                            viewModel.toggleLandmarkSelection(landmark, index)
-                        },
+                        onToggleLandmarkSelection = { landmark, index -> viewModel.toggleLandmarkSelection(landmark, index) },
                         startingLandmark = state.startingLandmark,
                         endingLandmark = state.endingLandmark,
                         startingLandmarkIndex = state.startingLandmarkIndex,
@@ -308,7 +267,6 @@ fun LandmarkList(
                             inBetween
                         )
                     }
-
                     Spacer(modifier = Modifier.width(6.dp))
                     Column {
                         if (startingLandmark?.id == landmark.id) {
@@ -328,7 +286,7 @@ fun LandmarkList(
                             )
                         }
                         Text(
-                            text = landmark.name,
+                            text = "${index+1} ${landmark.name}",
                             color = Color.Black,
                             style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
