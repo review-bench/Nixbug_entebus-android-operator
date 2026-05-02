@@ -4,6 +4,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
 import com.nixbug.entebus.presentation.screens.ticket.uimapper.toUiModel
 import com.nixbug.entebus.utils.printer.PrinterManager
@@ -31,6 +32,7 @@ private const val METERS_PER_KILOMETER = 1000f
 class TicketViewModel @Inject constructor(
     private val printerManager: PrinterManager,
     private val getDetailedServiceByStatusUseCase: GetDetailedServiceByStatusUseCase,
+    private val calculateTicketFareUseCase: CalculateTicketFareUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketUiState())
@@ -88,6 +90,35 @@ class TicketViewModel @Inject constructor(
         }
     }
 
+    private fun recalculateFare() {
+
+        val state = _uiState.value
+        val start = state.startingLandmark
+        val end = state.endingLandmark
+
+        if (start == null || end == null
+        ) {
+            _uiState.update {
+                it.copy(
+                    totalFare = 0.0
+                )
+            }
+            return
+        }
+
+        val fare = calculateTicketFareUseCase(
+            fareFunction = state.fareFunctionString,
+            passengers = state.passengers,
+            distanceInMeters = state.totalDistanceKm * 1000.0
+        )
+
+        _uiState.update {
+            it.copy(
+                totalFare = fare
+            )
+        }
+    }
+
     private fun emitNavigateBack() {
         viewModelScope.launch {
             _events.emit(TicketUiEvent.EmitNavigateBack)
@@ -102,73 +133,111 @@ class TicketViewModel @Inject constructor(
         }
     }
 
-    fun toggleLandmarkSelection(landmark: Landmark, index: Int) {
+    fun toggleLandmarkSelection(
+        landmark: Landmark,
+        index: Int
+    ) {
+
+        val currentState = _uiState.value
+
         // Retap start → deselect
-        if (_uiState.value.startingLandmark?.id == landmark.id) {
+        if (currentState.startingLandmark?.id == landmark.id) {
+
             _uiState.update { state ->
                 state.copy(
                     startingLandmark = null,
                     startingLandmarkIndex = null,
-                    totalDistanceKm = calculateDistanceKm(null, state.endingLandmark)
+                    totalDistanceKm = calculateDistanceKm(
+                        start = null,
+                        end = state.endingLandmark
+                    )
                 )
             }
+
+            recalculateFare()
             return
         }
 
         // Retap end → deselect
-        if (_uiState.value.endingLandmark?.id == landmark.id) {
+        if (currentState.endingLandmark?.id == landmark.id) {
+
             _uiState.update { state ->
                 state.copy(
                     endingLandmark = null,
                     endingLandmarkIndex = null,
-                    totalDistanceKm = calculateDistanceKm(state.startingLandmark, null)
+                    totalDistanceKm = calculateDistanceKm(
+                        start = state.startingLandmark,
+                        end = null
+                    )
                 )
             }
+
+            recalculateFare()
             return
         }
 
-        // Invalid starting (below ending)
-        if (_uiState.value.startingLandmark == null && index > (_uiState.value.endingLandmarkIndex
-                ?: Int.MAX_VALUE)
+        // Invalid starting
+        if (
+            currentState.startingLandmark == null &&
+            index > (currentState.endingLandmarkIndex ?: Int.MAX_VALUE)
         ) {
+
             SnackbarManager.show(
                 message = "Starting point cannot be after ending point",
-                type = SnackbarType.ERROR,
+                type = SnackbarType.ERROR
             )
+
             return
         }
 
-        // Selecting starting landmark
-        if (_uiState.value.startingLandmark == null) {
+        // Select starting landmark
+        if (currentState.startingLandmark == null) {
+
             _uiState.update { state ->
+
                 val newStart = landmark
+
                 state.copy(
                     startingLandmark = newStart,
                     startingLandmarkIndex = index,
-                    totalDistanceKm = calculateDistanceKm(newStart, state.endingLandmark)
+                    totalDistanceKm = calculateDistanceKm(
+                        start = newStart,
+                        end = state.endingLandmark
+                    )
                 )
             }
+
+            recalculateFare()
             return
         }
 
-        // Invalid ending (above starting)
-        if (index < (_uiState.value.startingLandmarkIndex ?: 0)) {
+        // Invalid ending
+        if (index < (currentState.startingLandmarkIndex ?: 0)) {
+
             SnackbarManager.show(
                 message = "Ending point must come after starting point",
-                type = SnackbarType.ERROR,
+                type = SnackbarType.ERROR
             )
+
             return
         }
 
-        // Selecting Ending landmark
+        // Select ending landmark
         _uiState.update { state ->
+
             val newEnd = landmark
+
             state.copy(
                 endingLandmark = newEnd,
                 endingLandmarkIndex = index,
-                totalDistanceKm = calculateDistanceKm(state.startingLandmark, newEnd)
+                totalDistanceKm = calculateDistanceKm(
+                    start = state.startingLandmark,
+                    end = newEnd
+                )
             )
         }
+
+        recalculateFare()
     }
 
     fun updatePassengerCount(id: Int, count: Int) {
@@ -195,6 +264,7 @@ class TicketViewModel @Inject constructor(
                         }
                     )
                 }
+                recalculateFare()
             }
         }
     }
@@ -217,7 +287,6 @@ class TicketViewModel @Inject constructor(
             val startingLandmark = state.startingLandmark
             val endingLandmark = state.endingLandmark
             val passengers = state.passengers
-            val totalDistanceKm = state.totalDistanceKm
 
             if (startingLandmark == null || endingLandmark == null) {
                 SnackbarManager.show(
@@ -241,8 +310,6 @@ class TicketViewModel @Inject constructor(
             val dateStr = dateFormat.format(calendar.time)
             val timeStr = timeFormat.format(calendar.time)
 
-            val totalFare = totalDistanceKm * 10.0
-
             if (!printerManager.checkConnection()) {
                 SnackbarManager.show(
                     message = "Printer connection failed. Please reconnect the printer and resume the service.",
@@ -254,15 +321,42 @@ class TicketViewModel @Inject constructor(
             }
 
             try {
+
+                val lineItems = selectedPassengers.map { passenger ->
+
+                    val singleFare = calculateTicketFareUseCase(
+                        fareFunction = state.fareFunctionString,
+                        passengers = listOf(passenger.copy(passengerCount = 1)),
+                        distanceInMeters = state.totalDistanceKm * 1000.0
+                    )
+
+                    val lineFare = singleFare * passenger.passengerCount
+
+                    Triple(
+                        passenger.name,
+                        passenger.passengerCount,
+                        lineFare
+                    )
+                }
+
+                val totalFare = state.totalFare
+
                 val ticketData = withContext(Dispatchers.Default) {
+
                     TicketBuilder()
+
                         .addCommand(PrinterManager.Commands.ALIGN_CENTER)
+
                         .addCommand(PrinterManager.Commands.BOLD_ON)
                         .text("RKV")
                         .addCommand(PrinterManager.Commands.BOLD_OFF)
 
                         .addCommand(PrinterManager.Commands.SIZE_NORMAL)
-                        .threeColumnRow(dateStr, timeStr, "TKT-000123")
+                        .threeColumnRow(
+                            dateStr,
+                            timeStr,
+                            "TKT-000123"
+                        )
 
                         .addCommand(PrinterManager.Commands.BOLD_ON)
                         .routeRow(
@@ -273,20 +367,31 @@ class TicketViewModel @Inject constructor(
                         .addCommand(PrinterManager.Commands.BOLD_OFF)
 
                         .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
+
                         .apply {
-                            selectedPassengers.forEach { passenger ->
-                                val lineFare = passenger.passengerCount * 100.0
-                                val line = "%-10s %2d x 100.00 = %6.2f".format(
-                                    passenger.name.take(10),
-                                    passenger.passengerCount,
-                                    lineFare
-                                )
+
+                            lineItems.forEach { item ->
+
+                                val name = item.first
+                                val count = item.second
+                                val lineFare = item.third
+
+                                val singleFare = lineFare / count
+
+                                val line =
+                                    "%-10s %2d x %6.2f = %6.2f".format(
+                                        name.take(10),
+                                        count,
+                                        singleFare,
+                                        lineFare
+                                    )
+
                                 text(line)
                             }
                         }
 
                         .addCommand(PrinterManager.Commands.SIZE_BIG)
-                        .text("RS .  %.2f".format(totalFare))
+                        .text("RS . $totalFare")
                         .addCommand(PrinterManager.Commands.SIZE_NORMAL)
 
                         .divider()
@@ -294,16 +399,22 @@ class TicketViewModel @Inject constructor(
                         .addCommand(PrinterManager.Commands.ALIGN_CENTER)
                         .text("Not Transferable")
                         .text("Nixbug softwares")
+
                         .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
                         .addCommand(PrinterManager.Commands.BOLD_OFF)
+
                         .build()
                 }
+
                 val result = printerManager.sendData(ticketData)
 
                 if (!result.isSuccess) {
-                    throw result.exceptionOrNull() ?: Exception("Unknown error")
+                    throw result.exceptionOrNull()
+                        ?: Exception("Unknown error")
                 }
+
                 resetPassengerCounts()
+
             } catch (e: Exception) {
                 SnackbarManager.show(
                     "Printer connection failed. Please reconnect the printer and resume the service.",
@@ -335,5 +446,7 @@ class TicketViewModel @Inject constructor(
                 }
             )
         }
+        recalculateFare()
+
     }
 }

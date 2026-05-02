@@ -207,7 +207,8 @@ fun TicketScreen(
                         totalDistanceKm = state.totalDistanceKm,
                         passengers = state.passengers,
                         isPrinting = state.isPrinting,
-                        onPrintClick = { viewModel.printTicket() }
+                        onPrintClick = { viewModel.printTicket() },
+                        totalFare = state.totalFare
                     )
                 }
             }
@@ -541,7 +542,8 @@ fun BottomSummaryCard(
     totalDistanceKm: Float,
     passengers: List<Passenger>,
     onPrintClick: () -> Unit,
-    isPrinting: Boolean
+    isPrinting: Boolean,
+    totalFare: Double
 ) {
     val isTicketValid = startingLandmark != null &&
             endingLandmark != null &&
@@ -608,7 +610,7 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        String.format(Locale.getDefault(), "%.1f \u20B9", totalDistanceKm * 10),
+                        text = "$totalFare \u20B9",
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )
