@@ -65,7 +65,7 @@ class TicketViewModel @Inject constructor(
                 _uiState.update { state ->
                     state.copy(
                         landmarks = currentService.landmarks
-                            .sortedByDescending { it.distance }
+                            .sortedBy { it.distance }
                             .map { it.toUiModel() },
 
                         passengers = currentService.fare.ticketTypes
