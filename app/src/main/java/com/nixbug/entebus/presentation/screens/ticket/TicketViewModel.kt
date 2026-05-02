@@ -3,6 +3,7 @@ package com.nixbug.entebus.presentation.screens.ticket
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.DetailedTicketType
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
@@ -92,30 +93,50 @@ class TicketViewModel @Inject constructor(
 
     private fun recalculateFare() {
 
-        val state = _uiState.value
-        val start = state.startingLandmark
-        val end = state.endingLandmark
+        viewModelScope.launch {
 
-        if (start == null || end == null
-        ) {
-            _uiState.update {
-                it.copy(
-                    totalFare = 0.0
+            val state = _uiState.value
+
+            val start = state.startingLandmark
+            val end = state.endingLandmark
+
+            if (start == null || end == null) {
+
+                _uiState.update {
+                    it.copy(
+                        totalFare = 0.0
+                    )
+                }
+
+                return@launch
+            }
+
+            val fare = withContext(Dispatchers.Default) {
+
+                calculateTicketFareUseCase(
+
+                    fareFunction =
+                        state.fareFunctionString,
+
+                    passengers =
+                        state.passengers.map {
+                            DetailedTicketType(
+                                id = it.id,
+                                name = it.name,
+                                count = it.passengerCount
+                            )
+                        },
+
+                    distanceInMeters =
+                        state.totalDistanceKm * 1000.0
                 )
             }
-            return
-        }
 
-        val fare = calculateTicketFareUseCase(
-            fareFunction = state.fareFunctionString,
-            passengers = state.passengers,
-            distanceInMeters = state.totalDistanceKm.toDouble() * 1000.0
-        )
-
-        _uiState.update {
-            it.copy(
-                totalFare = fare
-            )
+            _uiState.update {
+                it.copy(
+                    totalFare = fare
+                )
+            }
         }
     }
 
@@ -344,16 +365,19 @@ class TicketViewModel @Inject constructor(
 
                 val lineItems = selectedPassengers.map { passenger ->
 
-                    val singleFare =
-                        calculateTicketFareUseCase(
-                            fareFunction = state.fareFunctionString,
-                            passengers = listOf(
-                                passenger.copy(
-                                    passengerCount = 1
-                                )
-                            ),
-                            distanceInMeters = state.totalDistanceKm.toDouble() * 1000.0
-                        )
+                    val singleFare = calculateTicketFareUseCase(
+                        fareFunction = state.fareFunctionString,
+
+                        passengers = listOf(
+                            DetailedTicketType(
+                                id = passenger.id,
+                                name = passenger.name,
+                                count = 1
+                            )
+                        ),
+
+                        distanceInMeters = state.totalDistanceKm * 1000.0
+                    )
 
                     Triple(
                         passenger.name,

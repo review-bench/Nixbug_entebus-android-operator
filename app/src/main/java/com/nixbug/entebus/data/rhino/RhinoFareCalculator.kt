@@ -1,6 +1,8 @@
 package com.nixbug.entebus.data.rhino
 
 import com.nixbug.entebus.domain.repository.FareCalculatorRepository
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.mozilla.javascript.Context
 import org.mozilla.javascript.Function
 import org.mozilla.javascript.Scriptable
@@ -10,6 +12,8 @@ import javax.inject.Singleton
 @Singleton
 class RhinoFareCalculator @Inject constructor() : FareCalculatorRepository {
 
+    private val mutex = Mutex()
+
     private var currentScript: String? = null
 
     private var scope: Scriptable? = null
@@ -17,81 +21,87 @@ class RhinoFareCalculator @Inject constructor() : FareCalculatorRepository {
     private var fareFunction: Function? = null
 
 
-    override fun initialize(
+    override suspend fun initialize(
         fareFunction: String
     ) {
 
-        if (fareFunction == currentScript) {
-            return
-        }
+        mutex.withLock {
 
-        val context = Context.enter()
+            if (fareFunction == currentScript) {
+                return
+            }
 
-        try {
+            val context = Context.enter()
 
-            context.optimizationLevel = -1
+            try {
 
-            val newScope =
-                context.initStandardObjects()
+                context.optimizationLevel = -1
 
-            context.evaluateString(
-                newScope,
-                fareFunction,
-                "fare.js",
-                1,
-                null
-            )
+                val newScope =
+                    context.initStandardObjects()
 
-            val jsFunction =
-                newScope.get(
-                    "getFare",
-                    newScope
-                ) as? Function
-                    ?: throw IllegalArgumentException(
-                        "Invalid fare script: expected 'getFare' to be defined as a function."
-                    )
+                context.evaluateString(
+                    newScope,
+                    fareFunction,
+                    "fare.js",
+                    1,
+                    null
+                )
 
-            currentScript = fareFunction
+                val jsFunction =
+                    newScope.get(
+                        "getFare",
+                        newScope
+                    ) as? Function
+                        ?: throw IllegalArgumentException(
+                            "Invalid fare script"
+                        )
 
-            scope = newScope
+                currentScript = fareFunction
 
-            this.fareFunction = jsFunction
+                scope = newScope
 
-        } finally {
-            Context.exit()
+                this.fareFunction = jsFunction
+
+            } finally {
+                Context.exit()
+            }
         }
     }
 
 
-    override fun calculate(
+    override suspend fun calculate(
         ticketType: String,
         distanceInMeters: Double,
         extras: Map<String, Any>
     ): Double {
 
-        val context = Context.enter()
+        return mutex.withLock {
 
-        try {
+            val context = Context.enter()
 
-            context.optimizationLevel = -1
+            try {
 
-            val result =
-                fareFunction?.call(
-                    context,
-                    scope,
-                    scope,
-                    arrayOf(
-                        ticketType,
-                        distanceInMeters,
-                        extras
+                context.optimizationLevel = -1
+
+                val result =
+                    fareFunction?.call(
+                        context,
+                        scope,
+                        scope,
+                        arrayOf(
+                            ticketType,
+                            distanceInMeters,
+                            extras
+                        )
                     )
-                )
 
-            return (result as Number)
-                .toDouble()
+                (result as Number)
+                    .toDouble()
 
-        } finally {
-            Context.exit()
+            } finally {
+                Context.exit()
+            }
         }
     }
 }

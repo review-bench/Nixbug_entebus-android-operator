@@ -1,16 +1,16 @@
 package com.nixbug.entebus.domain.usecase.fare
 
+import com.nixbug.entebus.domain.model.DetailedTicketType
 import com.nixbug.entebus.domain.repository.FareCalculatorRepository
-import com.nixbug.entebus.presentation.screens.ticket.Passenger
 import javax.inject.Inject
 
 class CalculateTicketFareUseCase @Inject constructor(
     private val fareCalculator: FareCalculatorRepository
 ) {
 
-    operator fun invoke(
+    suspend operator fun invoke(
         fareFunction: String,
-        passengers: List<Passenger>,
+        passengers: List<DetailedTicketType>,
         distanceInMeters: Double
     ): Double {
 
@@ -20,7 +20,7 @@ class CalculateTicketFareUseCase @Inject constructor(
 
         return passengers
             .filter {
-                it.passengerCount > 0
+                it.count > 0
             }
             .sumOf { passenger ->
 
@@ -30,8 +30,7 @@ class CalculateTicketFareUseCase @Inject constructor(
                         distanceInMeters = distanceInMeters
                     )
 
-                singleFare *
-                        passenger.passengerCount
+                singleFare * passenger.count
             }
     }
 }
