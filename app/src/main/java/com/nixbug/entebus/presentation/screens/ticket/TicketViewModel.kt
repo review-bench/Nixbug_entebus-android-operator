@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
+import com.nixbug.entebus.presentation.screens.ticket.uimapper.toUiModel
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
@@ -21,10 +22,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 private const val MAX_PASSENGER_COUNT = 99
 private const val METERS_PER_KILOMETER = 1000f
-private val SortedSampleLandmarks = SampleLandmarks.sortedBy { it.distanceFromStart }
 
 @HiltViewModel
 class TicketViewModel @Inject constructor(
@@ -32,29 +33,49 @@ class TicketViewModel @Inject constructor(
     private val getDetailedServiceByStatusUseCase: GetDetailedServiceByStatusUseCase,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(TicketUiState(landmarks = SortedSampleLandmarks))
+    private val _uiState = MutableStateFlow(TicketUiState())
     val uiState: StateFlow<TicketUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<TicketUiEvent>()
     val events: SharedFlow<TicketUiEvent> = _events.asSharedFlow()
 
 
-
     init {
+        loadStartedService()
+    }
+
+    private fun loadStartedService() {
         viewModelScope.launch {
             try {
-                val services = getDetailedServiceByStatusUseCase(LocalServiceStatus.STARTED)
 
-                services.forEach { service ->
-                    println("Fare: ${service.fare.ticketTypes}")
-                    println("Fare: ${service.fare.function}")
-                    service.landmarks.forEach { landmark ->
-                        println("Landmark: ${landmark.landmarkName}")
-                    }
+                val services = getDetailedServiceByStatusUseCase(LocalServiceStatus.STARTED)
+                val currentService = services.firstOrNull()
+
+                if (currentService == null) {
+                    SnackbarManager.show(
+                        message = "No started service found",
+                        type = SnackbarType.ERROR
+                    )
+                    return@launch
+                }
+
+                _uiState.update { state ->
+                    state.copy(
+                        landmarks = currentService.landmarks
+                            .sortedByDescending { it.distance }
+                            .map { it.toUiModel() },
+
+                        passengers = currentService.fare.ticketTypes
+                            .map { it.toUiModel() }
+                    )
                 }
 
             } catch (e: Exception) {
-                println("Error fetching service details: ${e.message}")
+                if (e is CancellationException) throw e
+                SnackbarManager.show(
+                    message = "Failed to load service data",
+                    type = SnackbarType.ERROR
+                )
             }
         }
     }
@@ -269,11 +290,10 @@ class TicketViewModel @Inject constructor(
                 }
                 val result = printerManager.sendData(ticketData)
 
-                if (result.isSuccess) {
-                    SnackbarManager.show("Ticket printed successfully!", SnackbarType.SUCCESS)
-                } else {
+                if (!result.isSuccess) {
                     throw result.exceptionOrNull() ?: Exception("Unknown error")
                 }
+                resetPassengerCounts()
             } catch (e: Exception) {
                 SnackbarManager.show(
                     "Printer connection failed. Please reconnect the printer and resume the service.",
@@ -282,6 +302,24 @@ class TicketViewModel @Inject constructor(
                 )
                 emitNavigateBack()
             }
+        }
+    }
+
+    private fun resetPassengerCounts() {
+        _uiState.update { state ->
+            state.copy(
+                passengers = state.passengers.map { passenger ->
+                    passenger.copy(
+                        passengerCount = if (
+                            passenger.name.equals("Adult", ignoreCase = true)
+                        ) {
+                            1
+                        } else {
+                            0
+                        }
+                    )
+                }
+            )
         }
     }
 }
