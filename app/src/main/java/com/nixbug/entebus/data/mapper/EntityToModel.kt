@@ -14,7 +14,6 @@ import com.nixbug.entebus.domain.model.DetailedTicketType
 import com.nixbug.entebus.domain.model.DetailedVehicle
 import com.nixbug.entebus.domain.model.ServiceDetails
 
-private val gson = Gson()
 
 
 fun ServiceWithDetails.toDomain(
