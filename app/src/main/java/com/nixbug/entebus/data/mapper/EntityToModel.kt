@@ -17,10 +17,12 @@ import com.nixbug.entebus.domain.model.ServiceDetails
 private val gson = Gson()
 
 
-fun ServiceWithDetails.toDomain() = ServiceDetails(
+fun ServiceWithDetails.toDomain(
+    gson: Gson
+) = ServiceDetails(
     service = service.toDomain(),
     landmarks = landmarks.map { it.toDomain() },
-    fare = fare.toDomain(),
+    fare = fare.toDomain(gson),
     vehicle = vehicle.toDomain()
 )
 
@@ -55,14 +57,16 @@ fun LandmarkEntity.toDomain() = DetailedLandmark(
     departureAt = departureAt
 )
 
-fun FareEntity.toDomain() = DetailedFare(
+fun FareEntity.toDomain(
+    gson: Gson
+) = DetailedFare(
     fareId = fareId,
     name = name,
     function = function,
     currencyType = currencyType,
     distanceUnit = distanceUnit,
     version = version,
-    ticketTypes = ticketTypesJson.toTicketTypes(),
+    ticketTypes = ticketTypesJson.toTicketTypes(gson),
     dfVersion = dfVersion
 )
 
@@ -74,17 +78,18 @@ fun VehicleEntity.toDomain() = DetailedVehicle(
     version = version
 )
 
-fun String.toTicketTypes(): List<DetailedTicketType> {
+fun String.toTicketTypes(gson: Gson): List<DetailedTicketType> {
 
     return try {
 
-        val type =
-            object : TypeToken<List<DetailedTicketType>>() {}.type
+        val type = object : TypeToken<List<DetailedTicketType>>() {}.type
 
         gson.fromJson(this, type) ?: emptyList()
 
     } catch (e: Exception) {
-
+        if (e is ClassCastException) {
+            throw e
+        }
         emptyList()
     }
 }

@@ -213,7 +213,7 @@ class ServiceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getServicesWithDetailsByStatus(status: String): List<ServiceDetails> {
-        return serviceDao.getServicesWithDetailsByStatus(status).map { it.toDomain() }
+        return serviceDao.getServicesWithDetailsByStatus(status).map { it.toDomain(gson) }
     }
 
     override suspend fun updateLocalServiceStatus(serviceId: Int, status: String) {

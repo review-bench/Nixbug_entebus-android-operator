@@ -124,12 +124,11 @@ class TicketViewModel @Inject constructor(
                 }
 
             } catch (e: Exception) {
-
+                if (e is CancellationException) throw e
                 SnackbarManager.show(
                     message = "Fare calculation failed. Please check service configuration.",
                     type = SnackbarType.ERROR
                 )
-
                 0.0
             }
 
@@ -387,7 +386,7 @@ class TicketViewModel @Inject constructor(
                         }
                     }
                 } catch (e: Exception) {
-
+                    if (e is CancellationException) throw e
                     SnackbarManager.show(
                         message = "Fare calculation failed. Please check service configuration.",
                         type = SnackbarType.ERROR
@@ -507,6 +506,7 @@ class TicketViewModel @Inject constructor(
                                 )
                     }
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
 
                     SnackbarManager.show(
                         "Printing failed. Please check the printer and try again.",
@@ -515,6 +515,7 @@ class TicketViewModel @Inject constructor(
                     )
 
                     emitNavigateBack()
+                    return@launch
                 }
                 resetPassengerCounts()
 
