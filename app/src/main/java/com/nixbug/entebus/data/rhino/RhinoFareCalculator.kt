@@ -72,33 +72,41 @@ class RhinoFareCalculator @Inject constructor() : FareCalculatorRepository {
 
     override suspend fun calculate(
         ticketType: String,
-        distanceInMeters: Double,
+        distanceInMeters: Float,
         extras: Map<String, Any>
     ): Double {
 
         return mutex.withLock {
 
+            val function = fareFunction
+                ?: throw IllegalStateException(
+                    "Fare function not initialized. Call initialize() before calculate()."
+                )
+
             val context = Context.enter()
 
             try {
-
                 context.optimizationLevel = -1
 
-                val result =
-                    fareFunction?.call(
-                        context,
-                        scope,
-                        scope,
-                        arrayOf(
-                            ticketType,
-                            distanceInMeters,
-                            extras
-                        )
+                val result = function.call(
+                    context,
+                    scope,
+                    scope,
+                    arrayOf(ticketType, distanceInMeters, extras)
+                )
+
+                val numberResult = result as? Number
+                    ?: throw IllegalStateException(
+                        "Fare script did not return a numeric value. Received: ${result?.let { it::class.java.name }}"
                     )
 
-                (result as Number)
-                    .toDouble()
+                numberResult.toDouble()
 
+            } catch (e: ClassCastException) {
+                throw IllegalStateException(
+                    "Invalid return type from fare script. Expected Number but got ${e.message}",
+                    e
+                )
             } finally {
                 Context.exit()
             }

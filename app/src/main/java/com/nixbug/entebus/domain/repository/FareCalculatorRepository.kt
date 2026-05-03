@@ -8,7 +8,7 @@ interface FareCalculatorRepository {
 
     suspend fun calculate(
         ticketType: String,
-        distanceInMeters: Double,
+        distanceInMeters: Float,
         extras: Map<String, Any> = emptyMap()
     ): Double
 }

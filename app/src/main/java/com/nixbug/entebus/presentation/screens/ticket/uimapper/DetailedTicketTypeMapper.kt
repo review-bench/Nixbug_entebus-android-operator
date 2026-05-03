@@ -8,12 +8,13 @@ fun DetailedTicketType.toUiModel(): Passenger {
     return Passenger(
         id = id,
         name = name,
-        passengerCount = if (
-            name.equals("Adult", ignoreCase = true)
-        ) {
-            1
-        } else {
-            0
-        }
+        passengerCount = PassengerDefaults.defaultCount(name)
     )
+}
+
+object PassengerDefaults {
+
+    fun defaultCount(name: String): Int {
+        return if (name.equals("Adult", ignoreCase = true)) 1 else 0
+    }
 }

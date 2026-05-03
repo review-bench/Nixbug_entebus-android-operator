@@ -11,7 +11,7 @@ class CalculateTicketFareUseCase @Inject constructor(
     suspend operator fun invoke(
         fareFunction: String,
         passengers: List<DetailedTicketType>,
-        distanceInMeters: Double
+        distanceInMeters: Float
     ): Double {
 
         fareCalculator.initialize(

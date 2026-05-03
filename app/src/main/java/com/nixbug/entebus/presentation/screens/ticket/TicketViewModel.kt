@@ -7,6 +7,7 @@ import com.nixbug.entebus.domain.model.DetailedTicketType
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
+import com.nixbug.entebus.presentation.screens.ticket.uimapper.PassengerDefaults
 import com.nixbug.entebus.presentation.screens.ticket.uimapper.toUiModel
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
@@ -101,41 +102,39 @@ class TicketViewModel @Inject constructor(
             val end = state.endingLandmark
 
             if (start == null || end == null) {
-
-                _uiState.update {
-                    it.copy(
-                        totalFare = 0.0
-                    )
-                }
-
+                _uiState.update { it.copy(totalFare = 0.0) }
                 return@launch
             }
 
-            val fare = withContext(Dispatchers.Default) {
+            val fare = try {
 
-                calculateTicketFareUseCase(
+                withContext(Dispatchers.Default) {
 
-                    fareFunction =
-                        state.fareFunctionString,
-
-                    passengers =
-                        state.passengers.map {
+                    calculateTicketFareUseCase(
+                        fareFunction = state.fareFunctionString,
+                        passengers = state.passengers.map {
                             DetailedTicketType(
                                 id = it.id,
                                 name = it.name,
                                 count = it.passengerCount
                             )
                         },
+                        distanceInMeters = state.totalDistanceKm * METERS_PER_KILOMETER
+                    )
+                }
 
-                    distanceInMeters =
-                        state.totalDistanceKm * 1000.0
+            } catch (e: Exception) {
+
+                SnackbarManager.show(
+                    message = "Fare calculation failed. Please check service configuration.",
+                    type = SnackbarType.ERROR
                 )
+
+                0.0
             }
 
             _uiState.update {
-                it.copy(
-                    totalFare = fare
-                )
+                it.copy(totalFare = fare)
             }
         }
     }
@@ -363,154 +362,170 @@ class TicketViewModel @Inject constructor(
                 val timeStr =
                     timeFormat.format(calendar.time)
 
-                val lineItems = selectedPassengers.map { passenger ->
-
-                    val singleFare = calculateTicketFareUseCase(
-                        fareFunction = state.fareFunctionString,
-
-                        passengers = listOf(
-                            DetailedTicketType(
-                                id = passenger.id,
-                                name = passenger.name,
-                                count = 1
-                            )
-                        ),
-
-                        distanceInMeters = state.totalDistanceKm * 1000.0
-                    )
-
-                    Triple(
-                        passenger.name,
-                        passenger.passengerCount,
-                        singleFare * passenger.passengerCount
-                    )
-                }
-
-                val totalFare = state.totalFare
-
-                val ticketData =
+                val lineItems = try {
                     withContext(Dispatchers.Default) {
 
-                        TicketBuilder()
+                        selectedPassengers.map { passenger ->
 
-                            .addCommand(
-                                PrinterManager.Commands.ALIGN_CENTER
-                            )
-
-                            .addCommand(
-                                PrinterManager.Commands.BOLD_ON
-                            )
-                            .text("RKV")
-                            .addCommand(
-                                PrinterManager.Commands.BOLD_OFF
-                            )
-
-                            .addCommand(
-                                PrinterManager.Commands.SIZE_NORMAL
-                            )
-
-                            .threeColumnRow(
-                                dateStr,
-                                timeStr,
-                                "TKT-000123"
-                            )
-
-                            .addCommand(
-                                PrinterManager.Commands.BOLD_ON
-                            )
-
-                            .routeRow(
-                                formatText(startingLandmark.name),
-                                "To",
-                                formatText(endingLandmark.name)
-                            )
-
-                            .addCommand(
-                                PrinterManager.Commands.BOLD_OFF
-                            )
-
-                            .addCommand(
-                                PrinterManager.Commands.LINE_SPACE_TIGHT
-                            )
-
-                            .apply {
-
-                                lineItems.forEach { item ->
-
-                                    val name = item.first
-                                    val count = item.second
-                                    val lineFare = item.third
-
-                                    val singleFare =
-                                        lineFare / count
-
-                                    text(
-                                        "%-10s %2d x %6.2f = %6.2f".format(
-                                            name.take(10),
-                                            count,
-                                            singleFare,
-                                            lineFare
-                                        )
+                            val singleFare = calculateTicketFareUseCase(
+                                fareFunction = state.fareFunctionString,
+                                passengers = listOf(
+                                    DetailedTicketType(
+                                        id = passenger.id,
+                                        name = passenger.name,
+                                        count = 1
                                     )
-                                }
-                            }
-
-                            .addCommand(
-                                PrinterManager.Commands.SIZE_BIG
+                                ),
+                                distanceInMeters = state.totalDistanceKm * METERS_PER_KILOMETER
                             )
 
-                            .text(
-                                "RS . $totalFare"
+                            Triple(
+                                passenger.name,
+                                passenger.passengerCount,
+                                singleFare * passenger.passengerCount
                             )
-
-                            .addCommand(
-                                PrinterManager.Commands.SIZE_NORMAL
-                            )
-
-                            .divider()
-
-                            .addCommand(
-                                PrinterManager.Commands.ALIGN_CENTER
-                            )
-
-                            .text("Not Transferable")
-                            .text("Nixbug softwares")
-
-                            .addCommand(
-                                PrinterManager.Commands.LINE_SPACE_DEFAULT
-                            )
-
-                            .addCommand(
-                                PrinterManager.Commands.BOLD_OFF
-                            )
-
-                            .build()
+                        }
                     }
+                } catch (e: Exception) {
 
-                val result =
-                    printerManager.sendData(ticketData)
-
-                if (!result.isSuccess) {
-                    throw (
-                            result.exceptionOrNull()
-                                ?: Exception("Unknown error")
-                            )
+                    SnackbarManager.show(
+                        message = "Fare calculation failed. Please check service configuration.",
+                        type = SnackbarType.ERROR
+                    )
+                    return@launch
                 }
 
+                val totalFare = lineItems.sumOf { it.third }
+
+                val ticketData = withContext(Dispatchers.Default) {
+
+                    TicketBuilder()
+
+                        .addCommand(
+                            PrinterManager.Commands.ALIGN_CENTER
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.BOLD_ON
+                        )
+                        .text("RKV")
+                        .addCommand(
+                            PrinterManager.Commands.BOLD_OFF
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.SIZE_NORMAL
+                        )
+
+                        .threeColumnRow(
+                            dateStr,
+                            timeStr,
+                            "TKT-000123"
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.BOLD_ON
+                        )
+
+                        .routeRow(
+                            formatText(startingLandmark.name),
+                            "To",
+                            formatText(endingLandmark.name)
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.BOLD_OFF
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.LINE_SPACE_TIGHT
+                        )
+
+                        .apply {
+
+                            lineItems.forEach { item ->
+
+                                val name = item.first
+                                val count = item.second
+                                val lineFare = item.third
+
+                                val singleFare =
+                                    lineFare / count
+
+                                text(
+                                    "%-10s %2d x %6.2f = %6.2f".format(
+                                        name.take(10),
+                                        count,
+                                        singleFare,
+                                        lineFare
+                                    )
+                                )
+                            }
+                        }
+
+                        .addCommand(
+                            PrinterManager.Commands.SIZE_BIG
+                        )
+
+                        .text(
+                            "RS . $totalFare"
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.SIZE_NORMAL
+                        )
+
+                        .divider()
+
+                        .addCommand(
+                            PrinterManager.Commands.ALIGN_CENTER
+                        )
+
+                        .text("Not Transferable")
+                        .text("Nixbug softwares")
+
+                        .addCommand(
+                            PrinterManager.Commands.LINE_SPACE_DEFAULT
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.BOLD_OFF
+                        )
+
+                        .build()
+                }
+
+                try {
+
+
+                    val result = printerManager.sendData(ticketData)
+
+                    if (!result.isSuccess) {
+                        throw (
+                                result.exceptionOrNull()
+                                    ?: Exception("Unknown error")
+                                )
+                    }
+                } catch (e: Exception) {
+
+                    SnackbarManager.show(
+                        "Printing failed. Please check the printer and try again.",
+                        SnackbarType.ERROR,
+                        SnackbarDuration.Long
+                    )
+
+                    emitNavigateBack()
+                }
                 resetPassengerCounts()
 
             } catch (e: Exception) {
 
                 SnackbarManager.show(
-                    "Printer connection failed. Please reconnect the printer and resume the service.",
-                    SnackbarType.ERROR,
-                    SnackbarDuration.Long
+                    message = e.message ?: "Something went wrong",
+                    type = SnackbarType.ERROR
                 )
 
-                emitNavigateBack()
-
             } finally {
-
                 _uiState.update {
                     it.copy(
                         isPrinting = false
@@ -525,13 +540,7 @@ class TicketViewModel @Inject constructor(
             state.copy(
                 passengers = state.passengers.map { passenger ->
                     passenger.copy(
-                        passengerCount = if (
-                            passenger.name.equals("Adult", ignoreCase = true)
-                        ) {
-                            1
-                        } else {
-                            0
-                        }
+                        passengerCount = PassengerDefaults.defaultCount(passenger.name)
                     )
                 }
             )
