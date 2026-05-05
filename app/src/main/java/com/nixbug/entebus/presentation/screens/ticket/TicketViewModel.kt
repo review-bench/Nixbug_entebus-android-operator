@@ -361,7 +361,14 @@ class TicketViewModel @Inject constructor(
                 val startingLandmark = state.startingLandmark
                 val endingLandmark = state.endingLandmark
                 val passengers = state.passengers
-                val serviceId = requireNotNull(state.serviceId)
+                val serviceId = state.serviceId
+                if (serviceId == null) {
+                    SnackbarManager.show(
+                        message = "Service data is still loading. Please try again.",
+                        type = SnackbarType.ERROR
+                    )
+                    return@launch
+                }
                 val ticketId = getNextTicketSequenceUseCase(serviceId)
 
                 if (startingLandmark == null || endingLandmark == null) {
