@@ -9,6 +9,10 @@ import com.nixbug.entebus.domain.model.PaperTicket
 import com.nixbug.entebus.domain.model.ServiceUpdate
 import com.nixbug.entebus.domain.model.local.SyncOperationType
 import com.nixbug.entebus.domain.repository.SyncQueueRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SyncQueueRepositoryImpl @Inject constructor(
@@ -17,6 +21,7 @@ class SyncQueueRepositoryImpl @Inject constructor(
     private val processor: SyncQueueProcessor
 ) : SyncQueueRepository {
 
+    private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     override suspend fun enqueuePaperTicket(request: PaperTicket) {
 
         val entity = SyncQueueEntity(
@@ -49,8 +54,8 @@ class SyncQueueRepositoryImpl @Inject constructor(
         triggerSync()
     }
 
-    private suspend fun triggerSync() {
-        processor.processQueue()
+    private fun triggerSync() {
+        syncScope.launch { processor.processQueue() }
     }
 
     override suspend fun getNextTicketSequence(serviceId: Int): Int {

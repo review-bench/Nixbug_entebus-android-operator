@@ -13,7 +13,7 @@ interface SyncQueueDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(entity: SyncQueueEntity)
 
-    @Query("SELECT * FROM sync_queue WHERE status IN ('PENDING', 'FAILED')ORDER BY queueOrder ASC LIMIT 1")
+    @Query("SELECT * FROM sync_queue WHERE status IN ('PENDING', 'FAILED') ORDER BY queueOrder ASC LIMIT 1")
     suspend fun getNextPending(): SyncQueueEntity?
 
     @Query("UPDATE sync_queue SET status = :status WHERE queueOrder = :queueOrder")

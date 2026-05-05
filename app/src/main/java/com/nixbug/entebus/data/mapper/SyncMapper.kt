@@ -19,7 +19,8 @@ fun ServiceUpdate.toDto(): AppApiServiceUpdateForm {
 
             ServicePatchStatus.FINISHED ->
                 ServiceStatus._4
-        }
+        },
+        remark = remark
     )
 }
 

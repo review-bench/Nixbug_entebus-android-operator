@@ -12,6 +12,7 @@ import com.nixbug.entebus.domain.usecase.EnqueuePaperTicketUseCase
 import com.nixbug.entebus.domain.usecase.GetNextTicketSequenceUseCase
 import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
+import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.presentation.screens.ticket.uimapper.PassengerDefaults
 import com.nixbug.entebus.presentation.screens.ticket.uimapper.toUiModel
 import com.nixbug.entebus.utils.printer.PrinterManager
@@ -43,6 +44,7 @@ class TicketViewModel @Inject constructor(
     private val calculateTicketFareUseCase: CalculateTicketFareUseCase,
     private val enqueuePaperTicketUseCase: EnqueuePaperTicketUseCase,
     private val getNextTicketSequenceUseCase: GetNextTicketSequenceUseCase,
+    private val getUserUseCase: GetUserUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketUiState())
@@ -54,83 +56,67 @@ class TicketViewModel @Inject constructor(
 
     init {
         loadStartedService()
+        loadUserData()
     }
 
-    private suspend fun buildPaperTicketRequest(): PaperTicket {
+    private suspend fun buildPaperTicketRequest(ticketId: Int): PaperTicket {
 
         val state = _uiState.value
 
         val start = requireNotNull(state.startingLandmark)
         val end = requireNotNull(state.endingLandmark)
 
-        val serviceId =
-            requireNotNull(state.serviceId) {
-                "Service id missing"
-            }
+        val serviceId = requireNotNull(state.serviceId) { "Service id missing" }
+        val selectedPassengers = state.passengers.filter { it.passengerCount > 0 }
+        val ticketTypes = selectedPassengers.map { passenger ->
 
-        val ticketId =
-            getNextTicketSequenceUseCase(serviceId)
-
-        val selectedPassengers =
-            state.passengers.filter {
-                it.passengerCount > 0
-            }
-
-        val ticketTypes =
-            selectedPassengers.map { passenger ->
-
-                val singleFare =
-                    calculateTicketFareUseCase(
-                        fareFunction = state.fareFunctionString,
-                        passengers = listOf(
-                            DetailedTicketType(
-                                id = passenger.id,
-                                name = passenger.name,
-                                count = 1
-                            )
-                        ),
-                        distanceInMeters =
-                            state.totalDistanceKm * METERS_PER_KILOMETER
-                    )
-
-                PaperTicketType(
-                    id = passenger.id,
-                    count = passenger.passengerCount,
-                    price = singleFare
+            val singleFare =
+                calculateTicketFareUseCase(
+                    fareFunction = state.fareFunctionString,
+                    passengers = listOf(
+                        DetailedTicketType(
+                            id = passenger.id,
+                            name = passenger.name,
+                            count = 1
+                        )
+                    ),
+                    distanceInMeters =
+                        state.totalDistanceKm * METERS_PER_KILOMETER
                 )
-            }
+
+            PaperTicketType(
+                id = passenger.id,
+                count = passenger.passengerCount,
+                price = singleFare
+            )
+        }
 
         return PaperTicket(
 
             ticket = Ticket(
-
                 id = ticketId,
-
                 serviceId = serviceId,
-
-                createdOn =
-                    Instant.now().toString(),
-
+                createdOn = Instant.now().toString(),
                 ticketTypes = ticketTypes,
-
-                amount =
-                    ticketTypes.sumOf {
-                        it.price * it.count
-                    },
-
+                amount = ticketTypes.sumOf { it.price * it.count },
                 pickupPoint = start.id,
-
                 droppingPoint = end.id,
-
-                distance =
-                    (
-                            state.totalDistanceKm *
-                                    METERS_PER_KILOMETER
-                            ).toInt(),
-
+                distance = (state.totalDistanceKm * METERS_PER_KILOMETER).toInt(),
                 extras = emptyMap()
             )
         )
+    }
+
+    private fun loadUserData() {
+        viewModelScope.launch {
+            getUserUseCase().collect { user ->
+                _uiState.update {
+                    it.copy(
+                        companyName = user.companyName ?: ""
+                    )
+                }
+            }
+        }
     }
 
     private fun loadStartedService() {
@@ -396,6 +382,8 @@ class TicketViewModel @Inject constructor(
                 val startingLandmark = state.startingLandmark
                 val endingLandmark = state.endingLandmark
                 val passengers = state.passengers
+                val serviceId = requireNotNull(state.serviceId)
+                val ticketId = getNextTicketSequenceUseCase(serviceId)
 
                 if (startingLandmark == null || endingLandmark == null) {
                     SnackbarManager.show(
@@ -476,10 +464,16 @@ class TicketViewModel @Inject constructor(
                     TicketBuilder()
                         .addCommand(PrinterManager.Commands.ALIGN_CENTER)
                         .addCommand(PrinterManager.Commands.BOLD_ON)
-                        .text("RKV")
+                        .text(state.companyName)
                         .addCommand(PrinterManager.Commands.BOLD_OFF)
                         .addCommand(PrinterManager.Commands.SIZE_NORMAL)
-                        .threeColumnRow(dateStr, timeStr, "TKT-000123")
+                        .threeColumnRow(
+                            dateStr,
+                            timeStr,
+                            "T-${
+                                serviceId.toString().padStart(6, '0')
+                            }-${ticketId.toString().padStart(4, '0')}"
+                        )
                         .addCommand(PrinterManager.Commands.BOLD_ON)
                         .routeRow(
                             formatText(startingLandmark.name),
@@ -540,7 +534,7 @@ class TicketViewModel @Inject constructor(
                     emitNavigateBack()
                     return@launch
                 }
-                val request = buildPaperTicketRequest()
+                val request = buildPaperTicketRequest(ticketId)
                 enqueuePaperTicketUseCase(request)
                 resetPassengerCounts()
 

@@ -80,7 +80,6 @@ class HomeScreenViewModel @Inject constructor(
     private var pendingService: HomeUiModel? = null
     private val fetchedAssignedServiceIds = mutableSetOf<Int>()
     private val finishServiceRequest = ServiceUpdate(status = ServicePatchStatus.FINISHED)
-
     private val restartServiceRequest = ServiceUpdate(status = ServicePatchStatus.RESTARTED)
 
     fun loadMoreAssignedServices() {
@@ -645,7 +644,6 @@ class HomeScreenViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (pendingAction == ServiceAction.RESTART_RECENT) {
-                    println("Inside Home ")
                     enqueueServicePatchUseCase(
                         serviceId = service.id,
                         request = restartServiceRequest
