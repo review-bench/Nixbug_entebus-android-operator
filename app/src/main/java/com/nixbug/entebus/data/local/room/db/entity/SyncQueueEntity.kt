@@ -10,7 +10,8 @@ import com.nixbug.entebus.domain.model.local.SyncStatus
     tableName = "sync_queue",
     indices = [
         Index(value = ["queueOrder"]),
-        Index(value = ["status"])
+        Index(value = ["status"]),
+        Index(value = ["operationType", "serviceId", "businessId"], unique = true)
     ]
 )
 data class SyncQueueEntity(

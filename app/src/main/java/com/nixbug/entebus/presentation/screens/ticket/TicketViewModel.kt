@@ -59,7 +59,7 @@ class TicketViewModel @Inject constructor(
         loadUserData()
     }
 
-    private suspend fun buildPaperTicketRequest(ticketId: Int): PaperTicket {
+    private fun buildPaperTicketRequest(ticketId: Int, lineItems: List<LineItem>): PaperTicket {
 
         val state = _uiState.value
 
@@ -67,27 +67,11 @@ class TicketViewModel @Inject constructor(
         val end = requireNotNull(state.endingLandmark)
 
         val serviceId = requireNotNull(state.serviceId) { "Service id missing" }
-        val selectedPassengers = state.passengers.filter { it.passengerCount > 0 }
-        val ticketTypes = selectedPassengers.map { passenger ->
-
-            val singleFare =
-                calculateTicketFareUseCase(
-                    fareFunction = state.fareFunctionString,
-                    passengers = listOf(
-                        DetailedTicketType(
-                            id = passenger.id,
-                            name = passenger.name,
-                            count = 1
-                        )
-                    ),
-                    distanceInMeters =
-                        state.totalDistanceKm * METERS_PER_KILOMETER
-                )
-
+        val ticketTypes = lineItems.map {
             PaperTicketType(
-                id = passenger.id,
-                count = passenger.passengerCount,
-                price = singleFare
+                id = it.id,
+                count = it.count,
+                price = it.singleFare
             )
         }
 
@@ -371,14 +355,9 @@ class TicketViewModel @Inject constructor(
     fun printTicket() {
         viewModelScope.launch {
 
-            _uiState.update {
-                it.copy(isPrinting = true)
-            }
-
+            _uiState.update { it.copy(isPrinting = true) }
             try {
-
                 val state = _uiState.value
-
                 val startingLandmark = state.startingLandmark
                 val endingLandmark = state.endingLandmark
                 val passengers = state.passengers
@@ -441,10 +420,11 @@ class TicketViewModel @Inject constructor(
                                 distanceInMeters = state.totalDistanceKm * METERS_PER_KILOMETER
                             )
 
-                            Triple(
-                                passenger.name,
-                                passenger.passengerCount,
-                                singleFare * passenger.passengerCount
+                            LineItem(
+                                id = passenger.id,
+                                name = passenger.name,
+                                count = passenger.passengerCount,
+                                singleFare = singleFare
                             )
                         }
                     }
@@ -457,7 +437,7 @@ class TicketViewModel @Inject constructor(
                     return@launch
                 }
 
-                val totalFare = lineItems.sumOf { it.third }
+                val totalFare = lineItems.sumOf { it.singleFare * it.count }
 
                 val ticketData = withContext(Dispatchers.Default) {
 
@@ -485,17 +465,15 @@ class TicketViewModel @Inject constructor(
 
                         .apply {
                             lineItems.forEach { item ->
-                                val name = item.first
-                                val count = item.second
-                                val lineFare = item.third
-
-                                val singleFare = lineFare / count
+                                val name = item.name
+                                val count = item.count
+                                val lineFare = item.singleFare * item.count
 
                                 text(
                                     "%-10s %2d x %6.2f = %6.2f".format(
                                         name.take(10),
                                         count,
-                                        singleFare,
+                                        item.singleFare,
                                         lineFare
                                     )
                                 )
@@ -515,9 +493,7 @@ class TicketViewModel @Inject constructor(
                 }
 
                 try {
-
                     val result = printerManager.sendData(ticketData)
-
                     if (!result.isSuccess) {
                         throw (
                                 result.exceptionOrNull()
@@ -534,7 +510,7 @@ class TicketViewModel @Inject constructor(
                     emitNavigateBack()
                     return@launch
                 }
-                val request = buildPaperTicketRequest(ticketId)
+                val request = buildPaperTicketRequest(ticketId, lineItems = lineItems)
                 enqueuePaperTicketUseCase(request)
                 resetPassengerCounts()
 

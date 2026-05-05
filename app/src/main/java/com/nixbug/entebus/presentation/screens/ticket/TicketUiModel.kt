@@ -15,3 +15,10 @@ data class Passenger(
 sealed class TicketUiEvent {
     data object EmitNavigateBack : TicketUiEvent()
 }
+
+data class LineItem(
+    val id: Int,
+    val name: String,
+    val count: Int,
+    val singleFare: Double
+)

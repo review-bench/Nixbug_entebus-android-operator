@@ -717,8 +717,8 @@ class HomeScreenViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                updateLocalStatusUseCase(service.id, LocalServiceStatus.RECENT)
                 enqueueServicePatchUseCase(serviceId = service.id, request = finishServiceRequest)
+                updateLocalStatusUseCase(service.id, LocalServiceStatus.RECENT)
                 _uiState.update { state ->
                     state.copy(
                         recentServiceList = state.recentServiceList + service,
