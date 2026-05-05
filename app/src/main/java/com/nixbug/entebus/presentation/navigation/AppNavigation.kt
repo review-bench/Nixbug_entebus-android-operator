@@ -151,7 +151,7 @@ fun AppNavigation(
                 MainScreen(rootNavController = navController, activity = activity)
             }
             composable(AppNavItem.TicketScreen.route) {
-                TicketScreen(navController = navController, activity = activity)
+                TicketScreen(navController = navController)
             }
             composable(AppNavItem.QrScannerScreen.route) {
                 QrScannerScreen(navController = navController)

@@ -3,6 +3,12 @@ package com.nixbug.entebus.presentation.screens.ticket
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.DetailedTicketType
+import com.nixbug.entebus.domain.model.local.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
+import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
+import com.nixbug.entebus.presentation.screens.ticket.uimapper.PassengerDefaults
+import com.nixbug.entebus.presentation.screens.ticket.uimapper.toUiModel
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
@@ -19,20 +25,118 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 private const val MAX_PASSENGER_COUNT = 99
 private const val METERS_PER_KILOMETER = 1000f
-private val SortedSampleLandmarks = SampleLandmarks.sortedBy { it.distanceFromStart }
 
 @HiltViewModel
-class TicketViewModel @Inject constructor(private val printerManager: PrinterManager) :
-    ViewModel() {
+class TicketViewModel @Inject constructor(
+    private val printerManager: PrinterManager,
+    private val getDetailedServiceByStatusUseCase: GetDetailedServiceByStatusUseCase,
+    private val calculateTicketFareUseCase: CalculateTicketFareUseCase,
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(TicketUiState(landmarks = SortedSampleLandmarks))
+    private val _uiState = MutableStateFlow(TicketUiState())
     val uiState: StateFlow<TicketUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<TicketUiEvent>()
     val events: SharedFlow<TicketUiEvent> = _events.asSharedFlow()
+
+
+    init {
+        loadStartedService()
+    }
+
+    private fun loadStartedService() {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(isLoading = true)
+            }
+            try {
+
+                val services = getDetailedServiceByStatusUseCase(LocalServiceStatus.STARTED)
+                val currentService = services.firstOrNull()
+
+                if (currentService == null) {
+                    SnackbarManager.show(
+                        message = "No started service found",
+                        type = SnackbarType.ERROR
+                    )
+                    return@launch
+                }
+
+                _uiState.update { state ->
+                    state.copy(
+                        landmarks = currentService.landmarks
+                            .sortedBy { it.distance }
+                            .map { it.toUiModel() },
+
+                        passengers = currentService.fare.ticketTypes
+                            .map { it.toUiModel() },
+                        fareFunctionString = currentService.fare.function
+                    )
+                }
+
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(
+                    message = "Failed to load service data",
+                    type = SnackbarType.ERROR
+                )
+            } finally {
+                _uiState.update {
+                    it.copy(isLoading = false)
+                }
+            }
+        }
+    }
+
+    private fun recalculateFare() {
+
+        viewModelScope.launch {
+
+            val state = _uiState.value
+
+            val start = state.startingLandmark
+            val end = state.endingLandmark
+
+            if (start == null || end == null) {
+                _uiState.update { it.copy(totalFare = 0.0) }
+                return@launch
+            }
+
+            val fare = try {
+
+                withContext(Dispatchers.Default) {
+
+                    calculateTicketFareUseCase(
+                        fareFunction = state.fareFunctionString,
+                        passengers = state.passengers.map {
+                            DetailedTicketType(
+                                id = it.id,
+                                name = it.name,
+                                count = it.passengerCount
+                            )
+                        },
+                        distanceInMeters = state.totalDistanceKm * METERS_PER_KILOMETER
+                    )
+                }
+
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(
+                    message = "Fare calculation failed. Please check service configuration.",
+                    type = SnackbarType.ERROR
+                )
+                0.0
+            }
+
+            _uiState.update {
+                it.copy(totalFare = fare)
+            }
+        }
+    }
 
     private fun emitNavigateBack() {
         viewModelScope.launch {
@@ -48,73 +152,111 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
         }
     }
 
-    fun toggleLandmarkSelection(landmark: Landmark, index: Int) {
+    fun toggleLandmarkSelection(
+        landmark: Landmark,
+        index: Int
+    ) {
+
+        val currentState = _uiState.value
+
         // Retap start → deselect
-        if (_uiState.value.startingLandmark?.id == landmark.id) {
+        if (currentState.startingLandmark?.id == landmark.id) {
+
             _uiState.update { state ->
                 state.copy(
                     startingLandmark = null,
                     startingLandmarkIndex = null,
-                    totalDistanceKm = calculateDistanceKm(null, state.endingLandmark)
+                    totalDistanceKm = calculateDistanceKm(
+                        start = null,
+                        end = state.endingLandmark
+                    )
                 )
             }
+
+            recalculateFare()
             return
         }
 
         // Retap end → deselect
-        if (_uiState.value.endingLandmark?.id == landmark.id) {
+        if (currentState.endingLandmark?.id == landmark.id) {
+
             _uiState.update { state ->
                 state.copy(
                     endingLandmark = null,
                     endingLandmarkIndex = null,
-                    totalDistanceKm = calculateDistanceKm(state.startingLandmark, null)
+                    totalDistanceKm = calculateDistanceKm(
+                        start = state.startingLandmark,
+                        end = null
+                    )
                 )
             }
+
+            recalculateFare()
             return
         }
 
-        // Invalid starting (below ending)
-        if (_uiState.value.startingLandmark == null && index > (_uiState.value.endingLandmarkIndex
-                ?: Int.MAX_VALUE)
+        // Invalid starting
+        if (
+            currentState.startingLandmark == null &&
+            index > (currentState.endingLandmarkIndex ?: Int.MAX_VALUE)
         ) {
+
             SnackbarManager.show(
                 message = "Starting point cannot be after ending point",
-                type = SnackbarType.ERROR,
+                type = SnackbarType.ERROR
             )
+
             return
         }
 
-        // Selecting starting landmark
-        if (_uiState.value.startingLandmark == null) {
+        // Select starting landmark
+        if (currentState.startingLandmark == null) {
+
             _uiState.update { state ->
+
                 val newStart = landmark
+
                 state.copy(
                     startingLandmark = newStart,
                     startingLandmarkIndex = index,
-                    totalDistanceKm = calculateDistanceKm(newStart, state.endingLandmark)
+                    totalDistanceKm = calculateDistanceKm(
+                        start = newStart,
+                        end = state.endingLandmark
+                    )
                 )
             }
+
+            recalculateFare()
             return
         }
 
-        // Invalid ending (above starting)
-        if (index < (_uiState.value.startingLandmarkIndex ?: 0)) {
+        // Invalid ending
+        if (index < (currentState.startingLandmarkIndex ?: 0)) {
+
             SnackbarManager.show(
                 message = "Ending point must come after starting point",
-                type = SnackbarType.ERROR,
+                type = SnackbarType.ERROR
             )
+
             return
         }
 
-        // Selecting Ending landmark
+        // Select ending landmark
         _uiState.update { state ->
+
             val newEnd = landmark
+
             state.copy(
                 endingLandmark = newEnd,
                 endingLandmarkIndex = index,
-                totalDistanceKm = calculateDistanceKm(state.startingLandmark, newEnd)
+                totalDistanceKm = calculateDistanceKm(
+                    start = state.startingLandmark,
+                    end = newEnd
+                )
             )
         }
+
+        recalculateFare()
     }
 
     fun updatePassengerCount(id: Int, count: Int) {
@@ -141,6 +283,7 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
                         }
                     )
                 }
+                recalculateFare()
             }
         }
     }
@@ -156,107 +299,254 @@ class TicketViewModel @Inject constructor(private val printerManager: PrinterMan
     fun printTicket() {
         viewModelScope.launch {
 
-            val state = _uiState.value
-
-            val startingLandmark = state.startingLandmark
-            val endingLandmark = state.endingLandmark
-            val passengers = state.passengers
-            val totalDistanceKm = state.totalDistanceKm
-
-            if (startingLandmark == null || endingLandmark == null) {
-                SnackbarManager.show(
-                    message = "Please select starting and ending points",
-                    type = SnackbarType.ERROR
-                )
-                return@launch
-            }
-            val selectedPassengers = passengers.filter { it.passengerCount > 0 }
-            if (selectedPassengers.isEmpty()) {
-                SnackbarManager.show(
-                    message = "Please select at least one passenger",
-                    type = SnackbarType.ERROR
-                )
-                return@launch
-            }
-            val calendar = java.util.Calendar.getInstance()
-            val dateFormat = java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault())
-            val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
-
-            val dateStr = dateFormat.format(calendar.time)
-            val timeStr = timeFormat.format(calendar.time)
-
-            val totalFare = totalDistanceKm * 10.0
-
-            if (!printerManager.checkConnection()) {
-                SnackbarManager.show(
-                    message = "Printer connection failed. Please reconnect the printer and resume the service.",
-                    type = SnackbarType.ERROR,
-                    duration = SnackbarDuration.Long
-                )
-                emitNavigateBack()
-                return@launch
+            _uiState.update {
+                it.copy(isPrinting = true)
             }
 
             try {
+
+                val state = _uiState.value
+
+                val startingLandmark = state.startingLandmark
+                val endingLandmark = state.endingLandmark
+                val passengers = state.passengers
+
+                if (startingLandmark == null || endingLandmark == null) {
+                    SnackbarManager.show(
+                        message = "Please select starting and ending points",
+                        type = SnackbarType.ERROR
+                    )
+                    return@launch
+                }
+
+                val selectedPassengers =
+                    passengers.filter { it.passengerCount > 0 }
+
+                if (selectedPassengers.isEmpty()) {
+                    SnackbarManager.show(
+                        message = "Please select at least one passenger",
+                        type = SnackbarType.ERROR
+                    )
+                    return@launch
+                }
+
+                if (!printerManager.checkConnection()) {
+                    SnackbarManager.show(
+                        message = "Printer connection failed. Please reconnect the printer and resume the service.",
+                        type = SnackbarType.ERROR,
+                        duration = SnackbarDuration.Long
+                    )
+
+                    emitNavigateBack()
+                    return@launch
+                }
+
+                val calendar = java.util.Calendar.getInstance()
+
+                val dateFormat =
+                    java.text.SimpleDateFormat(
+                        "dd/MM/yy",
+                        java.util.Locale.getDefault()
+                    )
+
+                val timeFormat =
+                    java.text.SimpleDateFormat(
+                        "hh:mm a",
+                        java.util.Locale.getDefault()
+                    )
+
+                val dateStr =
+                    dateFormat.format(calendar.time)
+
+                val timeStr =
+                    timeFormat.format(calendar.time)
+
+                val lineItems = try {
+                    withContext(Dispatchers.Default) {
+
+                        selectedPassengers.map { passenger ->
+
+                            val singleFare = calculateTicketFareUseCase(
+                                fareFunction = state.fareFunctionString,
+                                passengers = listOf(
+                                    DetailedTicketType(
+                                        id = passenger.id,
+                                        name = passenger.name,
+                                        count = 1
+                                    )
+                                ),
+                                distanceInMeters = state.totalDistanceKm * METERS_PER_KILOMETER
+                            )
+
+                            Triple(
+                                passenger.name,
+                                passenger.passengerCount,
+                                singleFare * passenger.passengerCount
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    SnackbarManager.show(
+                        message = "Fare calculation failed. Please check service configuration.",
+                        type = SnackbarType.ERROR
+                    )
+                    return@launch
+                }
+
+                val totalFare = lineItems.sumOf { it.third }
+
                 val ticketData = withContext(Dispatchers.Default) {
+
                     TicketBuilder()
-                        .addCommand(PrinterManager.Commands.ALIGN_CENTER)
-                        .addCommand(PrinterManager.Commands.BOLD_ON)
+
+                        .addCommand(
+                            PrinterManager.Commands.ALIGN_CENTER
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.BOLD_ON
+                        )
                         .text("RKV")
-                        .addCommand(PrinterManager.Commands.BOLD_OFF)
+                        .addCommand(
+                            PrinterManager.Commands.BOLD_OFF
+                        )
 
-                        .addCommand(PrinterManager.Commands.SIZE_NORMAL)
-                        .threeColumnRow(dateStr, timeStr, "TKT-000123")
+                        .addCommand(
+                            PrinterManager.Commands.SIZE_NORMAL
+                        )
 
-                        .addCommand(PrinterManager.Commands.BOLD_ON)
+                        .threeColumnRow(
+                            dateStr,
+                            timeStr,
+                            "TKT-000123"
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.BOLD_ON
+                        )
+
                         .routeRow(
                             formatText(startingLandmark.name),
                             "To",
                             formatText(endingLandmark.name)
                         )
-                        .addCommand(PrinterManager.Commands.BOLD_OFF)
 
-                        .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
+                        .addCommand(
+                            PrinterManager.Commands.BOLD_OFF
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.LINE_SPACE_TIGHT
+                        )
+
                         .apply {
-                            selectedPassengers.forEach { passenger ->
-                                val lineFare = passenger.passengerCount * 100.0
-                                val line = "%-10s %2d x 100.00 = %6.2f".format(
-                                    passenger.name.take(10),
-                                    passenger.passengerCount,
-                                    lineFare
+
+                            lineItems.forEach { item ->
+
+                                val name = item.first
+                                val count = item.second
+                                val lineFare = item.third
+
+                                val singleFare =
+                                    lineFare / count
+
+                                text(
+                                    "%-10s %2d x %6.2f = %6.2f".format(
+                                        name.take(10),
+                                        count,
+                                        singleFare,
+                                        lineFare
+                                    )
                                 )
-                                text(line)
                             }
                         }
 
-                        .addCommand(PrinterManager.Commands.SIZE_BIG)
-                        .text("RS .  %.2f".format(totalFare))
-                        .addCommand(PrinterManager.Commands.SIZE_NORMAL)
+                        .addCommand(
+                            PrinterManager.Commands.SIZE_BIG
+                        )
+
+                        .text(
+                            "RS . $totalFare"
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.SIZE_NORMAL
+                        )
 
                         .divider()
 
-                        .addCommand(PrinterManager.Commands.ALIGN_CENTER)
+                        .addCommand(
+                            PrinterManager.Commands.ALIGN_CENTER
+                        )
+
                         .text("Not Transferable")
                         .text("Nixbug softwares")
-                        .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
-                        .addCommand(PrinterManager.Commands.BOLD_OFF)
+
+                        .addCommand(
+                            PrinterManager.Commands.LINE_SPACE_DEFAULT
+                        )
+
+                        .addCommand(
+                            PrinterManager.Commands.BOLD_OFF
+                        )
+
                         .build()
                 }
-                val result = printerManager.sendData(ticketData)
 
-                if (result.isSuccess) {
-                    SnackbarManager.show("Ticket printed successfully!", SnackbarType.SUCCESS)
-                } else {
-                    throw result.exceptionOrNull() ?: Exception("Unknown error")
+                try {
+
+
+                    val result = printerManager.sendData(ticketData)
+
+                    if (!result.isSuccess) {
+                        throw (
+                                result.exceptionOrNull()
+                                    ?: Exception("Unknown error")
+                                )
+                    }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+
+                    SnackbarManager.show(
+                        "Printing failed. Please check the printer and try again.",
+                        SnackbarType.ERROR,
+                        SnackbarDuration.Long
+                    )
+
+                    emitNavigateBack()
+                    return@launch
                 }
+                resetPassengerCounts()
+
             } catch (e: Exception) {
+
                 SnackbarManager.show(
-                    "Printer connection failed. Please reconnect the printer and resume the service.",
-                    SnackbarType.ERROR,
-                    SnackbarDuration.Long
+                    message = e.message ?: "Something went wrong",
+                    type = SnackbarType.ERROR
                 )
-                emitNavigateBack()
+
+            } finally {
+                _uiState.update {
+                    it.copy(
+                        isPrinting = false
+                    )
+                }
             }
         }
+    }
+
+    private fun resetPassengerCounts() {
+        _uiState.update { state ->
+            state.copy(
+                passengers = state.passengers.map { passenger ->
+                    passenger.copy(
+                        passengerCount = PassengerDefaults.defaultCount(passenger.name)
+                    )
+                }
+            )
+        }
+        recalculateFare()
+
     }
 }

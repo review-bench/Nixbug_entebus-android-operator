@@ -1,8 +1,5 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
-import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,11 +30,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AdsClick
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Print
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -57,7 +53,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -70,42 +65,21 @@ import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.nixbug.entebus.presentation.components.AppHeader
-import com.nixbug.entebus.presentation.components.DialogBox
-import com.nixbug.entebus.presentation.navigation.AppNavItem
+import com.nixbug.entebus.presentation.components.loadingskeleton.TicketScreenSkeleton
+import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
-import com.nixbug.entebus.utils.CameraPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
-import com.nixbug.entebus.utils.isCameraAvailable
-import com.nixbug.entebus.utils.snackbar.SnackbarManager
-import com.nixbug.entebus.utils.snackbar.SnackbarType
 import java.util.Locale
 
 @Composable
 fun TicketScreen(
     navController: NavHostController,
-    activity: Activity,
     viewModel: TicketViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    var showPermissionDialog by remember { mutableStateOf(false) }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            navController.navigate(AppNavItem.QrScannerScreen.route)
-        } else if (CameraPermissionHelper.isPermissionPermanentlyDenied(activity)) {
-            showPermissionDialog = true
-        } else {
-            SnackbarManager.show(
-                message = "Camera permission is required to scan QR codes",
-                type = SnackbarType.ERROR,
-            )
-        }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -117,29 +91,11 @@ fun TicketScreen(
         }
     }
 
-    if (showPermissionDialog) {
-        DialogBox(
-            title = "Permission Required",
-            message = "Camera access is required to scan QR codes.",
-            confirmText = "Open Settings",
-            onConfirmClick = {
-                CameraPermissionHelper.openAppSettings(context)
-                showPermissionDialog = false
-            },
-            dismissible = true,
-            onDismiss = { showPermissionDialog = false },
-            showExitButton = true,
-            exitText = "Cancel",
-            onExitClick = { showPermissionDialog = false },
-            titleColor = MaterialTheme.colorScheme.primary,
-            confirmBtnColor = MaterialTheme.colorScheme.primary,
-            exitBtnBorderColor = MaterialTheme.colorScheme.primary
-        )
-    }
     SetStatusBarColor(
         color = Color.White,
         darkIcons = true
     )
+
     Column(
         modifier = Modifier
             .statusBarsPadding()
@@ -156,87 +112,80 @@ fun TicketScreen(
         AppHeader(
             title = "Ticket",
             onBackClick = { navController.popBackStack() },
-            showTopBarActions = true,
-            primaryActionText = "QR",
-            primaryActionIcon = Icons.Default.QrCode,
-            onPrimaryActionClick = {
-                if (isCameraAvailable(context)) {
-                    if (CameraPermissionHelper.hasCameraPermission(context)) {
-                        navController.navigate(AppNavItem.QrScannerScreen.route)
-                    } else {
-                        permissionLauncher.launch(
-                            CameraPermissionHelper.CAMERA_PERMISSION
+        )
+        if (state.isLoading) {
+            val shimmerBrush = rememberShimmerBrush()
+            TicketScreenSkeleton(shimmerBrush = shimmerBrush)
+        } else {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            )
+            {
+
+                Row(
+                    modifier = Modifier
+                        .weight(0.73f)
+                        .fillMaxWidth()
+                )
+                {
+
+                    // LANDMARK LIST
+                    Box(
+                        modifier = Modifier
+                            .weight(0.58f)
+                            .fillMaxHeight()
+                            .padding(horizontal = 5.dp)
+                    ) {
+                        LandmarkList(
+                            landmarks = state.landmarks,
+                            onToggleLandmarkSelection = { landmark, index ->
+                                viewModel.toggleLandmarkSelection(
+                                    landmark,
+                                    index
+                                )
+                            },
+                            startingLandmark = state.startingLandmark,
+                            endingLandmark = state.endingLandmark,
+                            startingLandmarkIndex = state.startingLandmarkIndex,
+                            endingLandmarkIndex = state.endingLandmarkIndex
                         )
                     }
-                } else {
-                    SnackbarManager.show(
-                        message = "This device does not have a camera",
-                        type = SnackbarType.ERROR,
-                    )
+
+                    // PASSENGER COUNT LIST
+                    Box(
+                        modifier = Modifier
+                            .weight(0.42f)
+                            .fillMaxHeight()
+                    ) {
+                        PassengerCountList(
+                            passengers = state.passengers,
+                            onCountChange = { passenger, newCount ->
+                                viewModel.updatePassengerCount(passenger.id, newCount)
+                            }
+                        )
+                    }
                 }
-            })
-
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-
-            Row(
-                modifier = Modifier
-                    .weight(0.73f)
-                    .fillMaxWidth()
-            ) {
-
-                // LANDMARK LIST
-                Box(
+                // BOTTOM SUMMARY
+                Surface(
                     modifier = Modifier
-                        .weight(0.58f)
-                        .fillMaxHeight()
-                        .padding(horizontal = 5.dp)
+                        .weight(0.27f)
+                        .padding(10.dp, 8.dp)
+                        .fillMaxSize(),
+                    shape = RoundedCornerShape(22.dp),
+                    tonalElevation = 6.dp,
+                    shadowElevation = 6.dp,
+                    color = Color(0xFFEEF6EE)
                 ) {
-                    LandmarkList(
-                        landmarks = state.landmarks,
-                        onToggleLandmarkSelection = { landmark, index ->
-                            viewModel.toggleLandmarkSelection(landmark, index)
-                        },
+                    BottomSummaryCard(
                         startingLandmark = state.startingLandmark,
                         endingLandmark = state.endingLandmark,
-                        startingLandmarkIndex = state.startingLandmarkIndex,
-                        endingLandmarkIndex = state.endingLandmarkIndex
-                    )
-                }
-
-                // PASSENGER COUNT LIST
-                Box(
-                    modifier = Modifier
-                        .weight(0.42f)
-                        .fillMaxHeight()
-                ) {
-                    PassengerCountList(
+                        totalDistanceKm = state.totalDistanceKm,
                         passengers = state.passengers,
-                        onCountChange = { passenger, newCount ->
-                            viewModel.updatePassengerCount(passenger.id, newCount)
-                        }
+                        isPrinting = state.isPrinting,
+                        onPrintClick = { viewModel.printTicket() },
+                        totalFare = state.totalFare
                     )
                 }
-            }
-            // BOTTOM SUMMARY
-            Surface(
-                modifier = Modifier
-                    .weight(0.27f)
-                    .padding(10.dp, 8.dp)
-                    .fillMaxSize(),
-                shape = RoundedCornerShape(22.dp),
-                tonalElevation = 6.dp,
-                shadowElevation = 6.dp,
-                color = Color(0xFFEEF6EE)
-            ) {
-                BottomSummaryCard(
-                    startingLandmark = state.startingLandmark,
-                    endingLandmark = state.endingLandmark,
-                    totalDistanceKm = state.totalDistanceKm,
-                    passengers = state.passengers,
-                    onPrintClick = { viewModel.printTicket() }
-                )
             }
         }
     }
@@ -303,12 +252,14 @@ fun LandmarkList(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LandmarksTimelineIcons(
-                            isFirst, isLast, isStart,
+                            index = index + 1,
+                            isFirst,
+                            isLast,
+                            isStart,
                             isEnd,
                             inBetween
                         )
                     }
-
                     Spacer(modifier = Modifier.width(6.dp))
                     Column {
                         if (startingLandmark?.id == landmark.id) {
@@ -328,7 +279,13 @@ fun LandmarkList(
                             )
                         }
                         Text(
-                            text = landmark.name,
+                            text = landmark.name.replaceFirstChar {
+                                if (it.isLowerCase()) {
+                                    it.titlecase()
+                                } else {
+                                    it.toString()
+                                }
+                            },
                             color = Color.Black,
                             style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
@@ -344,6 +301,7 @@ fun LandmarkList(
 
 @Composable
 fun LandmarksTimelineIcons(
+    index: Int,
     isFirst: Boolean,
     isLast: Boolean,
     isStart: Boolean,
@@ -351,90 +309,61 @@ fun LandmarksTimelineIcons(
     inBetween: Boolean,
 ) {
 
-    val outerColor = when {
-        isStart || isEnd || inBetween -> Color(0x48974B00)
-        else -> DisabledButtonColor
-    }
-
-    val innerColor = when {
+    val circleColor = when {
         isStart || isEnd || inBetween -> Color(0x6B974B00)
         else -> MaterialTheme.colorScheme.primary
     }
 
-    if (!isFirst) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        // Top line
         Box(
             modifier = Modifier
                 .width(2.dp)
                 .height(15.dp)
-                .background(Color.Gray)
+                .background(
+                    if (isFirst) Color.Transparent else Color.Gray
+                )
         )
-    }
 
-    if (isFirst) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .width(2.dp)
-                    .height(15.dp)
-                    .background(Color.Transparent)
-            )
-            Icon(
-                imageVector = Icons.Default.MyLocation,
-                contentDescription = "Start",
-                tint = innerColor,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-    } else if (isLast) {
-        Column {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = "End",
-                tint = innerColor,
-                modifier = Modifier.size(20.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .width(2.dp)
-                    .height(15.dp)
-                    .background(Color.Transparent)
-            )
-        }
-    } else {
+        // Middle icon
         if (inBetween) {
             Icon(
                 imageVector = Icons.Default.KeyboardDoubleArrowDown,
-                contentDescription = "End",
+                contentDescription = null,
                 tint = DarkOrange,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(24.dp)
             )
         } else {
             Box(
                 modifier = Modifier
-                    .size(20.dp)
+                    .size(24.dp)
                     .background(
-                        color = outerColor,
+                        color = circleColor,
                         shape = CircleShape
-                    ), contentAlignment = Alignment.Center
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(
-                            color = innerColor,
-                            shape = CircleShape
-                        )
+                Text(
+                    text = index.toString(),
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 10.sp
                 )
             }
         }
-    }
-    if (!isLast) {
+
+        // Bottom line
         Box(
             modifier = Modifier
                 .width(2.dp)
                 .height(15.dp)
-                .background(Color.Gray)
+                .background(
+                    if (isLast) Color.Transparent else Color.Gray
+                )
         )
     }
 }
@@ -587,7 +516,9 @@ fun BottomSummaryCard(
     endingLandmark: Landmark?,
     totalDistanceKm: Float,
     passengers: List<Passenger>,
-    onPrintClick: () -> Unit
+    onPrintClick: () -> Unit,
+    isPrinting: Boolean,
+    totalFare: Double
 ) {
     val isTicketValid = startingLandmark != null &&
             endingLandmark != null &&
@@ -654,7 +585,7 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        String.format(Locale.getDefault(), "%.1f \u20B9", totalDistanceKm * 10),
+                        text = "$totalFare \u20B9",
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )
@@ -662,27 +593,30 @@ fun BottomSummaryCard(
             }
             Spacer(Modifier.height(5.dp))
             Button(
-                onClick = {
-                    onPrintClick()
-                },
+                onClick = { onPrintClick() },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(13.dp),
                 contentPadding = PaddingValues(5.dp),
-                colors = ButtonDefaults.buttonColors(
-                    disabledContainerColor = DisabledButtonColor
-                ),
-                enabled = isTicketValid
+                colors = ButtonDefaults.buttonColors(disabledContainerColor = DisabledButtonColor),
+                enabled = isTicketValid && !isPrinting,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Print,
-                        contentDescription = "Print Ticket",
-                        tint = Color.White,
+                if (isPrinting) {
+                    CircularProgressIndicator(
+                        strokeWidth = 2.dp,
                         modifier = Modifier.size(20.dp)
                     )
-                    Text(
-                        " Print Ticket", style = MaterialTheme.typography.titleMedium
-                    )
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Print,
+                            contentDescription = "Print Ticket",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            " Print Ticket", style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
             }
         }
