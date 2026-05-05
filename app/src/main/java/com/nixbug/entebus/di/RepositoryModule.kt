@@ -120,9 +120,7 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideAssignedServiceRepository(
-        api: OperatorServiceAssignmentApi
-    ): AssignedServiceRepository {
+    fun provideAssignedServiceRepository(api: OperatorServiceAssignmentApi): AssignedServiceRepository {
         return AssignedServiceRepositoryImpl(api)
     }
 
