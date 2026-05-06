@@ -88,4 +88,8 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
     override suspend fun hasCollection(serviceId: Int, operatorId: Int): Boolean {
         return dao.hasCollection(serviceId = serviceId, operatorId = operatorId)
     }
+
+    override suspend fun deleteOldCollections() {
+        dao.deleteCollectionsOlderThan7Days()
+    }
 }

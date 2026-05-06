@@ -10,4 +10,5 @@ data class SummaryUiState(
     val isConnectingPrinter: Boolean = false,
     val showSummaryPreviewDialog: Boolean = false,
     val companyName: String? = null,
+    val isLoading: Boolean = false
 )

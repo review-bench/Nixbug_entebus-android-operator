@@ -8,6 +8,7 @@ import com.nixbug.entebus.domain.model.local.SyncEvent
 import com.nixbug.entebus.domain.usecase.HasPendingSyncItemsUseCase
 import com.nixbug.entebus.domain.usecase.ObserveSyncEventsUseCase
 import com.nixbug.entebus.domain.usecase.TriggerSyncUseCase
+import com.nixbug.entebus.domain.usecase.collection.DeleteOldCollectionsUseCase
 import com.nixbug.entebus.domain.usecase.collection.ObserveServiceCollectionsUseCase
 import com.nixbug.entebus.domain.usecase.service.HasServiceWithStartedStatusUseCase
 import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
@@ -41,6 +42,7 @@ class SummaryScreenViewModel @Inject constructor(
     private val triggerSyncUseCase: TriggerSyncUseCase,
     private val observeSyncEventsUseCase: ObserveSyncEventsUseCase,
     private val getUserUseCase: GetUserUseCase,
+    private val deleteOldCollectionsUseCase: DeleteOldCollectionsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SummaryUiState())
@@ -52,8 +54,18 @@ class SummaryScreenViewModel @Inject constructor(
     private var pendingPrintData: PrintSummaryData? = null
 
     init {
-        observeCollections()
-        observeUser()
+        try {
+            viewModelScope.launch {
+                deleteOldCollectionsUseCase()
+            }
+            observeCollections()
+            observeUser()
+        } catch (e: Exception) {
+            SnackbarManager.show(
+                "Error initializing summary screen: ${e.message}",
+                SnackbarType.ERROR
+            )
+        }
     }
 
     private fun observeUser() {
@@ -70,35 +82,54 @@ class SummaryScreenViewModel @Inject constructor(
     }
 
     private fun observeCollections() {
+
         viewModelScope.launch {
 
-            observeServiceCollectionsUseCase()
-                .collect { collections ->
+            try {
 
-                    val summary = collections.map { collection ->
-
-                        SummaryUiModel(
-                            id = "${collection.serviceId}${collection.operatorId}".hashCode(),
-
-                            serviceId = collection.serviceId,
-                            serviceName = collection.serviceName,
-                            startedOn = collection.startedAt,
-                            finishedOn = collection.finishOn,
-                            regNo = collection.registrationNumber,
-                            operatorId = collection.operatorId,
-                            operatorName = collection.operatorName,
-                            collection = collection.collection.toInt()
-                        )
-                    }
-
-                    _uiState.update {
-                        it.copy(
-                            summary = summary
-                        )
-                    }
-
-                    autoSelectTodayServices()
+                _uiState.update {
+                    it.copy(isLoading = true)
                 }
+
+                observeServiceCollectionsUseCase()
+                    .collect { collections ->
+
+                        val summary = collections.map { collection ->
+
+                            SummaryUiModel(
+                                id = "${collection.serviceId}${collection.operatorId}".hashCode(),
+                                serviceId = collection.serviceId,
+                                serviceName = collection.serviceName,
+                                startedOn = collection.startedAt,
+                                finishedOn = collection.finishOn,
+                                regNo = collection.registrationNumber,
+                                operatorId = collection.operatorId,
+                                operatorName = collection.operatorName,
+                                collection = collection.collection.toInt()
+                            )
+                        }
+
+                        _uiState.update {
+                            it.copy(
+                                summary = summary,
+                                isLoading = false
+                            )
+                        }
+
+                        autoSelectTodayServices()
+                    }
+
+            } catch (e: Exception) {
+
+                _uiState.update {
+                    it.copy(isLoading = false)
+                }
+
+                SnackbarManager.show(
+                    "Error loading collections: ${e.message}",
+                    SnackbarType.ERROR
+                )
+            }
         }
     }
 

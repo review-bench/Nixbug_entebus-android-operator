@@ -30,4 +30,6 @@ interface ServiceCollectionRepository {
     fun observeCollections(): Flow<List<CollectionSummary>>
 
     suspend fun hasCollection(serviceId: Int, operatorId: Int): Boolean
+
+    suspend fun deleteOldCollections()
 }

@@ -27,4 +27,7 @@ interface ServiceCollectionDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM service_collection WHERE serviceId = :serviceId AND operatorId = :operatorId AND totalCollection > 0)")
     suspend fun hasCollection(serviceId: Int, operatorId: Int): Boolean
+
+    @Query("DELETE FROM service_collection WHERE datetime(startedAt) < datetime('now', '-7 days')")
+    suspend fun deleteCollectionsOlderThan7Days()
 }

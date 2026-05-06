@@ -59,6 +59,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.nixbug.entebus.presentation.components.DialogBox
+import com.nixbug.entebus.presentation.components.loadingskeleton.PersonalDetailsSkeleton
+import com.nixbug.entebus.presentation.components.loadingskeleton.SummaryScreenSkeleton
+import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.presentation.components.printer.PrinterPickerDialog
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
@@ -145,42 +148,49 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
         color = Color.White,
         darkIcons = true
     )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-                .padding(bottom = 135.dp)
-        ) {
-            SummaryHeader()
-            SummaryList(
-                summaryData = state.summary,
-                selectedIds = state.selectedServiceIds,
-                onToggle = viewModel::toggleSelection,
-                modifier = Modifier.weight(1f)
+        if (state.isLoading) {
+            val shimmerBrush = rememberShimmerBrush()
+            SummaryScreenSkeleton(shimmerBrush = shimmerBrush)
+        } else
+        {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+                    .padding(bottom = 135.dp)
+            ) {
+                SummaryHeader()
+                SummaryList(
+                    summaryData = state.summary,
+                    selectedIds = state.selectedServiceIds,
+                    onToggle = viewModel::toggleSelection,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            PreviewButton(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 80.dp)
+                    .padding(horizontal = 30.dp),
+                onClick = {
+                    if (state.selectedServiceIds.isNotEmpty()) {
+                        viewModel.showSummaryPreview()
+                    } else {
+                        SnackbarManager.show(
+                            message = "Please select at least one service",
+                            type = SnackbarType.WARNING
+                        )
+                    }
+                },
             )
         }
-        PreviewButton(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp)
-                .padding(horizontal = 30.dp),
-            onClick = {
-                if (state.selectedServiceIds.isNotEmpty()) {
-                    viewModel.showSummaryPreview()
-                } else {
-                    SnackbarManager.show(
-                        message = "Please select at least one service",
-                        type = SnackbarType.WARNING
-                    )
-                }
-            },
-        )
     }
 
     if (state.showSummaryPreviewDialog) {
