@@ -246,4 +246,8 @@ class ServiceRepositoryImpl @Inject constructor(
     override suspend fun deleteAllServices() {
         serviceDao.deleteAllServices()
     }
+
+    override suspend fun hasServiceWithStartedStatus(): Boolean {
+        return serviceDao.hasStartedService()
+    }
 }

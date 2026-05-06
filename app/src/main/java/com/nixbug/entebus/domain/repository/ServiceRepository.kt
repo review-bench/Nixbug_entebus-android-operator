@@ -34,4 +34,6 @@ interface ServiceRepository {
     suspend fun deleteAssignedServices()
 
     suspend fun deleteAllServices()
+
+    suspend fun hasServiceWithStartedStatus(): Boolean
 }

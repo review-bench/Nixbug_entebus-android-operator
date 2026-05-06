@@ -10,4 +10,6 @@ interface SyncQueueRepository {
     suspend fun enqueueServicePatch(serviceId: Int, request: ServiceUpdate)
 
     suspend fun getNextTicketSequence(serviceId: Int): Int
+
+    suspend fun hasPendingItems(): Boolean
 }

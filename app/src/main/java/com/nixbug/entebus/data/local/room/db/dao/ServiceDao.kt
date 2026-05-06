@@ -71,4 +71,7 @@ interface ServiceDao {
 
     @Query("DELETE FROM services")
     suspend fun deleteAllServices()
+
+    @Query("SELECT COUNT(*) > 0 FROM services WHERE localStatus = 'STARTED'")
+    suspend fun hasStartedService(): Boolean
 }
