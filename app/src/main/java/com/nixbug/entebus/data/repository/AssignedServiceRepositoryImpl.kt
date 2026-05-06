@@ -8,6 +8,8 @@ import com.nixbug.entebus.domain.repository.AssignedServiceRepository
 import com.nixbug.entebus.utils.network.Resource
 import javax.inject.Inject
 import com.nixbug.entebus.domain.model.AssignedServiceModel
+import java.time.Duration
+import java.time.Instant
 
 class AssignedServiceRepositoryImpl @Inject constructor(
     private val serviceAssignmentApi: OperatorServiceAssignmentApi,
@@ -18,6 +20,7 @@ class AssignedServiceRepositoryImpl @Inject constructor(
         offset: Int,
         limit: Int,
     ): Resource<List<AssignedServiceModel>> {
+        val createdOnGe = getUtc24HoursAgo()
         val operatorId = tokenManager.operatorId
         if (operatorId == null) {
             return Resource.Error(
@@ -29,10 +32,17 @@ class AssignedServiceRepositoryImpl @Inject constructor(
                 serviceAssignmentApi.getAssignedServices(
                     offset = offset,
                     limit = limit,
-                    operatorId = operatorId
+                    operatorId = operatorId,
+                    createdOnGe = createdOnGe
                 )
             },
             mapper = { responseList -> responseList.map { it.toDomain() } }
         )
+    }
+
+    private fun getUtc24HoursAgo(): String {
+        return Instant.now()
+            .minus(Duration.ofHours(24))
+            .toString()
     }
 }
