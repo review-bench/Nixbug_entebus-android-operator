@@ -363,7 +363,7 @@ fun SummaryCardContent(
     startTime: String,
     finishDate: String,
     finishTime: String,
-    totalCollection: Int,
+    totalCollection: Double,
     isSelected: Boolean,
     onToggle: () -> Unit
 ) {
@@ -462,7 +462,7 @@ fun OperatorList(serviceGroup: List<SummaryUiModel>) {
 }
 
 @Composable
-fun TotalCollectionRow(total: Int) {
+fun TotalCollectionRow(total: Double) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
@@ -560,7 +560,7 @@ fun ExpandableEllipsizedText(
 @Composable
 fun OperatorRow(
     name: String,
-    amount: Int
+    amount: Double
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -824,7 +824,7 @@ fun SummaryPreviewDialog(
 
 private fun buildPrintSummaryData(
     selectedServices: Map<Int, List<SummaryUiModel>>,
-    grandTotal: Int
+    grandTotal: Double
 ): PrintSummaryData {
 
     val currentDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"))

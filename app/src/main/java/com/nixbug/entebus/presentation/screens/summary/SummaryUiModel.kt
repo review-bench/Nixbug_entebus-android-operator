@@ -9,7 +9,7 @@ data class SummaryUiModel(
     val regNo: String,
     val operatorId: Int,
     val operatorName: String,
-    val collection: Int,
+    val collection: Double,
 )
 
 sealed class SummaryUiEvent {
@@ -28,6 +28,6 @@ data class PrintServiceData(
     val serviceName: String,
     val regNo: String,
     val dateTimeRange: String,
-    val operators: List<Pair<String, Int>>,
+    val operators: List<Pair<String, Double>>,
     val serviceTotal: String
 )

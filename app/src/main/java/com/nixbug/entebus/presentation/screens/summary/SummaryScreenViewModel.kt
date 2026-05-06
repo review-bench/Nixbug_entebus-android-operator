@@ -105,7 +105,7 @@ class SummaryScreenViewModel @Inject constructor(
                                 regNo = collection.registrationNumber,
                                 operatorId = collection.operatorId,
                                 operatorName = collection.operatorName,
-                                collection = collection.collection.toInt()
+                                collection = collection.collection
                             )
                         }
 

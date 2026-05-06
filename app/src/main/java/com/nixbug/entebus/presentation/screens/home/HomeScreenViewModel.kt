@@ -527,6 +527,17 @@ class HomeScreenViewModel @Inject constructor(
 
     // MAIN UNIFIED ENTRY POINT
 
+    fun cancelPendingServiceAction() {
+        pendingAction = null
+        pendingService = null
+
+        _uiState.update {
+            it.copy(
+                startingServiceId = null
+            )
+        }
+    }
+
     fun handleServiceAction(
         action: ServiceAction,
         service: HomeUiModel? = null,

@@ -112,6 +112,7 @@ fun HomeScreen(
         if (allGranted) {
             viewModel.onPermissionGranted(context)
         } else {
+//            viewModel.cancelPendingServiceAction()
             isPermanentDenial = BluetoothPermissionHelper.isPermanentlyDenied(activity)
             showPermissionDialog = true
         }
@@ -123,6 +124,8 @@ fun HomeScreen(
         ) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 viewModel.onPermissionGranted(context)
+            } else {
+//                viewModel.cancelPendingServiceAction()
             }
         }
 
@@ -293,7 +296,10 @@ fun HomeScreen(
             onDismiss = { showPermissionDialog = false },
             showExitButton = true,
             exitText = "Cancel",
-            onExitClick = { showPermissionDialog = false },
+            onExitClick = {
+                showPermissionDialog = false
+                viewModel.cancelPendingServiceAction()
+            },
             onConfirmClick = {
                 showPermissionDialog = false
 

@@ -533,7 +533,7 @@ class TicketViewModel @Inject constructor(
                     operatorId = requireNotNull(state.operatorId),
                     amount = totalFare
                 )
-                resetPassengerCounts()
+                resetTicketState()
 
             } catch (e: Exception) {
 
@@ -552,17 +552,19 @@ class TicketViewModel @Inject constructor(
         }
     }
 
-    private fun resetPassengerCounts() {
+    private fun resetTicketState() {
         _uiState.update { state ->
             state.copy(
                 passengers = state.passengers.map { passenger ->
                     passenger.copy(
                         passengerCount = PassengerDefaults.defaultCount(passenger.name)
                     )
-                }
+                },
+                endingLandmark = null,
+                endingLandmarkIndex = null,
+                totalDistanceKm = 0f,
+                totalFare = 0.0
             )
         }
-        recalculateFare()
-
     }
 }
