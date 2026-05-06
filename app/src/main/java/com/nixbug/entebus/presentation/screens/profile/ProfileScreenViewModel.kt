@@ -88,6 +88,14 @@ class ProfileScreenViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
+            val hasActiveService = hasServiceWithStatusStartedUseCase()
+            if (hasActiveService) {
+                SnackbarManager.show(
+                    "You have an active service. Please end it before logging out.",
+                    SnackbarType.ERROR
+                )
+                return@launch
+            }
             val hasPending = hasPendingSyncItemsUseCase()
             if (hasPending) {
                 SnackbarManager.show(
