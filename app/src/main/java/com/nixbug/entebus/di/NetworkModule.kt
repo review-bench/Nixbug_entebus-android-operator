@@ -6,6 +6,7 @@ import com.nixbug.entebus.data.interceptor.AuthInterceptor
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorLandmarkApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorPaperTicketApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceAssignmentApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
@@ -103,5 +104,10 @@ object NetworkModule {
     @Provides
     fun provideAssignedServiceApi(@OperatorApi retrofit: Retrofit): OperatorServiceAssignmentApi {
         return retrofit.create(OperatorServiceAssignmentApi::class.java)
+    }
+
+    @Provides
+    fun providePaperTicketApi(@OperatorApi retrofit: Retrofit): OperatorPaperTicketApi {
+        return retrofit.create(OperatorPaperTicketApi::class.java)
     }
 }

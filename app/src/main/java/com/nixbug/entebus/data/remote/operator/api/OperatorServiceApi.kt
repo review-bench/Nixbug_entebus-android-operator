@@ -1,5 +1,6 @@
 package com.nixbug.entebus.data.remote.operator.api
 
+import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceUpdateForm
 import com.nixbug.entebus.data.remote.operator.model.service.PrivateServiceSchema
 import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceOrderBy
 import com.nixbug.entebus.data.remote.operator.model.service.ServiceSchema
@@ -7,7 +8,9 @@ import com.nixbug.entebus.data.remote.operator.model.service.ServiceStatus
 import com.nixbug.entebus.data.remote.operator.model.service.TicketingMode
 import com.nixbug.entebus.data.remote.operator.model.service.OrderIn
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -94,4 +97,11 @@ interface OperatorServiceApi {
         @Path("id") id: kotlin.Int,
         @Query("marked_as_cached") markedAsCached: kotlin.Boolean? = false
     ): Response<PrivateServiceSchema>
+
+    @PATCH("company/service/{id}")
+    suspend fun updateService(
+        @Path("id") id: kotlin.Int,
+        @Body appApiServiceUpdateForm: AppApiServiceUpdateForm
+    ): Response<ServiceSchema>
+
 }

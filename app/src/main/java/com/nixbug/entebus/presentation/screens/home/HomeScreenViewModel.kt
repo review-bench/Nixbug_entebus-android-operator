@@ -4,7 +4,10 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.ServicePatchStatus
+import com.nixbug.entebus.domain.model.ServiceUpdate
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.EnqueueServicePatchUseCase
 import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.assignedservice.GetAssignedServiceUseCase
@@ -52,7 +55,8 @@ class HomeScreenViewModel @Inject constructor(
     private val cleanOldServicesUseCase: CleanOldServicesUseCase,
     private val getServiceDetailsForHomeUseCase: GetServiceDetailsForHomeUseCase,
     private val deleteAssignedServicesUseCase: DeleteAssignedServicesUseCase,
-    private val clearAssignedServicesUseCase: ClearAssignedServicesUseCase
+    private val clearAssignedServicesUseCase: ClearAssignedServicesUseCase,
+    private val enqueueServicePatchUseCase: EnqueueServicePatchUseCase,
 ) : ViewModel() {
 
     // STATE
@@ -75,6 +79,8 @@ class HomeScreenViewModel @Inject constructor(
     private var pendingAction: ServiceAction? = null
     private var pendingService: HomeUiModel? = null
     private val fetchedAssignedServiceIds = mutableSetOf<Int>()
+    private val finishServiceRequest = ServiceUpdate(status = ServicePatchStatus.FINISHED)
+    private val restartServiceRequest = ServiceUpdate(status = ServicePatchStatus.RESTARTED)
 
     fun loadMoreAssignedServices() {
         fetchAssignedService(isPagination = true)
@@ -418,9 +424,7 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    private suspend fun fetchOtherServicesInternal(
-        isPagination: Boolean = false,
-    ) {
+    private suspend fun fetchOtherServicesInternal(isPagination: Boolean = false) {
         val currentState = _uiState.value
 
         if (isPagination && (currentState.isPaginationLoading || !currentState.hasMore)) return
@@ -639,7 +643,14 @@ class HomeScreenViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
+                if (pendingAction == ServiceAction.RESTART_RECENT) {
+                    enqueueServicePatchUseCase(
+                        serviceId = service.id,
+                        request = restartServiceRequest
+                    )
+                }
                 updateLocalStatusUseCase(service.id, LocalServiceStatus.STARTED)
+
                 _uiState.update { state ->
                     state.copy(
                         ongoingService = service,
@@ -706,6 +717,7 @@ class HomeScreenViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
+                enqueueServicePatchUseCase(serviceId = service.id, request = finishServiceRequest)
                 updateLocalStatusUseCase(service.id, LocalServiceStatus.RECENT)
                 _uiState.update { state ->
                     state.copy(

@@ -4,9 +4,15 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.DetailedTicketType
+import com.nixbug.entebus.domain.model.PaperTicket
+import com.nixbug.entebus.domain.model.PaperTicketType
+import com.nixbug.entebus.domain.model.Ticket
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.EnqueuePaperTicketUseCase
+import com.nixbug.entebus.domain.usecase.GetNextTicketSequenceUseCase
 import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
+import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.presentation.screens.ticket.uimapper.PassengerDefaults
 import com.nixbug.entebus.presentation.screens.ticket.uimapper.toUiModel
 import com.nixbug.entebus.utils.printer.PrinterManager
@@ -24,6 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -35,6 +42,9 @@ class TicketViewModel @Inject constructor(
     private val printerManager: PrinterManager,
     private val getDetailedServiceByStatusUseCase: GetDetailedServiceByStatusUseCase,
     private val calculateTicketFareUseCase: CalculateTicketFareUseCase,
+    private val enqueuePaperTicketUseCase: EnqueuePaperTicketUseCase,
+    private val getNextTicketSequenceUseCase: GetNextTicketSequenceUseCase,
+    private val getUserUseCase: GetUserUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketUiState())
@@ -46,6 +56,51 @@ class TicketViewModel @Inject constructor(
 
     init {
         loadStartedService()
+        loadUserData()
+    }
+
+    private fun buildPaperTicketRequest(ticketId: Int, lineItems: List<LineItem>): PaperTicket {
+
+        val state = _uiState.value
+
+        val start = requireNotNull(state.startingLandmark)
+        val end = requireNotNull(state.endingLandmark)
+
+        val serviceId = requireNotNull(state.serviceId) { "Service id missing" }
+        val ticketTypes = lineItems.map {
+            PaperTicketType(
+                id = it.id,
+                count = it.count,
+                price = it.singleFare
+            )
+        }
+
+        return PaperTicket(
+
+            ticket = Ticket(
+                id = ticketId,
+                serviceId = serviceId,
+                createdOn = Instant.now().toString(),
+                ticketTypes = ticketTypes,
+                amount = ticketTypes.sumOf { it.price * it.count },
+                pickupPoint = start.id,
+                droppingPoint = end.id,
+                distance = (state.totalDistanceKm * METERS_PER_KILOMETER).toInt(),
+                extras = emptyMap()
+            )
+        )
+    }
+
+    private fun loadUserData() {
+        viewModelScope.launch {
+            getUserUseCase().collect { user ->
+                _uiState.update {
+                    it.copy(
+                        companyName = user.companyName ?: ""
+                    )
+                }
+            }
+        }
     }
 
     private fun loadStartedService() {
@@ -68,6 +123,7 @@ class TicketViewModel @Inject constructor(
 
                 _uiState.update { state ->
                     state.copy(
+                        serviceId = currentService.service.id,
                         landmarks = currentService.landmarks
                             .sortedBy { it.distance }
                             .map { it.toUiModel() },
@@ -299,17 +355,21 @@ class TicketViewModel @Inject constructor(
     fun printTicket() {
         viewModelScope.launch {
 
-            _uiState.update {
-                it.copy(isPrinting = true)
-            }
-
+            _uiState.update { it.copy(isPrinting = true) }
             try {
-
                 val state = _uiState.value
-
                 val startingLandmark = state.startingLandmark
                 val endingLandmark = state.endingLandmark
                 val passengers = state.passengers
+                val serviceId = state.serviceId
+                if (serviceId == null) {
+                    SnackbarManager.show(
+                        message = "Service data is still loading. Please try again.",
+                        type = SnackbarType.ERROR
+                    )
+                    return@launch
+                }
+                val ticketId = getNextTicketSequenceUseCase(serviceId)
 
                 if (startingLandmark == null || endingLandmark == null) {
                     SnackbarManager.show(
@@ -319,8 +379,7 @@ class TicketViewModel @Inject constructor(
                     return@launch
                 }
 
-                val selectedPassengers =
-                    passengers.filter { it.passengerCount > 0 }
+                val selectedPassengers = passengers.filter { it.passengerCount > 0 }
 
                 if (selectedPassengers.isEmpty()) {
                     SnackbarManager.show(
@@ -344,28 +403,18 @@ class TicketViewModel @Inject constructor(
                 val calendar = java.util.Calendar.getInstance()
 
                 val dateFormat =
-                    java.text.SimpleDateFormat(
-                        "dd/MM/yy",
-                        java.util.Locale.getDefault()
-                    )
+                    java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault())
 
                 val timeFormat =
-                    java.text.SimpleDateFormat(
-                        "hh:mm a",
-                        java.util.Locale.getDefault()
-                    )
+                    java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
 
-                val dateStr =
-                    dateFormat.format(calendar.time)
+                val dateStr = dateFormat.format(calendar.time)
 
-                val timeStr =
-                    timeFormat.format(calendar.time)
+                val timeStr = timeFormat.format(calendar.time)
 
                 val lineItems = try {
                     withContext(Dispatchers.Default) {
-
                         selectedPassengers.map { passenger ->
-
                             val singleFare = calculateTicketFareUseCase(
                                 fareFunction = state.fareFunctionString,
                                 passengers = listOf(
@@ -378,10 +427,11 @@ class TicketViewModel @Inject constructor(
                                 distanceInMeters = state.totalDistanceKm * METERS_PER_KILOMETER
                             )
 
-                            Triple(
-                                passenger.name,
-                                passenger.passengerCount,
-                                singleFare * passenger.passengerCount
+                            LineItem(
+                                id = passenger.id,
+                                name = passenger.name,
+                                count = passenger.passengerCount,
+                                singleFare = singleFare
                             )
                         }
                     }
@@ -394,111 +444,63 @@ class TicketViewModel @Inject constructor(
                     return@launch
                 }
 
-                val totalFare = lineItems.sumOf { it.third }
+                val totalFare = lineItems.sumOf { it.singleFare * it.count }
 
                 val ticketData = withContext(Dispatchers.Default) {
 
                     TicketBuilder()
-
-                        .addCommand(
-                            PrinterManager.Commands.ALIGN_CENTER
-                        )
-
-                        .addCommand(
-                            PrinterManager.Commands.BOLD_ON
-                        )
-                        .text("RKV")
-                        .addCommand(
-                            PrinterManager.Commands.BOLD_OFF
-                        )
-
-                        .addCommand(
-                            PrinterManager.Commands.SIZE_NORMAL
-                        )
-
+                        .addCommand(PrinterManager.Commands.ALIGN_CENTER)
+                        .addCommand(PrinterManager.Commands.BOLD_ON)
+                        .text(state.companyName)
+                        .addCommand(PrinterManager.Commands.BOLD_OFF)
+                        .addCommand(PrinterManager.Commands.SIZE_NORMAL)
                         .threeColumnRow(
                             dateStr,
                             timeStr,
-                            "TKT-000123"
+                            "T-${
+                                serviceId.toString().padStart(6, '0')
+                            }-${ticketId.toString().padStart(4, '0')}"
                         )
-
-                        .addCommand(
-                            PrinterManager.Commands.BOLD_ON
-                        )
-
+                        .addCommand(PrinterManager.Commands.BOLD_ON)
                         .routeRow(
                             formatText(startingLandmark.name),
                             "To",
                             formatText(endingLandmark.name)
                         )
-
-                        .addCommand(
-                            PrinterManager.Commands.BOLD_OFF
-                        )
-
-                        .addCommand(
-                            PrinterManager.Commands.LINE_SPACE_TIGHT
-                        )
+                        .addCommand(PrinterManager.Commands.BOLD_OFF)
+                        .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
 
                         .apply {
-
                             lineItems.forEach { item ->
-
-                                val name = item.first
-                                val count = item.second
-                                val lineFare = item.third
-
-                                val singleFare =
-                                    lineFare / count
+                                val name = item.name
+                                val count = item.count
+                                val lineFare = item.singleFare * item.count
 
                                 text(
                                     "%-10s %2d x %6.2f = %6.2f".format(
                                         name.take(10),
                                         count,
-                                        singleFare,
+                                        item.singleFare,
                                         lineFare
                                     )
                                 )
                             }
                         }
 
-                        .addCommand(
-                            PrinterManager.Commands.SIZE_BIG
-                        )
-
-                        .text(
-                            "RS . $totalFare"
-                        )
-
-                        .addCommand(
-                            PrinterManager.Commands.SIZE_NORMAL
-                        )
-
+                        .addCommand(PrinterManager.Commands.SIZE_BIG)
+                        .text("RS . $totalFare")
+                        .addCommand(PrinterManager.Commands.SIZE_NORMAL)
                         .divider()
-
-                        .addCommand(
-                            PrinterManager.Commands.ALIGN_CENTER
-                        )
-
+                        .addCommand(PrinterManager.Commands.ALIGN_CENTER)
                         .text("Not Transferable")
                         .text("Nixbug softwares")
-
-                        .addCommand(
-                            PrinterManager.Commands.LINE_SPACE_DEFAULT
-                        )
-
-                        .addCommand(
-                            PrinterManager.Commands.BOLD_OFF
-                        )
-
+                        .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
+                        .addCommand(PrinterManager.Commands.BOLD_OFF)
                         .build()
                 }
 
                 try {
-
-
                     val result = printerManager.sendData(ticketData)
-
                     if (!result.isSuccess) {
                         throw (
                                 result.exceptionOrNull()
@@ -507,16 +509,16 @@ class TicketViewModel @Inject constructor(
                     }
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
-
                     SnackbarManager.show(
                         "Printing failed. Please check the printer and try again.",
                         SnackbarType.ERROR,
                         SnackbarDuration.Long
                     )
-
                     emitNavigateBack()
                     return@launch
                 }
+                val request = buildPaperTicketRequest(ticketId, lineItems = lineItems)
+                enqueuePaperTicketUseCase(request)
                 resetPassengerCounts()
 
             } catch (e: Exception) {

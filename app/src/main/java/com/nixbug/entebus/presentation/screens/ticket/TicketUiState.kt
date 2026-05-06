@@ -12,4 +12,6 @@ data class TicketUiState(
     val isLoading: Boolean = false,
     val fareFunctionString: String = "",
     val totalFare: Double = 0.0,
+    val serviceId: Int? = null,
+    val companyName: String = ""
 )

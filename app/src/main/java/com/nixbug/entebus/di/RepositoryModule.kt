@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
 import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
+import com.nixbug.entebus.data.local.room.db.dao.SyncQueueDao
 import com.nixbug.entebus.data.manager.SessionManager
 import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
@@ -20,8 +21,10 @@ import com.nixbug.entebus.data.repository.PublicCompanyRepositoryImpl
 import com.nixbug.entebus.data.repository.AssignedServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.ServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.SessionRepositoryImpl
+import com.nixbug.entebus.data.repository.SyncQueueRepositoryImpl
 import com.nixbug.entebus.data.repository.TokenRepositoryImpl
 import com.nixbug.entebus.data.repository.UserRepositoryImpl
+import com.nixbug.entebus.data.sync.SyncQueueProcessor
 import com.nixbug.entebus.domain.repository.LandmarkRepository
 import com.nixbug.entebus.domain.repository.OperatorAccountImageRepository
 import com.nixbug.entebus.domain.repository.OperatorAccountRepository
@@ -29,6 +32,7 @@ import com.nixbug.entebus.domain.repository.PublicCompanyRepository
 import com.nixbug.entebus.domain.repository.AssignedServiceRepository
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.domain.repository.SessionRepository
+import com.nixbug.entebus.domain.repository.SyncQueueRepository
 import com.nixbug.entebus.domain.repository.TokenRepository
 import com.nixbug.entebus.domain.repository.UserRepository
 import dagger.Module
@@ -116,9 +120,21 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideAssignedServiceRepository(
-        api: OperatorServiceAssignmentApi
-    ): AssignedServiceRepository {
+    fun provideAssignedServiceRepository(api: OperatorServiceAssignmentApi): AssignedServiceRepository {
         return AssignedServiceRepositoryImpl(api)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSyncQueueRepository(
+        syncQueueDao: SyncQueueDao,
+        gson: Gson,
+        processor: SyncQueueProcessor
+    ): SyncQueueRepository {
+        return SyncQueueRepositoryImpl(
+            syncQueueDao = syncQueueDao,
+            gson = gson,
+            processor = processor
+        )
     }
 }
