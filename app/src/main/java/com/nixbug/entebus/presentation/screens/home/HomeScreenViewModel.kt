@@ -6,17 +6,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.ServicePatchStatus
 import com.nixbug.entebus.domain.model.ServiceUpdate
+import com.nixbug.entebus.domain.model.local.CollectionStatus
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
+import com.nixbug.entebus.domain.model.local.OperatorInfo
 import com.nixbug.entebus.domain.usecase.EnqueueServicePatchUseCase
 import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.assignedservice.GetAssignedServiceUseCase
+import com.nixbug.entebus.domain.usecase.collection.CreateServiceCollectionUseCase
+import com.nixbug.entebus.domain.usecase.collection.UpdateServiceCollectionStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.ClearAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailsForHomeUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.UpdateLocalStatusUseCase
+import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
+import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.printer.PrinterManager
@@ -37,6 +43,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -57,6 +64,10 @@ class HomeScreenViewModel @Inject constructor(
     private val deleteAssignedServicesUseCase: DeleteAssignedServicesUseCase,
     private val clearAssignedServicesUseCase: ClearAssignedServicesUseCase,
     private val enqueueServicePatchUseCase: EnqueueServicePatchUseCase,
+    private val getUserUseCase: GetUserUseCase,
+    private val getTokenUseCase: GetTokenUseCase,
+    private val createServiceCollectionUseCase: CreateServiceCollectionUseCase,
+    private val updateServiceCollectionStatusUseCase: UpdateServiceCollectionStatusUseCase
 ) : ViewModel() {
 
     // STATE
@@ -640,13 +651,38 @@ class HomeScreenViewModel @Inject constructor(
 
     private fun confirmServiceStart() {
         val service = pendingService ?: return
-
+        println("pendingAction = $pendingAction")
         viewModelScope.launch {
             try {
+                if (
+                    pendingAction == ServiceAction.START_DOWNLOADED ||
+                    pendingAction == ServiceAction.START_ASSIGNED
+                ) {
+                    val user = getUserUseCase().first()
+                    val token = getTokenUseCase().first()
+                    createServiceCollectionUseCase(
+                        serviceId = service.id,
+                        serviceName = "${service.endingLandmarkName} TO ${service.startingLandmarkName}",
+                        regNo = service.registrationNumber,
+                        startedAt = service.startingAt,
+                        finishOn = service.endingAt,
+                        operators = listOf(
+                            OperatorInfo(
+                                id = token.operatorId ?: 0,
+                                name = user.username ?: ""
+                            ),
+                        )
+                    )
+                }
+
                 if (pendingAction == ServiceAction.RESTART_RECENT) {
                     enqueueServicePatchUseCase(
                         serviceId = service.id,
                         request = restartServiceRequest
+                    )
+                    updateServiceCollectionStatusUseCase(
+                        serviceId = service.id,
+                        status = CollectionStatus.WORKING
                     )
                 }
                 updateLocalStatusUseCase(service.id, LocalServiceStatus.STARTED)
@@ -719,6 +755,10 @@ class HomeScreenViewModel @Inject constructor(
             try {
                 enqueueServicePatchUseCase(serviceId = service.id, request = finishServiceRequest)
                 updateLocalStatusUseCase(service.id, LocalServiceStatus.RECENT)
+                updateServiceCollectionStatusUseCase(
+                    serviceId = service.id,
+                    status = CollectionStatus.FINISHED
+                )
                 _uiState.update { state ->
                     state.copy(
                         recentServiceList = state.recentServiceList + service,

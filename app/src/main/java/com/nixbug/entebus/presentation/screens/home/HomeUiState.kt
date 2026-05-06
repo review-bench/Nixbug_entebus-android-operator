@@ -34,4 +34,8 @@ data class HomeUiState(
     val assignedLimit: Int = 10,
     val assignedHasMore: Boolean = true,
     val isAssignedPaginationLoading: Boolean = false,
+
+    val companyName: String = "",
+    val operatorName: String = "",
+    val operatorId: Int? = null
 )

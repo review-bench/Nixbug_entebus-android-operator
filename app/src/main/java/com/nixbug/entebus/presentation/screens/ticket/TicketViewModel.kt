@@ -10,8 +10,10 @@ import com.nixbug.entebus.domain.model.Ticket
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.EnqueuePaperTicketUseCase
 import com.nixbug.entebus.domain.usecase.GetNextTicketSequenceUseCase
+import com.nixbug.entebus.domain.usecase.collection.AddServiceCollectionUseCase
 import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
+import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
 import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.presentation.screens.ticket.uimapper.PassengerDefaults
 import com.nixbug.entebus.presentation.screens.ticket.uimapper.toUiModel
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -45,6 +48,8 @@ class TicketViewModel @Inject constructor(
     private val enqueuePaperTicketUseCase: EnqueuePaperTicketUseCase,
     private val getNextTicketSequenceUseCase: GetNextTicketSequenceUseCase,
     private val getUserUseCase: GetUserUseCase,
+    private val getTokenUseCase: GetTokenUseCase,
+    private val addServiceCollectionUseCase: AddServiceCollectionUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketUiState())
@@ -93,12 +98,16 @@ class TicketViewModel @Inject constructor(
 
     private fun loadUserData() {
         viewModelScope.launch {
-            getUserUseCase().collect { user ->
-                _uiState.update {
-                    it.copy(
-                        companyName = user.companyName ?: ""
-                    )
-                }
+
+            val user = getUserUseCase().first()
+            val token = getTokenUseCase().first()
+
+            _uiState.update {
+                it.copy(
+                    companyName = user.companyName ?: "",
+                    operatorName = user.username ?: "",
+                    operatorId = token.operatorId
+                )
             }
         }
     }
@@ -519,6 +528,11 @@ class TicketViewModel @Inject constructor(
                 }
                 val request = buildPaperTicketRequest(ticketId, lineItems = lineItems)
                 enqueuePaperTicketUseCase(request)
+                addServiceCollectionUseCase(
+                    serviceId = serviceId,
+                    operatorId = requireNotNull(state.operatorId),
+                    amount = totalFare
+                )
                 resetPassengerCounts()
 
             } catch (e: Exception) {

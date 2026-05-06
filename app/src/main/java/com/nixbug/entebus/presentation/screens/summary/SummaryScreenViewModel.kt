@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.usecase.collection.ObserveServiceCollectionsUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
@@ -25,8 +26,10 @@ import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
-class SummaryScreenViewModel @Inject constructor(private val printerManager: PrinterManager) :
-    ViewModel() {
+class SummaryScreenViewModel @Inject constructor(
+    private val printerManager: PrinterManager,
+    private val observeServiceCollectionsUseCase: ObserveServiceCollectionsUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SummaryUiState())
     val uiState: StateFlow<SummaryUiState> = _uiState.asStateFlow()
@@ -37,7 +40,41 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
     private var pendingPrintData: PrintSummaryData? = null
 
     init {
-        autoSelectTodayServices()
+//        autoSelectTodayServices()
+        observeCollections()
+    }
+
+    private fun observeCollections() {
+        viewModelScope.launch {
+
+            observeServiceCollectionsUseCase()
+                .collect { collections ->
+
+                    val summary = collections.map { collection ->
+
+                        SummaryUiModel(
+                            id = "${collection.serviceId}${collection.operatorId}".hashCode(),
+
+                            serviceId = collection.serviceId,
+                            serviceName = collection.serviceName,
+                            startedOn = collection.startedAt,
+                            finishedOn = collection.finishOn,
+                            regNo = collection.registrationNumber,
+                            operatorId = collection.operatorId,
+                            operatorName = collection.operatorName,
+                            collection = collection.collection.toInt()
+                        )
+                    }
+
+                    _uiState.update {
+                        it.copy(
+                            summary = summary
+                        )
+                    }
+
+                    autoSelectTodayServices()
+                }
+        }
     }
 
     private fun autoSelectTodayServices() {
