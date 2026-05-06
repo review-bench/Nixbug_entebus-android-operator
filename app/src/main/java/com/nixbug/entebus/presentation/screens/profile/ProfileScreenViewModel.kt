@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
 import com.nixbug.entebus.domain.usecase.accountimage.GetAccountImageUseCase
+import com.nixbug.entebus.domain.usecase.service.ClearAllServicesUseCase
 import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
 import com.nixbug.entebus.domain.usecase.token.RevokeTokenUseCase
 import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
@@ -26,7 +27,8 @@ class ProfileScreenViewModel @Inject constructor(
     private val getTokenUseCase: GetTokenUseCase,
     private val getAccountImageUseCase: GetAccountImageUseCase,
     private val getUserUseCase: GetUserUseCase,
-    private val clearSessionUseCase: ClearSessionUseCase
+    private val clearSessionUseCase: ClearSessionUseCase,
+    private val clearAllServicesUseCase: ClearAllServicesUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -114,6 +116,7 @@ class ProfileScreenViewModel @Inject constructor(
                 )
             } finally {
                 clearSessionUseCase()
+                clearAllServicesUseCase()
             }
         }
     }

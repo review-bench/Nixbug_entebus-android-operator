@@ -68,4 +68,7 @@ interface ServiceDao {
 
     @Query("DELETE FROM services WHERE localStatus = :status")
     suspend fun deleteServicesByStatus(status: String)
+
+    @Query("DELETE FROM services")
+    suspend fun deleteAllServices()
 }
