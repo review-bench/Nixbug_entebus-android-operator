@@ -31,7 +31,7 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
                 operatorId = operator.id,
                 operatorName = operator.name,
                 startedAt = startedAt,
-                finishOn=finishOn
+                finishOn = finishOn
             )
         }
 
@@ -43,32 +43,19 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
         operatorId: Int,
         amount: Double
     ) {
-
         dao.incrementCollection(
             serviceId = serviceId,
             operatorId = operatorId,
             amount = amount
         )
-
-        /*
-        if audited and new ticket comes,
-        back to working
-         */
         dao.updateStatus(
             serviceId = serviceId,
             status = CollectionStatus.WORKING
         )
     }
 
-    override suspend fun updateStatus(
-        serviceId: Int,
-        status: CollectionStatus
-    ) {
-
-        dao.updateStatus(
-            serviceId = serviceId,
-            status = status
-        )
+    override suspend fun updateStatus(serviceId: Int, status: CollectionStatus) {
+        dao.updateStatus(serviceId = serviceId, status = status)
     }
 
     override fun observeCollections(): Flow<List<CollectionSummary>> {
@@ -96,5 +83,9 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
                     )
                 }
             }
+    }
+
+    override suspend fun hasCollection(serviceId: Int, operatorId: Int): Boolean {
+        return dao.hasCollection(serviceId = serviceId, operatorId = operatorId)
     }
 }

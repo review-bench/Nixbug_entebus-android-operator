@@ -14,6 +14,7 @@ import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.assignedservice.GetAssignedServiceUseCase
 import com.nixbug.entebus.domain.usecase.collection.CreateServiceCollectionUseCase
+import com.nixbug.entebus.domain.usecase.collection.HasServiceCollectionUseCase
 import com.nixbug.entebus.domain.usecase.collection.UpdateServiceCollectionStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.ClearAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
@@ -67,7 +68,8 @@ class HomeScreenViewModel @Inject constructor(
     private val getUserUseCase: GetUserUseCase,
     private val getTokenUseCase: GetTokenUseCase,
     private val createServiceCollectionUseCase: CreateServiceCollectionUseCase,
-    private val updateServiceCollectionStatusUseCase: UpdateServiceCollectionStatusUseCase
+    private val updateServiceCollectionStatusUseCase: UpdateServiceCollectionStatusUseCase,
+    private val hasServiceCollectionUseCase: HasServiceCollectionUseCase
 ) : ViewModel() {
 
     // STATE
@@ -769,7 +771,17 @@ class HomeScreenViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                enqueueServicePatchUseCase(serviceId = service.id, request = finishServiceRequest)
+                val token = getTokenUseCase().first()
+                if (hasServiceCollectionUseCase(
+                        serviceId = service.id,
+                        operatorId = token.operatorId ?: 0
+                    )
+                ) {
+                    enqueueServicePatchUseCase(
+                        serviceId = service.id,
+                        request = finishServiceRequest
+                    )
+                }
                 updateLocalStatusUseCase(service.id, LocalServiceStatus.RECENT)
                 updateServiceCollectionStatusUseCase(
                     serviceId = service.id,

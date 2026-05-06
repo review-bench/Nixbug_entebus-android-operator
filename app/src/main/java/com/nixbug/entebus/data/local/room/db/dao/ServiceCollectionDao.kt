@@ -24,4 +24,7 @@ interface ServiceCollectionDao {
 
     @Query("SELECT * FROM service_collection ORDER BY startedAt DESC")
     fun observeCollections(): Flow<List<ServiceCollectionEntity>>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM service_collection WHERE serviceId = :serviceId AND operatorId = :operatorId AND totalCollection > 0)")
+    suspend fun hasCollection(serviceId: Int, operatorId: Int): Boolean
 }
