@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.local.SyncEvent
 import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
-import com.nixbug.entebus.domain.usecase.HasPendingSyncItemsUseCase
-import com.nixbug.entebus.domain.usecase.ObserveSyncEventsUseCase
-import com.nixbug.entebus.domain.usecase.TriggerSyncUseCase
+import com.nixbug.entebus.domain.usecase.queue.HasPendingSyncItemsUseCase
+import com.nixbug.entebus.domain.usecase.queue.ObserveSyncEventsUseCase
+import com.nixbug.entebus.domain.usecase.queue.TriggerSyncUseCase
 import com.nixbug.entebus.domain.usecase.accountimage.GetAccountImageUseCase
 import com.nixbug.entebus.domain.usecase.service.ClearAllServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.HasServiceWithStartedStatusUseCase

@@ -1,4 +1,4 @@
-package com.nixbug.entebus.domain.usecase
+package com.nixbug.entebus.domain.usecase.queue
 
 import com.nixbug.entebus.domain.model.PaperTicket
 import com.nixbug.entebus.domain.repository.SyncQueueRepository

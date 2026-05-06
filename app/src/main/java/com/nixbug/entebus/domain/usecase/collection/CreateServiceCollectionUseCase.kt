@@ -22,7 +22,7 @@ class CreateServiceCollectionUseCase @Inject constructor(
             serviceName = serviceName,
             regNo = regNo,
             startedAt = startedAt,
-            finishOn=finishOn,
+            finishOn = finishOn,
             operators = operators
         )
     }

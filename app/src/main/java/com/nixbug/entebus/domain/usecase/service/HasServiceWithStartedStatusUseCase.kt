@@ -6,5 +6,7 @@ import javax.inject.Inject
 class HasServiceWithStartedStatusUseCase @Inject constructor(
     private val repository: ServiceRepository
 ) {
-    suspend operator fun invoke(): Boolean { return repository.hasServiceWithStartedStatus() }
+    suspend operator fun invoke(): Boolean {
+        return repository.hasServiceWithStartedStatus()
+    }
 }

@@ -9,7 +9,7 @@ import com.nixbug.entebus.domain.model.ServiceUpdate
 import com.nixbug.entebus.domain.model.local.CollectionStatus
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.model.local.OperatorInfo
-import com.nixbug.entebus.domain.usecase.EnqueueServicePatchUseCase
+import com.nixbug.entebus.domain.usecase.queue.EnqueueServicePatchUseCase
 import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.assignedservice.GetAssignedServiceUseCase

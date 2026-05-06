@@ -8,8 +8,8 @@ import com.nixbug.entebus.domain.model.PaperTicket
 import com.nixbug.entebus.domain.model.PaperTicketType
 import com.nixbug.entebus.domain.model.Ticket
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
-import com.nixbug.entebus.domain.usecase.EnqueuePaperTicketUseCase
-import com.nixbug.entebus.domain.usecase.GetNextTicketSequenceUseCase
+import com.nixbug.entebus.domain.usecase.queue.EnqueuePaperTicketUseCase
+import com.nixbug.entebus.domain.usecase.queue.GetNextTicketSequenceUseCase
 import com.nixbug.entebus.domain.usecase.collection.AddServiceCollectionUseCase
 import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
