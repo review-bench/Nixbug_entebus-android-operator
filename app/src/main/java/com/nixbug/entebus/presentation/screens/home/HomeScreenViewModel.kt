@@ -664,7 +664,7 @@ class HomeScreenViewModel @Inject constructor(
 
     private fun confirmServiceStart() {
         val service = pendingService ?: return
-        println("pendingAction = $pendingAction")
+
         viewModelScope.launch {
             try {
                 if (
@@ -715,7 +715,6 @@ class HomeScreenViewModel @Inject constructor(
                     )
                 }
                 updateLocalStatusUseCase(service.id, LocalServiceStatus.STARTED)
-
                 _uiState.update { state ->
                     state.copy(
                         ongoingService = service,
