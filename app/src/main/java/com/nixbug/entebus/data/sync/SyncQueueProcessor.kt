@@ -6,8 +6,12 @@ import com.nixbug.entebus.data.remote.operator.api.OperatorPaperTicketApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceUpdateForm
 import com.nixbug.entebus.data.remote.operator.model.paperticket.AppApiPaperTicketCreateForm
+import com.nixbug.entebus.domain.model.local.SyncEvent
 import com.nixbug.entebus.domain.model.local.SyncOperationType
 import com.nixbug.entebus.domain.model.local.SyncStatus
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
@@ -20,15 +24,15 @@ class SyncQueueProcessor @Inject constructor(
     private val serviceApi: OperatorServiceApi,
     private val gson: Gson
 ) {
-
+    private val _events = MutableSharedFlow<SyncEvent>(replay = 1)
+    val events: SharedFlow<SyncEvent> = _events.asSharedFlow()
     private val mutex = Mutex()
 
     suspend fun processQueue() {
 
         mutex.withLock {
-
+            _events.emit(SyncEvent.Started)
             while (true) {
-
                 val item = syncQueueDao.getNextPending() ?: break
 
                 try {
@@ -40,33 +44,27 @@ class SyncQueueProcessor @Inject constructor(
                     when (item.operationType) {
 
                         SyncOperationType.PAPER_TICKET -> {
-
                             val request = gson.fromJson(
                                 item.payload,
                                 AppApiPaperTicketCreateForm::class.java
                             )
-
                             val response = paperTicketApi.createPaperTicket(request)
-
                             if (!response.isSuccessful) {
                                 throw Exception("Ticket sync failed")
                             }
                         }
 
                         SyncOperationType.SERVICE_PATCH -> {
-
                             val request = gson.fromJson(
                                 item.payload,
                                 AppApiServiceUpdateForm::class.java
                             )
-
                             val response = serviceApi.updateService(
                                 id = item.serviceId,
                                 appApiServiceUpdateForm = request
                             )
-
                             if (!response.isSuccessful) {
-                                throw Exception("Patch sync failed")
+                                throw Exception("Service sync failed")
                             }
                         }
                     }
@@ -86,7 +84,19 @@ class SyncQueueProcessor @Inject constructor(
                         queueOrder = item.queueOrder,
                         status = SyncStatus.FAILED
                     )
+                    val message = when {
+                        e.message?.contains("timeout", ignoreCase = true) == true ->
+                            "Request timed out. Please try again."
 
+                        e.message?.contains("Unable to resolve host", ignoreCase = true) == true ->
+                            "No internet connection. Please check your network."
+
+                        else ->
+                            e.message
+                    }
+                    _events.emit(
+                        SyncEvent.Failed(message ?: "Sync failed")
+                    )
                     break
                 }
             }

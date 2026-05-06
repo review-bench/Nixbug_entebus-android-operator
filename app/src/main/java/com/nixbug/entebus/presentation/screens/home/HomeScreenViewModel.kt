@@ -662,7 +662,23 @@ class HomeScreenViewModel @Inject constructor(
                     val token = getTokenUseCase().first()
                     createServiceCollectionUseCase(
                         serviceId = service.id,
-                        serviceName = "${service.startingLandmarkName} TO ${service.endingLandmarkName}",
+                        serviceName = "${
+                            service.startingLandmarkName.replaceFirstChar {
+                                if (it.isLowerCase()) {
+                                    it.titlecase()
+                                } else {
+                                    it.toString()
+                                }
+                            }
+                        } -> ${
+                            service.endingLandmarkName.replaceFirstChar {
+                                if (it.isLowerCase()) {
+                                    it.titlecase()
+                                } else {
+                                    it.toString()
+                                }
+                            }
+                        }",
                         regNo = service.registrationNumber,
                         startedAt = service.startingAt,
                         finishOn = service.endingAt,

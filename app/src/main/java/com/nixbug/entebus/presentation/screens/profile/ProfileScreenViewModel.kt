@@ -2,8 +2,10 @@ package com.nixbug.entebus.presentation.screens.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.local.SyncEvent
 import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
 import com.nixbug.entebus.domain.usecase.HasPendingSyncItemsUseCase
+import com.nixbug.entebus.domain.usecase.ObserveSyncEventsUseCase
 import com.nixbug.entebus.domain.usecase.TriggerSyncUseCase
 import com.nixbug.entebus.domain.usecase.accountimage.GetAccountImageUseCase
 import com.nixbug.entebus.domain.usecase.service.ClearAllServicesUseCase
@@ -34,7 +36,8 @@ class ProfileScreenViewModel @Inject constructor(
     private val clearAllServicesUseCase: ClearAllServicesUseCase,
     private val hasPendingSyncItemsUseCase: HasPendingSyncItemsUseCase,
     private val hasServiceWithStatusStartedUseCase: HasServiceWithStartedStatusUseCase,
-    private val triggerSyncUseCase: TriggerSyncUseCase
+    private val triggerSyncUseCase: TriggerSyncUseCase,
+    private val observeSyncEventsUseCase: ObserveSyncEventsUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -88,6 +91,32 @@ class ProfileScreenViewModel @Inject constructor(
         }
     }
 
+    fun syncNow() {
+        viewModelScope.launch {
+
+            triggerSyncUseCase()
+
+            when (val event = observeSyncEventsUseCase().first()) {
+
+                is SyncEvent.Failed -> {
+                    SnackbarManager.show(
+                        event.message,
+                        SnackbarType.ERROR
+                    )
+                }
+
+                is SyncEvent.Success -> {
+                    SnackbarManager.show(
+                        "Sync completed",
+                        SnackbarType.SUCCESS
+                    )
+                }
+
+                else -> Unit
+            }
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             val hasActiveService = hasServiceWithStatusStartedUseCase()
@@ -104,7 +133,7 @@ class ProfileScreenViewModel @Inject constructor(
                     message = "Sync in progress. Please wait.",
                     type = SnackbarType.ERROR,
                     actionLabel = "Sync",
-                    onAction = {viewModelScope.launch { triggerSyncUseCase() }}
+                    onAction = { viewModelScope.launch { syncNow() } }
                 )
                 return@launch
             }

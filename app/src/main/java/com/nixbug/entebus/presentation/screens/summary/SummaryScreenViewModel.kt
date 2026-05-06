@@ -4,7 +4,13 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.local.SyncEvent
+import com.nixbug.entebus.domain.usecase.HasPendingSyncItemsUseCase
+import com.nixbug.entebus.domain.usecase.ObserveSyncEventsUseCase
+import com.nixbug.entebus.domain.usecase.TriggerSyncUseCase
 import com.nixbug.entebus.domain.usecase.collection.ObserveServiceCollectionsUseCase
+import com.nixbug.entebus.domain.usecase.service.HasServiceWithStartedStatusUseCase
+import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
@@ -19,6 +25,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,7 +35,12 @@ import javax.inject.Inject
 @HiltViewModel
 class SummaryScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager,
-    private val observeServiceCollectionsUseCase: ObserveServiceCollectionsUseCase
+    private val observeServiceCollectionsUseCase: ObserveServiceCollectionsUseCase,
+    private val hasPendingSyncItemsUseCase: HasPendingSyncItemsUseCase,
+    private val hasServiceWithStatusStartedUseCase: HasServiceWithStartedStatusUseCase,
+    private val triggerSyncUseCase: TriggerSyncUseCase,
+    private val observeSyncEventsUseCase: ObserveSyncEventsUseCase,
+    private val getUserUseCase: GetUserUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SummaryUiState())
@@ -40,8 +52,21 @@ class SummaryScreenViewModel @Inject constructor(
     private var pendingPrintData: PrintSummaryData? = null
 
     init {
-//        autoSelectTodayServices()
         observeCollections()
+        observeUser()
+    }
+
+    private fun observeUser() {
+        viewModelScope.launch {
+            getUserUseCase()
+                .collect { user ->
+                    _uiState.update {
+                        it.copy(
+                            companyName = user.companyName
+                        )
+                    }
+                }
+        }
     }
 
     private fun observeCollections() {
@@ -186,10 +211,57 @@ class SummaryScreenViewModel @Inject constructor(
     }
 
     fun showSummaryPreview() {
-        _uiState.update {
-            it.copy(
-                showSummaryPreviewDialog = true
-            )
+        viewModelScope.launch {
+            val hasActiveService = hasServiceWithStatusStartedUseCase()
+            if (hasActiveService) {
+                SnackbarManager.show(
+                    "You have an active service. Please end it before logging out.",
+                    SnackbarType.ERROR
+                )
+                return@launch
+            }
+            val hasPending = hasPendingSyncItemsUseCase()
+            if (hasPending) {
+                SnackbarManager.show(
+                    message = "Sync in progress. Please wait.",
+                    type = SnackbarType.ERROR,
+                    actionLabel = "Sync",
+                    onAction = { viewModelScope.launch { syncNow() } }
+                )
+                return@launch
+            }
+            _uiState.update {
+                it.copy(
+                    showSummaryPreviewDialog = true
+                )
+            }
+        }
+
+    }
+
+    fun syncNow() {
+        viewModelScope.launch {
+
+            triggerSyncUseCase()
+
+            when (val event = observeSyncEventsUseCase().first()) {
+
+                is SyncEvent.Failed -> {
+                    SnackbarManager.show(
+                        event.message,
+                        SnackbarType.ERROR
+                    )
+                }
+
+                is SyncEvent.Success -> {
+                    SnackbarManager.show(
+                        "Sync completed",
+                        SnackbarType.SUCCESS
+                    )
+                }
+
+                else -> Unit
+            }
         }
     }
 
@@ -261,7 +333,13 @@ class SummaryScreenViewModel @Inject constructor(
                     builder.text("-----${data.printedAt}-----")
                     builder.addCommand(PrinterManager.Commands.BOLD_ON)
                     builder.addCommand(PrinterManager.Commands.SIZE_DOUBLE_HEIGHT)
-                    builder.text("Krishna")
+                    builder.text(uiState.value.companyName?.replaceFirstChar {
+                        if (it.isLowerCase()) {
+                            it.titlecase()
+                        } else {
+                            it.toString()
+                        }
+                    } ?: "")
                     builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
                     builder.addCommand(PrinterManager.Commands.BOLD_OFF)
                     builder.text("--------")
@@ -269,7 +347,17 @@ class SummaryScreenViewModel @Inject constructor(
                     data.services.forEachIndexed { index, service ->
                         builder.addCommand(PrinterManager.Commands.BOLD_ON)
                         builder.addCommand(PrinterManager.Commands.ALIGN_LEFT)
-                        builder.text("${index + 1}.${service.serviceName}")
+                        builder.text(
+                            "${index + 1}.${
+                                service.serviceName.replaceFirstChar {
+                                    if (it.isLowerCase()) {
+                                        it.titlecase()
+                                    } else {
+                                        it.toString()
+                                    }
+                                }
+                            }"
+                        )
                         builder.addCommand(PrinterManager.Commands.BOLD_OFF)
 
                         builder.addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)

@@ -185,6 +185,7 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
 
     if (state.showSummaryPreviewDialog) {
         SummaryPreviewDialog(
+            companyName = state.companyName ?: "",
             summaryData = state.summary,
             selectedIds = state.selectedServiceIds,
             onDismiss = viewModel::hideSummaryPreview,
@@ -400,8 +401,15 @@ fun SummaryCardHeader(
         Column(
             modifier = Modifier.weight(1f)
         ) {
+            val serviceNameWithUpperCase = serviceName.replaceFirstChar {
+                if (it.isLowerCase()) {
+                    it.titlecase()
+                } else {
+                    it.toString()
+                }
+            }
             ExpandableEllipsizedText(
-                text = serviceName,
+                text = serviceNameWithUpperCase,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 )
@@ -602,6 +610,7 @@ fun ReceiptTextWithLine(text: String) {
 
 @Composable
 fun SummaryPreviewDialog(
+    companyName: String,
     summaryData: List<SummaryUiModel>,
     selectedIds: Set<Int>,
     onDismiss: () -> Unit,
@@ -659,7 +668,13 @@ fun SummaryPreviewDialog(
 
                     item {
                         Text(
-                            text = "Krishna",
+                            text = companyName.replaceFirstChar {
+                                if (it.isLowerCase()) {
+                                    it.titlecase()
+                                } else {
+                                    it.toString()
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 4.dp),
@@ -691,7 +706,15 @@ fun SummaryPreviewDialog(
                         Column {
 
                             Text(
-                                text = "${index + 1}. ${first.serviceName}",
+                                text = "${index + 1}. ${
+                                    first.serviceName.replaceFirstChar {
+                                        if (it.isLowerCase()) {
+                                            it.titlecase()
+                                        } else {
+                                            it.toString()
+                                        }
+                                    }
+                                }",
                                 fontWeight = FontWeight.Bold
                             )
 
