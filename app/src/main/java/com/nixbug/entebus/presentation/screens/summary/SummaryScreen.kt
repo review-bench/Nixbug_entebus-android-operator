@@ -59,7 +59,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.nixbug.entebus.presentation.components.DialogBox
-import com.nixbug.entebus.presentation.components.loadingskeleton.PersonalDetailsSkeleton
 import com.nixbug.entebus.presentation.components.loadingskeleton.SummaryScreenSkeleton
 import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.presentation.components.printer.PrinterPickerDialog
@@ -158,8 +157,7 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
         if (state.isLoading) {
             val shimmerBrush = rememberShimmerBrush()
             SummaryScreenSkeleton(shimmerBrush = shimmerBrush)
-        } else
-        {
+        } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()

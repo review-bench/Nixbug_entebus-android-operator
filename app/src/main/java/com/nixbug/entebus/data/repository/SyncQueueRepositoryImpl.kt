@@ -23,7 +23,6 @@ class SyncQueueRepositoryImpl @Inject constructor(
 
     private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     override suspend fun enqueuePaperTicket(request: PaperTicket) {
-
         val entity = SyncQueueEntity(
             operationType = SyncOperationType.PAPER_TICKET,
             serviceId = request.ticket.serviceId,
