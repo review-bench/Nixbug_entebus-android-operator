@@ -55,9 +55,7 @@ class SyncQueueRepositoryImpl @Inject constructor(
         triggerSync()
     }
 
-    private fun triggerSync() {
-        syncScope.launch { processor.processQueue() }
-    }
+    override suspend fun triggerSync() { syncScope.launch { processor.processQueue() } }
 
     override suspend fun getNextTicketSequence(serviceId: Int): Int {
         val lastSequence = syncQueueDao.getLastTicketSequence(serviceId)

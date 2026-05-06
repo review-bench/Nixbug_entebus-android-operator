@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.usecase.ClearSessionUseCase
 import com.nixbug.entebus.domain.usecase.HasPendingSyncItemsUseCase
+import com.nixbug.entebus.domain.usecase.TriggerSyncUseCase
 import com.nixbug.entebus.domain.usecase.accountimage.GetAccountImageUseCase
 import com.nixbug.entebus.domain.usecase.service.ClearAllServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.HasServiceWithStartedStatusUseCase
@@ -32,7 +33,8 @@ class ProfileScreenViewModel @Inject constructor(
     private val clearSessionUseCase: ClearSessionUseCase,
     private val clearAllServicesUseCase: ClearAllServicesUseCase,
     private val hasPendingSyncItemsUseCase: HasPendingSyncItemsUseCase,
-    private val hasServiceWithStatusStartedUseCase: HasServiceWithStartedStatusUseCase
+    private val hasServiceWithStatusStartedUseCase: HasServiceWithStartedStatusUseCase,
+    private val triggerSyncUseCase: TriggerSyncUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -99,8 +101,10 @@ class ProfileScreenViewModel @Inject constructor(
             val hasPending = hasPendingSyncItemsUseCase()
             if (hasPending) {
                 SnackbarManager.show(
-                    "Sync in progress. Please wait.",
-                    SnackbarType.ERROR
+                    message = "Sync in progress. Please wait.",
+                    type = SnackbarType.ERROR,
+                    actionLabel = "Sync",
+                    onAction = {viewModelScope.launch { triggerSyncUseCase() }}
                 )
                 return@launch
             }
