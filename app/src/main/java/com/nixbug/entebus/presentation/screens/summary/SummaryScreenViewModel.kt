@@ -56,7 +56,14 @@ class SummaryScreenViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            deleteOldCollectionsUseCase()
+            try {
+                deleteOldCollectionsUseCase()
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    "Failed to clean old collections",
+                    SnackbarType.ERROR
+                )
+            }
         }
         observeCollections()
         observeUser()
@@ -64,14 +71,21 @@ class SummaryScreenViewModel @Inject constructor(
 
     private fun observeUser() {
         viewModelScope.launch {
-            getUserUseCase()
-                .collect { user ->
-                    _uiState.update {
-                        it.copy(
-                            companyName = user.companyName
-                        )
+            try {
+                getUserUseCase()
+                    .collect { user ->
+                        _uiState.update {
+                            it.copy(
+                                companyName = user.companyName
+                            )
+                        }
                     }
-                }
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    "Error loading user data: ${e.message}",
+                    SnackbarType.ERROR
+                )
+            }
         }
     }
 

@@ -9,6 +9,7 @@ import com.nixbug.entebus.data.remote.operator.model.paperticket.AppApiPaperTick
 import com.nixbug.entebus.domain.model.local.SyncEvent
 import com.nixbug.entebus.domain.model.local.SyncOperationType
 import com.nixbug.entebus.domain.model.local.SyncStatus
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -24,7 +25,10 @@ class SyncQueueProcessor @Inject constructor(
     private val serviceApi: OperatorServiceApi,
     private val gson: Gson
 ) {
-    private val _events = MutableSharedFlow<SyncEvent>(extraBufferCapacity = 1)
+    private val _events = MutableSharedFlow<SyncEvent>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     val events: SharedFlow<SyncEvent> = _events.asSharedFlow()
     private val mutex = Mutex()
 

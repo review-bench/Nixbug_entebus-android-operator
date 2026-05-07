@@ -798,7 +798,7 @@ class HomeScreenViewModel @Inject constructor(
                 }
                 if (hasServiceCollectionUseCase(
                         serviceId = service.id,
-                        operatorId = token.operatorId
+                        operatorId = operatorId
                     )
                 ) {
                     enqueueServicePatchUseCase(
