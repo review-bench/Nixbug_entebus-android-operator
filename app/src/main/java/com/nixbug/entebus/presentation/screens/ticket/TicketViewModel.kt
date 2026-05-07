@@ -21,6 +21,7 @@ import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.titleCaseFirstChar
 import com.nixbug.entebus.utils.toCurrency
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -481,9 +482,9 @@ class TicketViewModel @Inject constructor(
                         )
                         .addCommand(PrinterManager.Commands.BOLD_ON)
                         .routeRow(
-                            formatText(startingLandmark.name),
+                            formatText(startingLandmark.name.titleCaseFirstChar()),
                             "To",
-                            formatText(endingLandmark.name)
+                            formatText(endingLandmark.name.titleCaseFirstChar())
                         )
                         .addCommand(PrinterManager.Commands.BOLD_OFF)
                         .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
