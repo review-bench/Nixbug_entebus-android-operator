@@ -1,6 +1,5 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
-import android.annotation.SuppressLint
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -378,7 +377,6 @@ class TicketViewModel @Inject constructor(
                         message = "Service data is still loading. Please try again.",
                         type = SnackbarType.ERROR
                     )
-                    emitNavigateBack()
                     return@launch
                 }
                 if (operatorId == null) {
@@ -387,8 +385,6 @@ class TicketViewModel @Inject constructor(
                         type = SnackbarType.ERROR,
                         duration = SnackbarDuration.Long
                     )
-
-                    emitNavigateBack()
                     return@launch
                 }
                 val ticketId = getNextTicketSequenceUseCase(serviceId)

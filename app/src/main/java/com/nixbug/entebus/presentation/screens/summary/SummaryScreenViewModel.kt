@@ -17,6 +17,7 @@ import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.titleCaseFirstChar
 import com.nixbug.entebus.utils.utcToIstConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -369,13 +370,7 @@ class SummaryScreenViewModel @Inject constructor(
                     builder.text("-----${data.printedAt}-----")
                     builder.addCommand(PrinterManager.Commands.BOLD_ON)
                     builder.addCommand(PrinterManager.Commands.SIZE_DOUBLE_HEIGHT)
-                    builder.text(uiState.value.companyName?.replaceFirstChar {
-                        if (it.isLowerCase()) {
-                            it.titlecase()
-                        } else {
-                            it.toString()
-                        }
-                    } ?: "")
+                    builder.text(uiState.value.companyName?.titleCaseFirstChar() ?: "")
                     builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
                     builder.addCommand(PrinterManager.Commands.BOLD_OFF)
                     builder.text("--------")
@@ -383,17 +378,7 @@ class SummaryScreenViewModel @Inject constructor(
                     data.services.forEachIndexed { index, service ->
                         builder.addCommand(PrinterManager.Commands.BOLD_ON)
                         builder.addCommand(PrinterManager.Commands.ALIGN_LEFT)
-                        builder.text(
-                            "${index + 1}.${
-                                service.serviceName.replaceFirstChar {
-                                    if (it.isLowerCase()) {
-                                        it.titlecase()
-                                    } else {
-                                        it.toString()
-                                    }
-                                }
-                            }"
-                        )
+                        builder.text("${index + 1}.${service.serviceName}")
                         builder.addCommand(PrinterManager.Commands.BOLD_OFF)
 
                         builder.addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)

@@ -90,6 +90,7 @@ import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.titleCaseFirstChar
 
 @Composable
 fun HomeScreen(
@@ -771,23 +772,7 @@ fun ServiceCard(
 
             //-------------- ROUTE NAME ----------------------//
             Text(
-                text = "${
-                    service.startingLandmarkName.replaceFirstChar {
-                        if (it.isLowerCase()) {
-                            it.titlecase()
-                        } else {
-                            it.toString()
-                        }
-                    }
-                } -> ${
-                    service.endingLandmarkName.replaceFirstChar {
-                        if (it.isLowerCase()) {
-                            it.titlecase()
-                        } else {
-                            it.toString()
-                        }
-                    }
-                }",
+                text = "${service.startingLandmarkName.titleCaseFirstChar()}-> ${service.endingLandmarkName.titleCaseFirstChar()}",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 3.dp),
                 color = Color.Black

@@ -29,6 +29,7 @@ import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.titleCaseFirstChar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -683,23 +684,7 @@ class HomeScreenViewModel @Inject constructor(
 
                     createServiceCollectionUseCase(
                         serviceId = service.id,
-                        serviceName = "${
-                            service.startingLandmarkName.replaceFirstChar {
-                                if (it.isLowerCase()) {
-                                    it.titlecase()
-                                } else {
-                                    it.toString()
-                                }
-                            }
-                        } -> ${
-                            service.endingLandmarkName.replaceFirstChar {
-                                if (it.isLowerCase()) {
-                                    it.titlecase()
-                                } else {
-                                    it.toString()
-                                }
-                            }
-                        }",
+                        serviceName = "${service.startingLandmarkName.titleCaseFirstChar()} -> ${service.endingLandmarkName.titleCaseFirstChar()}",
                         regNo = service.registrationNumber,
                         startedAt = service.startingAt,
                         finishOn = service.endingAt,

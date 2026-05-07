@@ -70,6 +70,7 @@ import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimme
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.SetStatusBarColor
+import com.nixbug.entebus.utils.titleCaseFirstChar
 import com.nixbug.entebus.utils.toCurrency
 import java.util.Locale
 
@@ -280,13 +281,7 @@ fun LandmarkList(
                             )
                         }
                         Text(
-                            text = landmark.name.replaceFirstChar {
-                                if (it.isLowerCase()) {
-                                    it.titlecase()
-                                } else {
-                                    it.toString()
-                                }
-                            },
+                            text = landmark.name.titleCaseFirstChar(),
                             color = Color.Black,
                             style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,

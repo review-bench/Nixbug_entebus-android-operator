@@ -69,6 +69,7 @@ import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.titleCaseFirstChar
 import com.nixbug.entebus.utils.toCurrency
 import com.nixbug.entebus.utils.utcToIstConverter
 import com.nixbug.entebus.utils.utcToIstWithActualDate
@@ -421,13 +422,7 @@ fun SummaryCardHeader(
         Column(
             modifier = Modifier.weight(1f)
         ) {
-            val serviceNameWithUpperCase = serviceName.replaceFirstChar {
-                if (it.isLowerCase()) {
-                    it.titlecase()
-                } else {
-                    it.toString()
-                }
-            }
+            val serviceNameWithUpperCase = serviceName.titleCaseFirstChar()
             ExpandableEllipsizedText(
                 text = serviceNameWithUpperCase,
                 style = MaterialTheme.typography.titleMedium.copy(
@@ -659,7 +654,7 @@ fun EmptySummaryState(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "Collections from today or yesterday will appear here.",
+                text = "Collections from the last 7 days will appear here.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray,
                 textAlign = TextAlign.Center
@@ -728,13 +723,7 @@ fun SummaryPreviewDialog(
 
                     item {
                         Text(
-                            text = companyName.replaceFirstChar {
-                                if (it.isLowerCase()) {
-                                    it.titlecase()
-                                } else {
-                                    it.toString()
-                                }
-                            },
+                            text = companyName.titleCaseFirstChar(),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 4.dp),
@@ -766,15 +755,7 @@ fun SummaryPreviewDialog(
                         Column {
 
                             Text(
-                                text = "${index + 1}. ${
-                                    first.serviceName.replaceFirstChar {
-                                        if (it.isLowerCase()) {
-                                            it.titlecase()
-                                        } else {
-                                            it.toString()
-                                        }
-                                    }
-                                }",
+                                text = "${index + 1}. ${first.serviceName}",
                                 fontWeight = FontWeight.Bold
                             )
 
