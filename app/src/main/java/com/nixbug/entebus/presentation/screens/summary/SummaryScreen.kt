@@ -1,5 +1,6 @@
 package com.nixbug.entebus.presentation.screens.summary
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
@@ -473,7 +474,7 @@ fun TotalCollectionRow(total: Double) {
         )
 
         Text(
-            text = "₹$total",
+            text = "₹${total.toCurrency()}",
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
             color = MaterialTheme.colorScheme.primary
@@ -572,7 +573,7 @@ fun OperatorRow(
         )
 
         Text(
-            text = "₹$amount",
+            text = "₹${amount.toCurrency()}",
             fontWeight = FontWeight.SemiBold,
             color = Color.Black
         )
@@ -746,7 +747,7 @@ fun SummaryPreviewDialog(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(it.operatorName)
-                                    Text("₹${it.collection}")
+                                    Text("₹${it.collection.toCurrency()}")
                                 }
                             }
 
@@ -761,7 +762,7 @@ fun SummaryPreviewDialog(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "₹$total",
+                                    text = "₹${total.toCurrency()}",
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -783,7 +784,7 @@ fun SummaryPreviewDialog(
                                 fontSize = 18.sp
                             )
                             Text(
-                                text = "₹$grandTotal",
+                                text = "₹${grandTotal.toCurrency()}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp,
                                 color = MaterialTheme.colorScheme.primary
@@ -847,10 +848,10 @@ private fun buildPrintSummaryData(
                 operators = serviceGroup.map {
                     it.operatorName to it.collection
                 },
-                serviceTotal = total.toString()
+                serviceTotal = total.toCurrency()
             )
         },
-        grandTotal = grandTotal.toString(),
+        grandTotal = grandTotal.toCurrency(),
         printedAt = formattedDateTime
     )
 }
@@ -871,4 +872,9 @@ private fun buildDateRange(
     } else {
         "$startDate,$startTime To $finishDate,$finishTime"
     }
+}
+
+@SuppressLint("DefaultLocale")
+private fun Double.toCurrency(): String {
+    return String.format("%.2f", this)
 }

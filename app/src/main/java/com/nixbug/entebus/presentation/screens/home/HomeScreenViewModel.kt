@@ -313,7 +313,6 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-
     fun onDownloadService(service: HomeUiModel) {
         _uiState.update { it.copy(downloadingServiceId = service.id) }
         viewModelScope.launch {
@@ -673,6 +672,15 @@ class HomeScreenViewModel @Inject constructor(
                 ) {
                     val user = getUserUseCase().first()
                     val token = getTokenUseCase().first()
+                    val operatorId = token.operatorId
+                    if (operatorId == null) {
+                        SnackbarManager.show(
+                            "Operator session expired. Please login again.",
+                            SnackbarType.ERROR
+                        )
+                        return@launch
+                    }
+
                     createServiceCollectionUseCase(
                         serviceId = service.id,
                         serviceName = "${
@@ -697,7 +705,7 @@ class HomeScreenViewModel @Inject constructor(
                         finishOn = service.endingAt,
                         operators = listOf(
                             OperatorInfo(
-                                id = token.operatorId ?: 0,
+                                id = operatorId,
                                 name = user.username ?: ""
                             ),
                         )
@@ -774,7 +782,6 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     // OTHER UI STATE HANDLERS
-
 
     fun onFinishService(service: HomeUiModel) {
         printerManager.closeConnection()

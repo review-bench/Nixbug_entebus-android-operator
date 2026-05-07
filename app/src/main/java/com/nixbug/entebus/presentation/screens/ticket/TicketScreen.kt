@@ -1,5 +1,6 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -585,7 +586,7 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        text = "$totalFare \u20B9",
+                        text = "${totalFare.toCurrency()} \u20B9",
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )
@@ -621,4 +622,9 @@ fun BottomSummaryCard(
             }
         }
     }
+}
+
+@SuppressLint("DefaultLocale")
+private fun Double.toCurrency(): String {
+    return String.format("%.2f", this)
 }

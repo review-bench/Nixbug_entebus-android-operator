@@ -1,5 +1,6 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
+import android.annotation.SuppressLint
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -81,7 +82,6 @@ class TicketViewModel @Inject constructor(
         }
 
         return PaperTicket(
-
             ticket = Ticket(
                 id = ticketId,
                 serviceId = serviceId,
@@ -371,11 +371,23 @@ class TicketViewModel @Inject constructor(
                 val endingLandmark = state.endingLandmark
                 val passengers = state.passengers
                 val serviceId = state.serviceId
+                val operatorId = state.operatorId
                 if (serviceId == null) {
                     SnackbarManager.show(
                         message = "Service data is still loading. Please try again.",
                         type = SnackbarType.ERROR
                     )
+                    emitNavigateBack()
+                    return@launch
+                }
+                if (operatorId == null) {
+                    SnackbarManager.show(
+                        message = "Operator session expired. Please login again.",
+                        type = SnackbarType.ERROR,
+                        duration = SnackbarDuration.Long
+                    )
+
+                    emitNavigateBack()
                     return@launch
                 }
                 val ticketId = getNextTicketSequenceUseCase(serviceId)
@@ -497,7 +509,7 @@ class TicketViewModel @Inject constructor(
                         }
 
                         .addCommand(PrinterManager.Commands.SIZE_BIG)
-                        .text("RS . $totalFare")
+                        .text("RS . ${totalFare.toCurrency()}")
                         .addCommand(PrinterManager.Commands.SIZE_NORMAL)
                         .divider()
                         .addCommand(PrinterManager.Commands.ALIGN_CENTER)
@@ -530,7 +542,7 @@ class TicketViewModel @Inject constructor(
                 enqueuePaperTicketUseCase(request)
                 addServiceCollectionUseCase(
                     serviceId = serviceId,
-                    operatorId = requireNotNull(state.operatorId),
+                    operatorId = operatorId,
                     amount = totalFare
                 )
                 resetTicketState()
@@ -543,11 +555,7 @@ class TicketViewModel @Inject constructor(
                 )
 
             } finally {
-                _uiState.update {
-                    it.copy(
-                        isPrinting = false
-                    )
-                }
+                _uiState.update { it.copy(isPrinting = false) }
             }
         }
     }
@@ -566,5 +574,10 @@ class TicketViewModel @Inject constructor(
                 totalFare = 0.0
             )
         }
+    }
+
+    @SuppressLint("DefaultLocale")
+    private fun Double.toCurrency(): String {
+        return String.format("%.2f", this)
     }
 }

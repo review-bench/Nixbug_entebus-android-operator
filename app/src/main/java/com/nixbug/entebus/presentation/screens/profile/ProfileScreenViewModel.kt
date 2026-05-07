@@ -17,6 +17,7 @@ import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -94,9 +95,16 @@ class ProfileScreenViewModel @Inject constructor(
     fun syncNow() {
         viewModelScope.launch {
 
+            val eventDeferred = async {
+                observeSyncEventsUseCase()
+                    .first {
+                        it is SyncEvent.Success || it is SyncEvent.Failed
+                    }
+            }
+
             triggerSyncUseCase()
 
-            when (val event = observeSyncEventsUseCase().first()) {
+            when (val event = eventDeferred.await()) {
 
                 is SyncEvent.Failed -> {
                     SnackbarManager.show(

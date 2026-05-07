@@ -20,6 +20,7 @@ import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.utcToIstConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -54,18 +55,11 @@ class SummaryScreenViewModel @Inject constructor(
     private var pendingPrintData: PrintSummaryData? = null
 
     init {
-        try {
-            viewModelScope.launch {
-                deleteOldCollectionsUseCase()
-            }
-            observeCollections()
-            observeUser()
-        } catch (e: Exception) {
-            SnackbarManager.show(
-                "Error initializing summary screen: ${e.message}",
-                SnackbarType.ERROR
-            )
+        viewModelScope.launch {
+            deleteOldCollectionsUseCase()
         }
+        observeCollections()
+        observeUser()
     }
 
     private fun observeUser() {
@@ -273,9 +267,16 @@ class SummaryScreenViewModel @Inject constructor(
     fun syncNow() {
         viewModelScope.launch {
 
+            val eventDeferred = async {
+                observeSyncEventsUseCase()
+                    .first {
+                        it is SyncEvent.Success || it is SyncEvent.Failed
+                    }
+            }
+
             triggerSyncUseCase()
 
-            when (val event = observeSyncEventsUseCase().first()) {
+            when (val event = eventDeferred.await()) {
 
                 is SyncEvent.Failed -> {
                     SnackbarManager.show(

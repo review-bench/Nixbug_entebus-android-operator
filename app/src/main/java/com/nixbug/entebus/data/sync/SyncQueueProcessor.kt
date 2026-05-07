@@ -24,7 +24,7 @@ class SyncQueueProcessor @Inject constructor(
     private val serviceApi: OperatorServiceApi,
     private val gson: Gson
 ) {
-    private val _events = MutableSharedFlow<SyncEvent>(replay = 1)
+    private val _events = MutableSharedFlow<SyncEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<SyncEvent> = _events.asSharedFlow()
     private val mutex = Mutex()
 
@@ -105,8 +105,8 @@ class SyncQueueProcessor @Inject constructor(
 
             if (processedAny) {
                 syncQueueDao.clearSynced()
-                _events.emit(SyncEvent.Success)
             }
+            _events.emit(SyncEvent.Success)
         }
     }
 }
