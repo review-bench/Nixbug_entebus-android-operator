@@ -756,7 +756,6 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     // EVENTS
-
     private fun emitPermissionRequest() {
         viewModelScope.launch {
             _events.emit(HomeUiEvent.RequestBluetoothPermission)
@@ -782,16 +781,24 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     // OTHER UI STATE HANDLERS
-
     fun onFinishService(service: HomeUiModel) {
         printerManager.closeConnection()
 
         viewModelScope.launch {
             try {
                 val token = getTokenUseCase().first()
+                val operatorId = token.operatorId
+
+                if (operatorId == null) {
+                    SnackbarManager.show(
+                        "Operator session expired. Please login again.",
+                        SnackbarType.ERROR
+                    )
+                    return@launch
+                }
                 if (hasServiceCollectionUseCase(
                         serviceId = service.id,
-                        operatorId = token.operatorId ?: 0
+                        operatorId = token.operatorId
                     )
                 ) {
                     enqueueServicePatchUseCase(
@@ -822,7 +829,6 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     // HELPERS
-
     /**
      * Determines whether a service can be started based on its scheduled start time.
      *

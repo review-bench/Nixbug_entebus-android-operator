@@ -128,6 +128,10 @@ class SummaryScreenViewModel @Inject constructor(
     }
 
     private fun autoSelectTodayServices() {
+        if (_uiState.value.selectedServiceIds.isNotEmpty()) {
+            return
+        }
+
         val today = Instant.now().toString()
 
         val todayServiceIds = _uiState.value.summary
@@ -167,7 +171,6 @@ class SummaryScreenViewModel @Inject constructor(
         }
     }
 
-
     fun generateReceipt(
         data: PrintSummaryData,
         hasPermission: Boolean,
@@ -188,9 +191,7 @@ class SummaryScreenViewModel @Inject constructor(
         proceedAfterBluetoothReady()
     }
 
-
     // EVENTS
-
     private fun emitPermissionRequest() {
         viewModelScope.launch {
             _events.emit(SummaryUiEvent.RequestBluetoothPermission)
@@ -210,7 +211,6 @@ class SummaryScreenViewModel @Inject constructor(
     }
 
     // PERMISSION RESULT CALLBACK
-
     fun onPermissionGranted(context: Context) {
         val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
         val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
@@ -224,7 +224,6 @@ class SummaryScreenViewModel @Inject constructor(
     }
 
     // CORE FLOW CONTINUATION
-
     private fun proceedAfterBluetoothReady() {
         viewModelScope.launch {
             if (printerManager.checkConnection()) {
