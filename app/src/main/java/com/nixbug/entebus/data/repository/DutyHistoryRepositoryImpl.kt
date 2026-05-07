@@ -13,7 +13,11 @@ class DutyHistoryRepositoryImpl @Inject constructor(
     private val dutyHistoryApi: OperatorDutyApi,
     private val tokenManager: TokenManager
 ) : DutyHistoryRepository {
-    override suspend fun getDutyHistory(): Resource<List<DutyHistoryModel>> {
+    override suspend fun getDutyHistory(
+        offset: Int,
+        limit: Int,
+        dutyId: String
+    ): Resource<List<DutyHistoryModel>> {
         val operatorId = tokenManager.operatorId
         if (operatorId == null) {
             return Resource.Error(
@@ -22,7 +26,12 @@ class DutyHistoryRepositoryImpl @Inject constructor(
         }
         return apiHelper(
             apiCall = {
-                dutyHistoryApi.getDuty(operatorId = operatorId)
+                dutyHistoryApi.getDuty(
+                    operatorId = operatorId,
+                    offset = offset,
+                    limit = limit,
+                    id = dutyId.toIntOrNull()
+                )
             },
             mapper = { response ->
                 response.map { it.toDomain() }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -31,6 +32,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Stop
@@ -38,6 +41,7 @@ import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DividerDefaults
@@ -69,6 +73,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -82,7 +87,6 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
     var showSheet by remember { mutableStateOf(false) }
-    var searchText by remember { mutableStateOf("") }
     SetStatusBarColor(
         color = Color.White,
         darkIcons = true
@@ -105,12 +109,15 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
         ) {
             HistoryHeader(
                 onFilterClick = { showSheet = true },
-                searchText,
-                onSearchTextChange = { searchText = it },
+                searchText = state.searchQuery,
+                onSearchTextChange = viewModel::onSearchQueryChange,
             )
             DutyHistoryList(
                 dutyHistoryData = state.history,
                 calculateDuration = viewModel::calculateDuration,
+                onLoadMore = viewModel::loadMoreHistory,
+                isLoadingMore = state.isPaginationLoading,
+                hasMore = state.hasMore
             )
         }
         DutyHistoryOverlay(
@@ -159,7 +166,7 @@ fun HistoryHeader(
         OutlinedTextField(
             value = searchText,
             onValueChange = onSearchTextChange,
-            label = { Text("Search...") },
+            label = { Text("Search by duty ID...") },
             modifier = Modifier
                 .fillMaxWidth()
                 .semantics {
@@ -167,7 +174,10 @@ fun HistoryHeader(
                 },
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Search
+            )
         )
         Spacer(Modifier.height(8.dp))
     }
@@ -176,7 +186,10 @@ fun HistoryHeader(
 @Composable
 fun DutyHistoryList(
     dutyHistoryData: List<DutyHistoryModel>,
-    calculateDuration: (String?, String?) -> String
+    calculateDuration: (String?, String?) -> String,
+    onLoadMore: (() -> Unit)? = null,
+    isLoadingMore: Boolean = false,
+    hasMore: Boolean = true
 ) {
     if (dutyHistoryData.isEmpty()) {
         Box(
@@ -204,6 +217,31 @@ fun DutyHistoryList(
                 calculateDuration = calculateDuration
             )
             Spacer(Modifier.height(15.dp))
+        }
+
+        item {
+            Spacer(Modifier.height(10.dp))
+            if (onLoadMore != null) {
+                when {
+                    isLoadingMore -> {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    hasMore -> {
+                        ViewMoreText(
+                            text = "Load More",
+                            onClick = onLoadMore,
+                            isExpanded = false
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(20.dp))
         }
     }
 }
@@ -535,9 +573,9 @@ fun DutyHistoryOverlay(
                     )
 
                     StatusOption(
-                        label = "Terminated",
-                        isSelected = selectedStatus == "TERMINATED",
-                        onClick = { selectedStatus = "TERMINATED" }
+                        label = "Audited",
+                        isSelected = selectedStatus == "AUDITED",
+                        onClick = { selectedStatus = "AUDITED" }
                     )
                 }
 
@@ -685,3 +723,38 @@ fun StatusOption(
         )
     }
 }
+
+@Composable
+fun ViewMoreText(
+    text: String = "View More",
+    onClick: () -> Unit,
+    isExpanded: Boolean,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Icon(
+            imageVector = if (isExpanded) Icons.Filled.KeyboardDoubleArrowUp else Icons.Filled.KeyboardDoubleArrowDown,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .size(25.dp)
+        )
+    }
+}
+

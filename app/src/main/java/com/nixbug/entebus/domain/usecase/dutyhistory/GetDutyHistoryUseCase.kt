@@ -6,7 +6,11 @@ import com.nixbug.entebus.utils.network.Resource
 import javax.inject.Inject
 
 class GetDutyHistoryUseCase @Inject constructor(private val repository: DutyHistoryRepository) {
-    suspend operator fun invoke(): Resource<List<DutyHistoryModel>> {
-        return repository.getDutyHistory()
+    suspend operator fun invoke(
+        offset: Int,
+        limit: Int,
+        dutyId: String
+    ): Resource<List<DutyHistoryModel>> {
+        return repository.getDutyHistory(offset, limit, dutyId)
     }
 }

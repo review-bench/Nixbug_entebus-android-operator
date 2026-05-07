@@ -5,10 +5,16 @@ import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.usecase.dutyhistory.GetDutyHistoryUseCase
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
+import com.nixbug.entebus.utils.snackbar.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -17,7 +23,6 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class HistoryScreenViewModel @Inject constructor(
@@ -26,35 +31,114 @@ class HistoryScreenViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
 
+    private val searchQuery = MutableStateFlow("")
+    private var searchJob: Job? = null
+
     init {
-        getDutyHistory()
+        fetchHistory()
+        observeSearch()
     }
 
-    private fun getDutyHistory() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            try {
-                when (val result = getDutyHistoryUseCase()) {
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        searchQuery.value = query
+    }
 
+    @OptIn(FlowPreview::class)
+    private fun observeSearch() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            searchQuery
+                .debounce(500)
+                .distinctUntilChanged()
+                .collectLatest {
+                    fetchHistory(isPagination = false)
+                }
+        }
+    }
+
+    fun loadMoreHistory() {
+        fetchHistory(isPagination = true)
+    }
+
+    private fun fetchHistory(
+        isPagination: Boolean = false
+    ) {
+
+        viewModelScope.launch {
+            val currentState = _uiState.value
+            if (isPagination && (currentState.isPaginationLoading || !currentState.hasMore)) return@launch
+
+            if (isPagination) {
+                _uiState.update { it.copy(isPaginationLoading = true) }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        offset = 0,
+                        hasMore = true,
+                        history = emptyList(),
+                        isLoading = true
+                    )
+                }
+            }
+
+
+            try {
+                val result =
+                    getDutyHistoryUseCase(
+                        offset = if (isPagination) currentState.offset else 0,
+                        limit = currentState.limit,
+                        dutyId = searchQuery.value
+                    )
+
+                when (result) {
                     is Resource.Success -> {
-                        _uiState.update { it.copy(history = result.data ?: emptyList()) }
+                        val newList = result.data ?: emptyList()
+                        _uiState.update {
+                            it.copy(
+                                history = if (isPagination)
+                                    it.history + newList
+                                else
+                                    newList,
+                                offset = if (isPagination)
+                                    it.offset + it.limit
+                                else
+                                    it.limit,
+                                hasMore = newList.size == it.limit
+                            )
+                        }
+                    }
+
+                    is Resource.Empty -> {
+                        _uiState.update {
+                            if (isPagination) {
+                                it.copy(hasMore = false)
+                            } else {
+                                it.copy(history = emptyList(), hasMore = false)
+                            }
+                        }
                     }
 
                     is Resource.Error -> {
-                        _uiState.update { it.copy(isLoading = false) }
+                        SnackbarManager.show(
+                            result.message ?: "Failed to fetch history",
+                            SnackbarType.ERROR
+                        )
                     }
 
                     else -> {}
                 }
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                SnackbarManager.show(e.localizedMessage ?: " Failed to load duty history")
+
             } finally {
-                _uiState.update { it.copy(isLoading = false) }
+                if (isPagination) {
+                    _uiState.update { it.copy(isPaginationLoading = false) }
+                } else {
+                    _uiState.update { it.copy(isLoading = false) }
+                }
             }
         }
-
     }
+
 
     fun calculateDuration(startedOn: String?, finishedOn: String?): String {
         if (startedOn == null || finishedOn == null) return "Not finished yet"

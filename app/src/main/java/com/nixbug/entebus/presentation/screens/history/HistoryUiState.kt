@@ -5,4 +5,12 @@ import com.nixbug.entebus.domain.model.DutyHistoryModel
 data class HistoryUiState(
     val history: List<DutyHistoryModel> = emptyList(),
     val isLoading: Boolean = false,
+    val isPaginationLoading: Boolean = false,
+
+    val offset: Int = 0,
+    val limit: Int = 10,
+
+    val hasMore: Boolean = true,
+
+    val searchQuery: String = ""
 )
