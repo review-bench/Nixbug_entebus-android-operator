@@ -73,6 +73,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.nixbug.entebus.domain.model.DutyHistoryModel
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.utcToIstConverter
 
@@ -82,7 +83,6 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
     val focusManager = LocalFocusManager.current
     var showSheet by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
-    // TODO: Use searchText to filter dutyHistoryData once search functionality is implemented.
     SetStatusBarColor(
         color = Color.White,
         darkIcons = true
@@ -175,7 +175,7 @@ fun HistoryHeader(
 
 @Composable
 fun DutyHistoryList(
-    dutyHistoryData: List<HistoryUiModel>,
+    dutyHistoryData: List<DutyHistoryModel>,
     calculateDuration: (String?, String?) -> String
 ) {
     if (dutyHistoryData.isEmpty()) {
@@ -209,26 +209,27 @@ fun DutyHistoryList(
 }
 
 @Composable
-fun DutyHistoryCard(history: HistoryUiModel, calculateDuration: (String?, String?) -> String) {
+fun DutyHistoryCard(history: DutyHistoryModel, calculateDuration: (String?, String?) -> String) {
 
     val (statusText, bgColor, textColor) = when (history.status) {
-        2 -> Triple(
+        1 -> Triple(
             "STARTED",
             Color(0xFFDFF3E1),
             Color(0xFF2E7D32)
         )
 
-        3 -> Triple(
-            "TERMINATED",
-            Color(0xFFFDECEA),
-            Color(0xFFC62828)
-        )
-
-        4 -> Triple(
+        2 -> Triple(
             "ENDED",
             Color(0xFFFDEED6),
             Color(0xFFEF6C00)
         )
+
+        3 -> Triple(
+            "AUDITED",
+            Color(0xFFFDEED6),
+            Color(0xFFEF6C00)
+        )
+
 
         else -> Triple(
             "UNKNOWN",

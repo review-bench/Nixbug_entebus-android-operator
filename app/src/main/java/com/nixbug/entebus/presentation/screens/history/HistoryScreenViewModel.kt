@@ -1,21 +1,60 @@
 package com.nixbug.entebus.presentation.screens.history
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.usecase.dutyhistory.GetDutyHistoryUseCase
+import com.nixbug.entebus.utils.network.Resource
+import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
-class HistoryScreenViewModel @Inject constructor() : ViewModel() {
+class HistoryScreenViewModel @Inject constructor(
+    private val getDutyHistoryUseCase: GetDutyHistoryUseCase
+) : ViewModel() {
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
+
+    init {
+        getDutyHistory()
+    }
+
+    private fun getDutyHistory() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            try {
+                when (val result = getDutyHistoryUseCase()) {
+
+                    is Resource.Success -> {
+                        _uiState.update { it.copy(history = result.data ?: emptyList()) }
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update { it.copy(isLoading = false) }
+                    }
+
+                    else -> {}
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(e.localizedMessage ?: " Failed to load duty history")
+            } finally {
+                _uiState.update { it.copy(isLoading = false) }
+            }
+        }
+
+    }
 
     fun calculateDuration(startedOn: String?, finishedOn: String?): String {
         if (startedOn == null || finishedOn == null) return "Not finished yet"
@@ -59,4 +98,5 @@ class HistoryScreenViewModel @Inject constructor() : ViewModel() {
             .toLocalDate()
             .format(formatter)
     }
+
 }

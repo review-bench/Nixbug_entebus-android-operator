@@ -9,6 +9,7 @@ import com.nixbug.entebus.data.manager.SessionManager
 import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorDutyApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorLandmarkApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceAssignmentApi
@@ -19,6 +20,7 @@ import com.nixbug.entebus.data.repository.OperatorAccountImageRepositoryImpl
 import com.nixbug.entebus.data.repository.OperatorAccountRepositoryImpl
 import com.nixbug.entebus.data.repository.PublicCompanyRepositoryImpl
 import com.nixbug.entebus.data.repository.AssignedServiceRepositoryImpl
+import com.nixbug.entebus.data.repository.DutyHistoryRepositoryImpl
 import com.nixbug.entebus.data.repository.ServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.SessionRepositoryImpl
 import com.nixbug.entebus.data.repository.SyncQueueRepositoryImpl
@@ -30,6 +32,7 @@ import com.nixbug.entebus.domain.repository.OperatorAccountImageRepository
 import com.nixbug.entebus.domain.repository.OperatorAccountRepository
 import com.nixbug.entebus.domain.repository.PublicCompanyRepository
 import com.nixbug.entebus.domain.repository.AssignedServiceRepository
+import com.nixbug.entebus.domain.repository.DutyHistoryRepository
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.domain.repository.SessionRepository
 import com.nixbug.entebus.domain.repository.SyncQueueRepository
@@ -136,5 +139,14 @@ object RepositoryModule {
             gson = gson,
             processor = processor
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideDutyHistoryRepository(
+        api: OperatorDutyApi,
+        tokenManager: TokenManager
+    ): DutyHistoryRepository {
+        return DutyHistoryRepositoryImpl(api, tokenManager)
     }
 }
