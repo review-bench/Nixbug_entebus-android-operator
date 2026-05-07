@@ -275,7 +275,7 @@ fun SummaryHeader() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Showing collections from today and yesterday",
+            text = "Showing last 7 days collection on this device",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray
         )
