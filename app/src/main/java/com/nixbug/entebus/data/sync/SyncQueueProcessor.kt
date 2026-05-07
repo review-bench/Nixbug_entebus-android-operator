@@ -17,6 +17,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 
 @Singleton
 class SyncQueueProcessor @Inject constructor(
@@ -82,7 +83,7 @@ class SyncQueueProcessor @Inject constructor(
 
                 } catch (e: Exception) {
 
-                    if (e is kotlinx.coroutines.CancellationException) {
+                    if (e is CancellationException) {
                         throw e
                     }
 

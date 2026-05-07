@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class SummaryScreenViewModel @Inject constructor(
@@ -73,15 +74,10 @@ class SummaryScreenViewModel @Inject constructor(
     private fun observeUser() {
         viewModelScope.launch {
             try {
-                getUserUseCase()
-                    .collect { user ->
-                        _uiState.update {
-                            it.copy(
-                                companyName = user.companyName
-                            )
-                        }
-                    }
+                val user = getUserUseCase().first()
+                _uiState.update { it.copy(companyName = user.companyName) }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 SnackbarManager.show(
                     "Error loading user data: ${e.message}",
                     SnackbarType.ERROR
@@ -122,9 +118,8 @@ class SummaryScreenViewModel @Inject constructor(
                     }
 
             } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(isLoading = false)
-                }
+                if (e is CancellationException) throw e
+                _uiState.update { it.copy(isLoading = false) }
                 SnackbarManager.show(
                     "Error loading collections: ${e.message}",
                     SnackbarType.ERROR
@@ -245,7 +240,7 @@ class SummaryScreenViewModel @Inject constructor(
             val hasActiveService = hasServiceWithStatusStartedUseCase()
             if (hasActiveService) {
                 SnackbarManager.show(
-                    "You have an active service. Please end it before logging out.",
+                    "You have an active service. Please end it to preview summary.",
                     SnackbarType.ERROR
                 )
                 return@launch
@@ -253,7 +248,7 @@ class SummaryScreenViewModel @Inject constructor(
             val hasPending = hasPendingSyncItemsUseCase()
             if (hasPending) {
                 SnackbarManager.show(
-                    message = "Sync in progress. Please wait.",
+                    message = "Unsynced data found in storage. Please sync to continue.",
                     type = SnackbarType.ERROR,
                     actionLabel = "Sync",
                     onAction = { viewModelScope.launch { syncNow() } }

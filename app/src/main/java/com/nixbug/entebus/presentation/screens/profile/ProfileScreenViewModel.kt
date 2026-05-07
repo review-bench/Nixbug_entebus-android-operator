@@ -45,12 +45,11 @@ class ProfileScreenViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            getUserUseCase().collect { user ->
-                _uiState.update {
-                    it.copy(
-                        username = user.username
-                    )
-                }
+            try {
+                val user = getUserUseCase().first()
+                _uiState.update { it.copy(username = user.username) }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
             }
         }
         viewModelScope.launch {
@@ -138,7 +137,7 @@ class ProfileScreenViewModel @Inject constructor(
             val hasPending = hasPendingSyncItemsUseCase()
             if (hasPending) {
                 SnackbarManager.show(
-                    message = "Sync in progress. Please wait.",
+                    message = "Unsynced data found in storage. Please sync to continue.",
                     type = SnackbarType.ERROR,
                     actionLabel = "Sync",
                     onAction = { viewModelScope.launch { syncNow() } }
