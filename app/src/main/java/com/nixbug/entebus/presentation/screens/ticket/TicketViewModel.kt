@@ -22,6 +22,7 @@ import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.toCurrency
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -574,10 +575,5 @@ class TicketViewModel @Inject constructor(
                 totalFare = 0.0
             )
         }
-    }
-
-    @SuppressLint("DefaultLocale")
-    private fun Double.toCurrency(): String {
-        return String.format("%.2f", this)
     }
 }

@@ -94,18 +94,11 @@ class SummaryScreenViewModel @Inject constructor(
         viewModelScope.launch {
 
             try {
-
-                _uiState.update {
-                    it.copy(isLoading = true)
-                }
-
+                _uiState.update { it.copy(isLoading = true) }
                 observeServiceCollectionsUseCase()
                     .collect { collections ->
-
                         val summary = collections.map { collection ->
-
                             SummaryUiModel(
-                                id = "${collection.serviceId}${collection.operatorId}".hashCode(),
                                 serviceId = collection.serviceId,
                                 serviceName = collection.serviceName,
                                 startedOn = collection.startedAt,
@@ -128,11 +121,9 @@ class SummaryScreenViewModel @Inject constructor(
                     }
 
             } catch (e: Exception) {
-
                 _uiState.update {
                     it.copy(isLoading = false)
                 }
-
                 SnackbarManager.show(
                     "Error loading collections: ${e.message}",
                     SnackbarType.ERROR

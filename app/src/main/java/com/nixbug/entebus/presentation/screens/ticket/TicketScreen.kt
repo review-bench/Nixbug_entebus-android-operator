@@ -1,6 +1,5 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -71,6 +70,7 @@ import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimme
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.SetStatusBarColor
+import com.nixbug.entebus.utils.toCurrency
 import java.util.Locale
 
 @Composable
@@ -622,9 +622,4 @@ fun BottomSummaryCard(
             }
         }
     }
-}
-
-@SuppressLint("DefaultLocale")
-private fun Double.toCurrency(): String {
-    return String.format("%.2f", this)
 }

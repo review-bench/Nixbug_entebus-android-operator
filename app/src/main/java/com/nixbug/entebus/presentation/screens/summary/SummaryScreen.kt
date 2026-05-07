@@ -1,6 +1,5 @@
 package com.nixbug.entebus.presentation.screens.summary
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
@@ -22,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ConfirmationNumber
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -63,10 +64,12 @@ import com.nixbug.entebus.presentation.components.DialogBox
 import com.nixbug.entebus.presentation.components.loadingskeleton.SummaryScreenSkeleton
 import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.presentation.components.printer.PrinterPickerDialog
+import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.toCurrency
 import com.nixbug.entebus.utils.utcToIstConverter
 import com.nixbug.entebus.utils.utcToIstWithActualDate
 import kotlinx.coroutines.delay
@@ -166,29 +169,37 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
                     .padding(bottom = 135.dp)
             ) {
                 SummaryHeader()
-                SummaryList(
-                    summaryData = state.summary,
-                    selectedIds = state.selectedServiceIds,
-                    onToggle = viewModel::toggleSelection,
-                    modifier = Modifier.weight(1f)
+                if (state.summary.isEmpty()) {
+                    EmptySummaryState(
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    SummaryList(
+                        summaryData = state.summary,
+                        selectedIds = state.selectedServiceIds,
+                        onToggle = viewModel::toggleSelection,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+            if (state.summary.isNotEmpty()) {
+                PreviewButton(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 80.dp)
+                        .padding(horizontal = 30.dp),
+                    onClick = {
+                        if (state.selectedServiceIds.isNotEmpty()) {
+                            viewModel.showSummaryPreview()
+                        } else {
+                            SnackbarManager.show(
+                                message = "Please select at least one service",
+                                type = SnackbarType.WARNING
+                            )
+                        }
+                    },
                 )
             }
-            PreviewButton(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 80.dp)
-                    .padding(horizontal = 30.dp),
-                onClick = {
-                    if (state.selectedServiceIds.isNotEmpty()) {
-                        viewModel.showSummaryPreview()
-                    } else {
-                        SnackbarManager.show(
-                            message = "Please select at least one service",
-                            type = SnackbarType.WARNING
-                        )
-                    }
-                },
-            )
         }
     }
 
@@ -618,6 +629,46 @@ fun ReceiptTextWithLine(text: String) {
 }
 
 @Composable
+fun EmptySummaryState(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.ConfirmationNumber,
+                contentDescription = null,
+                tint = DisabledButtonColor,
+                modifier = Modifier
+                    .size(90.dp)
+                    .padding(bottom = 16.dp)
+            )
+
+            Text(
+                text = "No collections found",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "Collections from today or yesterday will appear here.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
 fun SummaryPreviewDialog(
     companyName: String,
     summaryData: List<SummaryUiModel>,
@@ -872,9 +923,4 @@ private fun buildDateRange(
     } else {
         "$startDate,$startTime To $finishDate,$finishTime"
     }
-}
-
-@SuppressLint("DefaultLocale")
-private fun Double.toCurrency(): String {
-    return String.format("%.2f", this)
 }
