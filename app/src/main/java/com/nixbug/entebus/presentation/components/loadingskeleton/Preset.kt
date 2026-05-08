@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -491,6 +493,164 @@ fun TicketScreenSkeleton(shimmerBrush: Brush) {
                 width = 220.dp,
                 height = 45.dp,
                 cornerRadius = 13.dp
+            )
+        }
+    }
+}
+
+@Composable
+fun SummaryScreenSkeleton(
+    shimmerBrush: Brush
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(bottom = 75.dp)
+    ) {
+
+        // Header
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp)
+                .padding(bottom = 12.dp)
+        ) {
+
+            SkeletonBlock(
+                shimmerBrush = shimmerBrush,
+                width = 180.dp,
+                height = 22.dp,
+                cornerRadius = 4.dp
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            SkeletonBlock(
+                shimmerBrush = shimmerBrush,
+                width = 240.dp,
+                height = 14.dp,
+                cornerRadius = 4.dp
+            )
+        }
+
+        // Cards
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(vertical = 10.dp)
+        ) {
+
+            items(4) {
+                SummaryCardSkeleton(
+                    shimmerBrush = shimmerBrush
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun SummaryCardSkeleton(
+    shimmerBrush: Brush
+) {
+
+    SkeletonCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                SkeletonBlock(
+                    shimmerBrush = shimmerBrush,
+                    width = 180.dp,
+                    height = 18.dp
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                SkeletonBlock(
+                    shimmerBrush = shimmerBrush,
+                    width = 90.dp,
+                    height = 14.dp
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                SkeletonBlock(
+                    shimmerBrush = shimmerBrush,
+                    width = 220.dp,
+                    height = 12.dp
+                )
+            }
+
+            SkeletonBlock(
+                shimmerBrush = shimmerBrush,
+                width = 22.dp,
+                height = 22.dp,
+                cornerRadius = 4.dp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Operators
+        repeat(3) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                SkeletonBlock(
+                    shimmerBrush = shimmerBrush,
+                    width = 100.dp,
+                    height = 14.dp
+                )
+
+                SkeletonBlock(
+                    shimmerBrush = shimmerBrush,
+                    width = 60.dp,
+                    height = 14.dp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        HorizontalDivider()
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Total
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            SkeletonBlock(
+                shimmerBrush = shimmerBrush,
+                width = 120.dp,
+                height = 16.dp
+            )
+
+            SkeletonBlock(
+                shimmerBrush = shimmerBrush,
+                width = 70.dp,
+                height = 18.dp
             )
         }
     }

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +30,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ConfirmationNumber
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -59,11 +61,16 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.nixbug.entebus.presentation.components.DialogBox
+import com.nixbug.entebus.presentation.components.loadingskeleton.SummaryScreenSkeleton
+import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.presentation.components.printer.PrinterPickerDialog
+import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.titleCaseFirstChar
+import com.nixbug.entebus.utils.toCurrency
 import com.nixbug.entebus.utils.utcToIstConverter
 import com.nixbug.entebus.utils.utcToIstWithActualDate
 import kotlinx.coroutines.delay
@@ -145,46 +152,61 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
         color = Color.White,
         darkIcons = true
     )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-                .padding(bottom = 135.dp)
-        ) {
-            SummaryHeader()
-            SummaryList(
-                summaryData = state.summary,
-                selectedIds = state.selectedServiceIds,
-                onToggle = viewModel::toggleSelection,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        PreviewButton(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp)
-                .padding(horizontal = 30.dp),
-            onClick = {
-                if (state.selectedServiceIds.isNotEmpty()) {
-                    viewModel.showSummaryPreview()
+        if (state.isLoading) {
+            val shimmerBrush = rememberShimmerBrush()
+            SummaryScreenSkeleton(shimmerBrush = shimmerBrush)
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+                    .padding(bottom = 135.dp)
+            ) {
+                SummaryHeader()
+                if (state.summary.isEmpty()) {
+                    EmptySummaryState(
+                        modifier = Modifier.weight(1f)
+                    )
                 } else {
-                    SnackbarManager.show(
-                        message = "Please select at least one service",
-                        type = SnackbarType.WARNING
+                    SummaryList(
+                        summaryData = state.summary,
+                        selectedIds = state.selectedServiceIds,
+                        onToggle = viewModel::toggleSelection,
+                        modifier = Modifier.weight(1f)
                     )
                 }
-            },
-        )
+            }
+            if (state.summary.isNotEmpty()) {
+                PreviewButton(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 80.dp)
+                        .padding(horizontal = 30.dp),
+                    onClick = {
+                        if (state.selectedServiceIds.isNotEmpty()) {
+                            viewModel.showSummaryPreview()
+                        } else {
+                            SnackbarManager.show(
+                                message = "Please select at least one service",
+                                type = SnackbarType.WARNING
+                            )
+                        }
+                    },
+                )
+            }
+        }
     }
 
     if (state.showSummaryPreviewDialog) {
         SummaryPreviewDialog(
+            companyName = state.companyName ?: "",
             summaryData = state.summary,
             selectedIds = state.selectedServiceIds,
             onDismiss = viewModel::hideSummaryPreview,
@@ -253,7 +275,7 @@ fun SummaryHeader() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Showing collections from today and yesterday",
+            text = "Showing last 7 days collection on this device",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray
         )
@@ -352,7 +374,7 @@ fun SummaryCardContent(
     startTime: String,
     finishDate: String,
     finishTime: String,
-    totalCollection: Int,
+    totalCollection: Double,
     isSelected: Boolean,
     onToggle: () -> Unit
 ) {
@@ -400,8 +422,9 @@ fun SummaryCardHeader(
         Column(
             modifier = Modifier.weight(1f)
         ) {
+            val serviceNameWithUpperCase = serviceName.titleCaseFirstChar()
             ExpandableEllipsizedText(
-                text = serviceName,
+                text = serviceNameWithUpperCase,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 )
@@ -444,7 +467,7 @@ fun OperatorList(serviceGroup: List<SummaryUiModel>) {
 }
 
 @Composable
-fun TotalCollectionRow(total: Int) {
+fun TotalCollectionRow(total: Double) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
@@ -457,7 +480,7 @@ fun TotalCollectionRow(total: Int) {
         )
 
         Text(
-            text = "₹$total",
+            text = "₹${total.toCurrency()}",
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
             color = MaterialTheme.colorScheme.primary
@@ -542,7 +565,7 @@ fun ExpandableEllipsizedText(
 @Composable
 fun OperatorRow(
     name: String,
-    amount: Int
+    amount: Double
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -556,7 +579,7 @@ fun OperatorRow(
         )
 
         Text(
-            text = "₹$amount",
+            text = "₹${amount.toCurrency()}",
             fontWeight = FontWeight.SemiBold,
             color = Color.Black
         )
@@ -601,7 +624,48 @@ fun ReceiptTextWithLine(text: String) {
 }
 
 @Composable
+fun EmptySummaryState(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.ConfirmationNumber,
+                contentDescription = null,
+                tint = DisabledButtonColor,
+                modifier = Modifier
+                    .size(90.dp)
+                    .padding(bottom = 16.dp)
+            )
+
+            Text(
+                text = "No collections found",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "Collections from the last 7 days will appear here.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
 fun SummaryPreviewDialog(
+    companyName: String,
     summaryData: List<SummaryUiModel>,
     selectedIds: Set<Int>,
     onDismiss: () -> Unit,
@@ -659,7 +723,7 @@ fun SummaryPreviewDialog(
 
                     item {
                         Text(
-                            text = "Krishna",
+                            text = companyName.titleCaseFirstChar(),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 4.dp),
@@ -715,7 +779,7 @@ fun SummaryPreviewDialog(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(it.operatorName)
-                                    Text("₹${it.collection}")
+                                    Text("₹${it.collection.toCurrency()}")
                                 }
                             }
 
@@ -730,7 +794,7 @@ fun SummaryPreviewDialog(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "₹$total",
+                                    text = "₹${total.toCurrency()}",
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -752,7 +816,7 @@ fun SummaryPreviewDialog(
                                 fontSize = 18.sp
                             )
                             Text(
-                                text = "₹$grandTotal",
+                                text = "₹${grandTotal.toCurrency()}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp,
                                 color = MaterialTheme.colorScheme.primary
@@ -791,7 +855,7 @@ fun SummaryPreviewDialog(
 
 private fun buildPrintSummaryData(
     selectedServices: Map<Int, List<SummaryUiModel>>,
-    grandTotal: Int
+    grandTotal: Double
 ): PrintSummaryData {
 
     val currentDateTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"))
@@ -816,10 +880,10 @@ private fun buildPrintSummaryData(
                 operators = serviceGroup.map {
                     it.operatorName to it.collection
                 },
-                serviceTotal = total.toString()
+                serviceTotal = total.toCurrency()
             )
         },
-        grandTotal = grandTotal.toString(),
+        grandTotal = grandTotal.toCurrency(),
         printedAt = formattedDateTime
     )
 }

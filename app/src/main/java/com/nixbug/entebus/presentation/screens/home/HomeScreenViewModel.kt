@@ -6,22 +6,30 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nixbug.entebus.domain.model.ServicePatchStatus
 import com.nixbug.entebus.domain.model.ServiceUpdate
+import com.nixbug.entebus.domain.model.local.CollectionStatus
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
-import com.nixbug.entebus.domain.usecase.EnqueueServicePatchUseCase
+import com.nixbug.entebus.domain.model.local.OperatorInfo
+import com.nixbug.entebus.domain.usecase.queue.EnqueueServicePatchUseCase
 import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.assignedservice.GetAssignedServiceUseCase
+import com.nixbug.entebus.domain.usecase.collection.CreateServiceCollectionUseCase
+import com.nixbug.entebus.domain.usecase.collection.HasServiceCollectionUseCase
+import com.nixbug.entebus.domain.usecase.collection.UpdateServiceCollectionStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.ClearAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailsForHomeUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.UpdateLocalStatusUseCase
+import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
+import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.network.Resource
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.titleCaseFirstChar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -37,6 +45,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -57,6 +66,11 @@ class HomeScreenViewModel @Inject constructor(
     private val deleteAssignedServicesUseCase: DeleteAssignedServicesUseCase,
     private val clearAssignedServicesUseCase: ClearAssignedServicesUseCase,
     private val enqueueServicePatchUseCase: EnqueueServicePatchUseCase,
+    private val getUserUseCase: GetUserUseCase,
+    private val getTokenUseCase: GetTokenUseCase,
+    private val createServiceCollectionUseCase: CreateServiceCollectionUseCase,
+    private val updateServiceCollectionStatusUseCase: UpdateServiceCollectionStatusUseCase,
+    private val hasServiceCollectionUseCase: HasServiceCollectionUseCase
 ) : ViewModel() {
 
     // STATE
@@ -300,7 +314,6 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-
     fun onDownloadService(service: HomeUiModel) {
         _uiState.update { it.copy(downloadingServiceId = service.id) }
         viewModelScope.launch {
@@ -514,6 +527,17 @@ class HomeScreenViewModel @Inject constructor(
 
     // MAIN UNIFIED ENTRY POINT
 
+    fun cancelPendingServiceAction() {
+        pendingAction = null
+        pendingService = null
+
+        _uiState.update {
+            it.copy(
+                startingServiceId = null
+            )
+        }
+    }
+
     fun handleServiceAction(
         action: ServiceAction,
         service: HomeUiModel? = null,
@@ -643,14 +667,47 @@ class HomeScreenViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
+                if (
+                    pendingAction == ServiceAction.START_DOWNLOADED ||
+                    pendingAction == ServiceAction.START_ASSIGNED
+                ) {
+                    val user = getUserUseCase().first()
+                    val token = getTokenUseCase().first()
+                    val operatorId = token.operatorId
+                    if (operatorId == null) {
+                        SnackbarManager.show(
+                            "Operator session expired. Please login again.",
+                            SnackbarType.ERROR
+                        )
+                        return@launch
+                    }
+
+                    createServiceCollectionUseCase(
+                        serviceId = service.id,
+                        serviceName = "${service.startingLandmarkName.titleCaseFirstChar()} -> ${service.endingLandmarkName.titleCaseFirstChar()}",
+                        regNo = service.registrationNumber,
+                        startedAt = service.startingAt,
+                        finishOn = service.endingAt,
+                        operators = listOf(
+                            OperatorInfo(
+                                id = operatorId,
+                                name = user.username ?: ""
+                            ),
+                        )
+                    )
+                }
+
                 if (pendingAction == ServiceAction.RESTART_RECENT) {
                     enqueueServicePatchUseCase(
                         serviceId = service.id,
                         request = restartServiceRequest
                     )
+                    updateServiceCollectionStatusUseCase(
+                        serviceId = service.id,
+                        status = CollectionStatus.WORKING
+                    )
                 }
                 updateLocalStatusUseCase(service.id, LocalServiceStatus.STARTED)
-
                 _uiState.update { state ->
                     state.copy(
                         ongoingService = service,
@@ -684,7 +741,6 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     // EVENTS
-
     private fun emitPermissionRequest() {
         viewModelScope.launch {
             _events.emit(HomeUiEvent.RequestBluetoothPermission)
@@ -710,15 +766,36 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     // OTHER UI STATE HANDLERS
-
-
     fun onFinishService(service: HomeUiModel) {
         printerManager.closeConnection()
 
         viewModelScope.launch {
             try {
-                enqueueServicePatchUseCase(serviceId = service.id, request = finishServiceRequest)
+                val token = getTokenUseCase().first()
+                val operatorId = token.operatorId
+
+                if (operatorId == null) {
+                    SnackbarManager.show(
+                        "Operator session expired. Please login again.",
+                        SnackbarType.ERROR
+                    )
+                    return@launch
+                }
+                if (hasServiceCollectionUseCase(
+                        serviceId = service.id,
+                        operatorId = operatorId
+                    )
+                ) {
+                    enqueueServicePatchUseCase(
+                        serviceId = service.id,
+                        request = finishServiceRequest
+                    )
+                }
                 updateLocalStatusUseCase(service.id, LocalServiceStatus.RECENT)
+                updateServiceCollectionStatusUseCase(
+                    serviceId = service.id,
+                    status = CollectionStatus.FINISHED
+                )
                 _uiState.update { state ->
                     state.copy(
                         recentServiceList = state.recentServiceList + service,
@@ -737,7 +814,6 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     // HELPERS
-
     /**
      * Determines whether a service can be started based on its scheduled start time.
      *

@@ -2,6 +2,8 @@ package com.nixbug.entebus.domain.repository
 
 import com.nixbug.entebus.domain.model.PaperTicket
 import com.nixbug.entebus.domain.model.ServiceUpdate
+import com.nixbug.entebus.domain.model.local.SyncEvent
+import kotlinx.coroutines.flow.Flow
 
 interface SyncQueueRepository {
 
@@ -9,5 +11,11 @@ interface SyncQueueRepository {
 
     suspend fun enqueueServicePatch(serviceId: Int, request: ServiceUpdate)
 
+    suspend fun triggerSync()
+
     suspend fun getNextTicketSequence(serviceId: Int): Int
+
+    suspend fun hasPendingItems(): Boolean
+
+    fun observeSyncEvents(): Flow<SyncEvent>
 }
