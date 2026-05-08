@@ -123,7 +123,19 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
         DutyHistoryOverlay(
             showSheet = showSheet,
             onDismiss = { showSheet = false },
-            convertMillisToDate = viewModel::convertMillisToDate
+            convertMillisToDate = viewModel::convertMillisToDate,
+            selectedStatus = state.selectedStatus,
+            selectedDate = state.selectedDate,
+
+            onStatusSelected = viewModel::onStatusSelected,
+            onDateSelected = viewModel::onDateSelected,
+
+            onClear = viewModel::clearFilters,
+
+            onApply = {
+                viewModel.applyFilters()
+                showSheet = false
+            }
         )
     }
 }
@@ -504,11 +516,17 @@ private fun LabeledIdRow(
 fun DutyHistoryOverlay(
     showSheet: Boolean,
     onDismiss: () -> Unit,
-    convertMillisToDate: (Long) -> String
+    convertMillisToDate: (Long) -> String,
+    selectedStatus: Int?,
+    selectedDate: String?,
+
+    onStatusSelected: (Int?) -> Unit,
+    onDateSelected: (String?) -> Unit,
+
+    onClear: () -> Unit,
+    onApply: () -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedDateText by remember { mutableStateOf("Select Date") }
-    var selectedStatus by remember { mutableStateOf<String?>(null) }
 
     if (showSheet) {
         val sheetState = rememberModalBottomSheetState(
@@ -562,20 +580,20 @@ fun DutyHistoryOverlay(
 
                     StatusOption(
                         label = "Started",
-                        isSelected = selectedStatus == "STARTED",
-                        onClick = { selectedStatus = "STARTED" }
+                        isSelected = selectedStatus == 1,
+                        onClick = { onStatusSelected(1) }
                     )
 
                     StatusOption(
                         label = "Ended",
-                        isSelected = selectedStatus == "ENDED",
-                        onClick = { selectedStatus = "ENDED" }
+                        isSelected = selectedStatus == 2,
+                        onClick = { onStatusSelected(2) }
                     )
 
                     StatusOption(
                         label = "Audited",
-                        isSelected = selectedStatus == "AUDITED",
-                        onClick = { selectedStatus = "AUDITED" }
+                        isSelected = selectedStatus == 3,
+                        onClick = { onStatusSelected(3) }
                     )
                 }
 
@@ -598,7 +616,7 @@ fun DutyHistoryOverlay(
                         ) {
                             Icon(Icons.Default.DateRange, contentDescription = "Calendar")
                             Text(
-                                text = selectedDateText,
+                                text = selectedDate ?: "Select Date",
                                 modifier = Modifier.padding(6.dp),
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.SemiBold
@@ -613,10 +631,7 @@ fun DutyHistoryOverlay(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     OutlinedButton(
-                        onClick = {
-                            selectedStatus = null
-                            selectedDateText = "Select Date"
-                        },
+                        onClick = onClear,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -627,10 +642,7 @@ fun DutyHistoryOverlay(
                     }
 
                     Button(
-                        onClick = {
-                            // TODO: Implement filter application logic in a future PR
-                            onDismiss()
-                        },
+                        onClick = onApply,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -652,7 +664,7 @@ fun DutyHistoryOverlay(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
-                        selectedDateText = convertMillisToDate(it)
+                        onDateSelected(convertMillisToDate(it))
                     }
                     showDatePicker = false
                 }) {

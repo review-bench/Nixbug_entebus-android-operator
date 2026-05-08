@@ -12,5 +12,7 @@ data class HistoryUiState(
 
     val hasMore: Boolean = true,
 
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val selectedStatus: Int? = null,
+    val selectedDate: String? = null
 )

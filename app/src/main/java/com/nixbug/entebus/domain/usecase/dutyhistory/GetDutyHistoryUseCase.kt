@@ -9,8 +9,10 @@ class GetDutyHistoryUseCase @Inject constructor(private val repository: DutyHist
     suspend operator fun invoke(
         offset: Int,
         limit: Int,
-        dutyId: String
+        dutyId: String,
+        status: Int?,
+        date: String?
     ): Resource<List<DutyHistoryModel>> {
-        return repository.getDutyHistory(offset, limit, dutyId)
+        return repository.getDutyHistory(offset, limit, dutyId, status, date)
     }
 }

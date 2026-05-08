@@ -7,6 +7,8 @@ interface DutyHistoryRepository {
     suspend fun getDutyHistory(
         offset: Int,
         limit: Int,
-        dutyId: String
+        dutyId: String,
+        status: Int?,
+        date: String?
     ): Resource<List<DutyHistoryModel>>
 }

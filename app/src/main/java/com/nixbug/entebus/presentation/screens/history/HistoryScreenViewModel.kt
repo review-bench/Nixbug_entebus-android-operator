@@ -61,6 +61,32 @@ class HistoryScreenViewModel @Inject constructor(
         fetchHistory(isPagination = true)
     }
 
+    fun onStatusSelected(status: Int?) {
+        _uiState.update {
+            it.copy(selectedStatus = status)
+        }
+    }
+
+    fun onDateSelected(date: String?) {
+        _uiState.update {
+            it.copy(selectedDate = date)
+        }
+    }
+
+    fun clearFilters() {
+        _uiState.update {
+            it.copy(
+                selectedStatus = null,
+                selectedDate = null
+            )
+        }
+        fetchHistory()
+    }
+
+    fun applyFilters() {
+        fetchHistory()
+    }
+
     private fun fetchHistory(
         isPagination: Boolean = false
     ) {
@@ -88,7 +114,9 @@ class HistoryScreenViewModel @Inject constructor(
                     getDutyHistoryUseCase(
                         offset = if (isPagination) currentState.offset else 0,
                         limit = currentState.limit,
-                        dutyId = searchQuery.value
+                        dutyId = searchQuery.value,
+                        status = currentState.selectedStatus,
+                        date = currentState.selectedDate
                     )
 
                 when (result) {
