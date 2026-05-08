@@ -58,6 +58,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -78,6 +79,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.nixbug.entebus.domain.model.DutyHistoryModel
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.utcToIstConverter
@@ -87,6 +91,15 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
     var showSheet by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(
+            Lifecycle.State.RESUMED
+        ) {
+            viewModel.onScreenVisible()
+        }
+    }
     SetStatusBarColor(
         color = Color.White,
         darkIcons = true
@@ -126,12 +139,9 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
             convertMillisToDate = viewModel::convertMillisToDate,
             selectedStatus = state.selectedStatus,
             selectedDate = state.selectedDate,
-
             onStatusSelected = viewModel::onStatusSelected,
             onDateSelected = viewModel::onDateSelected,
-
             onClear = viewModel::clearFilters,
-
             onApply = {
                 viewModel.applyFilters()
                 showSheet = false

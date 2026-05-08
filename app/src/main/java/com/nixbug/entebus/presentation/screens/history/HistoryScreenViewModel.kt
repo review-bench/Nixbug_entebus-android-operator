@@ -34,19 +34,28 @@ class HistoryScreenViewModel @Inject constructor(
     private val searchQuery = MutableStateFlow("")
     private var searchJob: Job? = null
 
-    init {
+    fun onScreenVisible() {
         fetchHistory()
-        observeSearch()
     }
 
     fun onSearchQueryChange(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
+        _uiState.update {
+            it.copy(
+                searchQuery = query,
+                offset = 0,
+                hasMore = true
+            )
+        }
         searchQuery.value = query
+        if (searchJob == null) {
+            observeSearch()
+        }
     }
 
     @OptIn(FlowPreview::class)
     private fun observeSearch() {
         searchJob?.cancel()
+
         searchJob = viewModelScope.launch {
             searchQuery
                 .debounce(500)
@@ -202,7 +211,7 @@ class HistoryScreenViewModel @Inject constructor(
      * across all devices, regardless of their local time zone.
      */
     fun convertMillisToDate(millis: Long): String {
-        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
             .withLocale(Locale.getDefault())
 
         return Instant.ofEpochMilli(millis)

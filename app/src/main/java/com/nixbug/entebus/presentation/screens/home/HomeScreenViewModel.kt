@@ -300,7 +300,6 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-
     fun onDownloadService(service: HomeUiModel) {
         _uiState.update { it.copy(downloadingServiceId = service.id) }
         viewModelScope.launch {

@@ -8,6 +8,8 @@ import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.DutyHistoryModel
 import com.nixbug.entebus.domain.repository.DutyHistoryRepository
 import com.nixbug.entebus.utils.network.Resource
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 
 class DutyHistoryRepositoryImpl @Inject constructor(
@@ -27,10 +29,7 @@ class DutyHistoryRepositoryImpl @Inject constructor(
                 "Session expired. Please login again."
             )
 
-        val statusList = status
-            ?.toDutyStatus()
-            ?.let(::listOf)
-
+        val statusList = status?.toDutyStatus()?.let(::listOf)
         val createdOnGe = date?.startOfDayUtc()
         val createdOnLe = date?.endOfDayUtc()
 
@@ -40,11 +39,8 @@ class DutyHistoryRepositoryImpl @Inject constructor(
                     operatorId = operatorId,
                     offset = offset,
                     limit = limit,
-
                     id = dutyId.toIntOrNull(),
-
                     statusList = statusList,
-
                     createdOnGe = createdOnGe,
                     createdOnLe = createdOnLe
                 )
@@ -63,10 +59,20 @@ class DutyHistoryRepositoryImpl @Inject constructor(
             else -> null
         }
     }
+
     private fun String.startOfDayUtc(): String {
-        return "${this}T00:00:00Z"
+        return LocalDate.parse(this)
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toString()
     }
+
     private fun String.endOfDayUtc(): String {
-        return "${this}T23:59:59Z"
+        return LocalDate.parse(this)
+            .plusDays(1)
+            .atStartOfDay(ZoneId.systemDefault())
+            .minusNanos(1)
+            .toInstant()
+            .toString()
     }
 }
