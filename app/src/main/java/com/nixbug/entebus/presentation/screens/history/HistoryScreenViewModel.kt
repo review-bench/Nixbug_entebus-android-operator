@@ -140,9 +140,9 @@ class HistoryScreenViewModel @Inject constructor(
                                 else
                                     newList,
                                 offset = if (isPagination)
-                                    it.offset + it.limit
+                                    it.history.size + newList.size
                                 else
-                                    it.limit,
+                                    newList.size,
                                 hasMore = newList.size == it.limit
                             )
                         }
@@ -177,7 +177,6 @@ class HistoryScreenViewModel @Inject constructor(
             }
         }
     }
-
 
     fun calculateDuration(startedOn: String?, finishedOn: String?): String {
         if (startedOn == null || finishedOn == null) return "Not finished yet"
@@ -221,5 +220,4 @@ class HistoryScreenViewModel @Inject constructor(
             .toLocalDate()
             .format(formatter)
     }
-
 }

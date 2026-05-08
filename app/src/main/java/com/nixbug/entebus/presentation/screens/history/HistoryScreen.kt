@@ -80,10 +80,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
 import com.nixbug.entebus.domain.model.DutyHistoryModel
+import com.nixbug.entebus.presentation.components.loadingskeleton.HistoryCardSkeleton
+import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.utcToIstConverter
 
@@ -92,14 +91,9 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
     var showSheet by remember { mutableStateOf(false) }
-    val lifecycleOwner = LocalLifecycleOwner.current
 
-    LaunchedEffect(lifecycleOwner) {
-        lifecycleOwner.lifecycle.repeatOnLifecycle(
-            Lifecycle.State.RESUMED
-        ) {
-            viewModel.onScreenVisible()
-        }
+    LaunchedEffect(true) {
+        viewModel.onScreenVisible()
     }
     SetStatusBarColor(
         color = Color.White,
@@ -128,6 +122,7 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
                 isFilterApplied = state.isFilterApplied
             )
             DutyHistoryList(
+                isLoading = state.isLoading,
                 dutyHistoryData = state.history,
                 calculateDuration = viewModel::calculateDuration,
                 onLoadMore = viewModel::loadMoreHistory,
@@ -145,9 +140,10 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
             onDateSelected = viewModel::onDateSelected,
             onClear = viewModel::clearFilters,
             onApply = {
-                viewModel.applyFilters()
                 showSheet = false
-            }
+                viewModel.applyFilters()
+            },
+            isFilterApplied = state.isFilterApplied
         )
     }
 }
@@ -225,12 +221,27 @@ fun HistoryHeader(
 
 @Composable
 fun DutyHistoryList(
+    isLoading: Boolean = true,
     dutyHistoryData: List<DutyHistoryModel>,
     calculateDuration: (String?, String?) -> String,
     onLoadMore: (() -> Unit)? = null,
     isLoadingMore: Boolean = false,
     hasMore: Boolean = true
 ) {
+    if (isLoading) {
+        val shimmerBrush = rememberShimmerBrush()
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(5) {
+                HistoryCardSkeleton(
+                    shimmerBrush = shimmerBrush
+                )
+            }
+        }
+        return
+    }
     if (dutyHistoryData.isEmpty()) {
         Box(
             modifier = Modifier
@@ -258,7 +269,6 @@ fun DutyHistoryList(
             )
             Spacer(Modifier.height(15.dp))
         }
-
         item {
             Spacer(Modifier.height(10.dp))
             if (onLoadMore != null) {
@@ -550,7 +560,8 @@ fun DutyHistoryOverlay(
     onStatusSelected: (Int?) -> Unit,
     onDateSelected: (String?) -> Unit,
     onClear: () -> Unit,
-    onApply: () -> Unit
+    onApply: () -> Unit,
+    isFilterApplied: Boolean
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -668,6 +679,7 @@ fun DutyHistoryOverlay(
                     }
 
                     Button(
+                        enabled = isFilterApplied,
                         onClick = onApply,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)

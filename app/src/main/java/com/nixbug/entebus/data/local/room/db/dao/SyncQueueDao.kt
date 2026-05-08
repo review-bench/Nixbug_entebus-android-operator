@@ -19,7 +19,20 @@ interface SyncQueueDao {
     @Query("UPDATE sync_queue SET status = :status WHERE queueOrder = :queueOrder")
     suspend fun updateStatus(queueOrder: Long, status: SyncStatus)
 
-    @Query("DELETE FROM sync_queue WHERE status = 'SYNCED'")
+    @Query("""
+    DELETE FROM sync_queue
+    WHERE status = 'SYNCED'
+    AND (
+        operationType != 'PAPER_TICKET'
+        OR queueOrder NOT IN (
+            SELECT MAX(queueOrder)
+            FROM sync_queue
+            WHERE status = 'SYNCED'
+            AND operationType = 'PAPER_TICKET'
+            GROUP BY serviceId
+        )
+    )
+""")
     suspend fun clearSynced()
 
     @Query("SELECT COUNT(*) > 0 FROM sync_queue WHERE status IN ('PENDING', 'FAILED', 'SYNCING')")
