@@ -30,8 +30,8 @@ class DutyHistoryRepositoryImpl @Inject constructor(
             )
 
         val statusList = status?.toDutyStatus()?.let(::listOf)
-        val createdOnGe = date?.startOfDayUtc()
-        val createdOnLe = date?.endOfDayUtc()
+        val createdOnGe = date?.startOfLocalDay()
+        val createdOnLe = date?.endOfLocalDay()
 
         return apiHelper(
             apiCall = {
@@ -60,14 +60,14 @@ class DutyHistoryRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun String.startOfDayUtc(): String {
+    private fun String.startOfLocalDay(): String {
         return LocalDate.parse(this)
             .atStartOfDay(ZoneId.systemDefault())
             .toInstant()
             .toString()
     }
 
-    private fun String.endOfDayUtc(): String {
+    private fun String.endOfLocalDay(): String {
         return LocalDate.parse(this)
             .plusDays(1)
             .atStartOfDay(ZoneId.systemDefault())

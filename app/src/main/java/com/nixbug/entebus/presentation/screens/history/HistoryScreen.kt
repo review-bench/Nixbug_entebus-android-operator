@@ -421,11 +421,7 @@ fun DutyHistoryCard(history: DutyHistoryModel, calculateDuration: (String?, Stri
             InfoRow(
                 icon = Icons.Outlined.Stop,
                 contentDescription = "Finished on",
-                label = if (history.status == 3) {
-                    "Terminated on"
-                } else {
-                    "Finished on"
-                },
+                label = "Finished on",
                 value = finishDateTime?.let { (date, time) -> "$date, $time" } ?: "Not finished yet"
             )
 
