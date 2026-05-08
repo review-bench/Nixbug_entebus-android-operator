@@ -149,7 +149,7 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
                 showSheet = false
                 viewModel.applyFilters()
             },
-            isFilerSelected = state.isFilterSelected
+            isFilterSelected = state.isFilterSelected
         )
     }
 }
@@ -273,7 +273,7 @@ fun DutyHistoryList(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = if (isFilterApplied) "No duty history found for the applied filters." else "No history are available right now. Please check back later.",
+                text = if (isFilterApplied) "No duty history found for the applied filters." else "No history is available right now. Please check back later.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray,
                 textAlign = TextAlign.Center
@@ -585,7 +585,7 @@ fun DutyHistoryOverlay(
     onDateSelected: (String?) -> Unit,
     onClear: () -> Unit,
     onApply: () -> Unit,
-    isFilerSelected: Boolean
+    isFilterSelected: Boolean
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -703,7 +703,7 @@ fun DutyHistoryOverlay(
                     }
 
                     Button(
-                        enabled = isFilerSelected,
+                        enabled = isFilterSelected,
                         onClick = onApply,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)

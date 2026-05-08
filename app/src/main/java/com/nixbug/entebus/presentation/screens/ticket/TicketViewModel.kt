@@ -388,10 +388,6 @@ class TicketViewModel @Inject constructor(
                     )
                     return@launch
                 }
-                val ticketId = getNextTicketSequenceUseCase(
-                    serviceId = serviceId,
-                    operatorId = operatorId
-                )
 
                 if (startingLandmark == null || endingLandmark == null) {
                     SnackbarManager.show(
@@ -467,6 +463,11 @@ class TicketViewModel @Inject constructor(
                 }
 
                 val totalFare = lineItems.sumOf { it.singleFare * it.count }
+
+                val ticketId = getNextTicketSequenceUseCase(
+                    serviceId = serviceId,
+                    operatorId = operatorId
+                )
 
                 val ticketData = withContext(Dispatchers.Default) {
 
