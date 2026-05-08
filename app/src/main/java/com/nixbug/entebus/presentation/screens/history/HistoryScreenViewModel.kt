@@ -72,7 +72,7 @@ class HistoryScreenViewModel @Inject constructor(
 
     fun onStatusSelected(status: Int?) {
         _uiState.update {
-            it.copy(selectedStatus = status)
+            it.copy(selectedStatus = status, isFilterApplied = true)
         }
     }
 
@@ -86,13 +86,15 @@ class HistoryScreenViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 selectedStatus = null,
-                selectedDate = null
+                selectedDate = null,
+                isFilterApplied = false
             )
         }
         fetchHistory()
     }
 
     fun applyFilters() {
+        _uiState.update { it.copy(isFilterApplied = true) }
         fetchHistory()
     }
 

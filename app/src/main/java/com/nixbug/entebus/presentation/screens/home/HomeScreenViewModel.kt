@@ -94,7 +94,6 @@ class HomeScreenViewModel @Inject constructor(
     private var pendingService: HomeUiModel? = null
     private val fetchedAssignedServiceIds = mutableSetOf<Int>()
     private val finishServiceRequest = ServiceUpdate(status = ServicePatchStatus.FINISHED)
-    private val restartServiceRequest = ServiceUpdate(status = ServicePatchStatus.RESTARTED)
 
     fun loadMoreAssignedServices() {
         fetchAssignedService(isPagination = true)
@@ -698,10 +697,6 @@ class HomeScreenViewModel @Inject constructor(
                 }
 
                 if (pendingAction == ServiceAction.RESTART_RECENT) {
-                    enqueueServicePatchUseCase(
-                        serviceId = service.id,
-                        request = restartServiceRequest
-                    )
                     updateServiceCollectionStatusUseCase(
                         serviceId = service.id,
                         status = CollectionStatus.WORKING
@@ -773,7 +768,6 @@ class HomeScreenViewModel @Inject constructor(
             try {
                 val token = getTokenUseCase().first()
                 val operatorId = token.operatorId
-
                 if (operatorId == null) {
                     SnackbarManager.show(
                         "Operator session expired. Please login again.",
@@ -781,6 +775,7 @@ class HomeScreenViewModel @Inject constructor(
                     )
                     return@launch
                 }
+
                 if (hasServiceCollectionUseCase(
                         serviceId = service.id,
                         operatorId = operatorId

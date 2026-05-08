@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -124,6 +125,7 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
                 onFilterClick = { showSheet = true },
                 searchText = state.searchQuery,
                 onSearchTextChange = viewModel::onSearchQueryChange,
+                isFilterApplied = state.isFilterApplied
             )
             DutyHistoryList(
                 dutyHistoryData = state.history,
@@ -154,7 +156,8 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
 fun HistoryHeader(
     onFilterClick: () -> Unit,
     searchText: String,
-    onSearchTextChange: (String) -> Unit
+    onSearchTextChange: (String) -> Unit,
+    isFilterApplied: Boolean = false
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -174,12 +177,27 @@ fun HistoryHeader(
                 )
             }
             IconButton(onClick = onFilterClick) {
-                Icon(
-                    imageVector = Icons.Default.FilterAlt,
-                    contentDescription = "Filter",
-                    tint = Color.Black,
-                    modifier = Modifier.size(30.dp)
-                )
+                Box {
+                    Icon(
+                        imageVector = Icons.Default.FilterAlt,
+                        contentDescription = "Filter",
+                        tint = Color.Black,
+                        modifier = Modifier.size(35.dp)
+                    )
+
+                    if (isFilterApplied) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .align(Alignment.TopEnd)
+                                .offset(x = (-4).dp, y = 2.5.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    MaterialTheme.colorScheme.error
+                                )
+                        )
+                    }
+                }
             }
         }
 
@@ -529,10 +547,8 @@ fun DutyHistoryOverlay(
     convertMillisToDate: (Long) -> String,
     selectedStatus: Int?,
     selectedDate: String?,
-
     onStatusSelected: (Int?) -> Unit,
     onDateSelected: (String?) -> Unit,
-
     onClear: () -> Unit,
     onApply: () -> Unit
 ) {
