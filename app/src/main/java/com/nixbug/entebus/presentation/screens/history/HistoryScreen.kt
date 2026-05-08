@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
@@ -83,6 +84,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.nixbug.entebus.domain.model.DutyHistoryModel
 import com.nixbug.entebus.presentation.components.loadingskeleton.HistoryCardSkeleton
 import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
+import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.utcToIstConverter
 
@@ -127,7 +129,8 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
                 calculateDuration = viewModel::calculateDuration,
                 onLoadMore = viewModel::loadMoreHistory,
                 isLoadingMore = state.isPaginationLoading,
-                hasMore = state.hasMore
+                hasMore = state.hasMore,
+                isFilterApplied = state.isFilterApplied
             )
         }
         DutyHistoryOverlay(
@@ -138,12 +141,15 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
             selectedDate = state.selectedDate,
             onStatusSelected = viewModel::onStatusSelected,
             onDateSelected = viewModel::onDateSelected,
-            onClear = viewModel::clearFilters,
+            onClear = {
+                showSheet = false
+                viewModel.clearFilters()
+            },
             onApply = {
                 showSheet = false
                 viewModel.applyFilters()
             },
-            isFilterApplied = state.isFilterApplied
+            isFilerSelected = state.isFilterSelected
         )
     }
 }
@@ -226,7 +232,8 @@ fun DutyHistoryList(
     calculateDuration: (String?, String?) -> String,
     onLoadMore: (() -> Unit)? = null,
     isLoadingMore: Boolean = false,
-    hasMore: Boolean = true
+    hasMore: Boolean = true,
+    isFilterApplied: Boolean
 ) {
     if (isLoading) {
         val shimmerBrush = rememberShimmerBrush()
@@ -243,20 +250,37 @@ fun DutyHistoryList(
         return
     }
     if (dutyHistoryData.isEmpty()) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize(),
-            contentAlignment = Alignment.Center
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            Icon(
+                imageVector = Icons.Default.History,
+                contentDescription = null,
+                tint = DisabledButtonColor,
+                modifier = Modifier
+                    .size(90.dp)
+                    .padding(bottom = 16.dp)
+            )
             Text(
                 text = "No history available!",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = if (isFilterApplied) "No duty history found for the applied filters." else "No history are available right now. Please check back later.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
             )
         }
         return
     }
-
     LazyColumn(
         modifier = Modifier.fillMaxHeight(),
         contentPadding = WindowInsets.ime.asPaddingValues(),
@@ -561,7 +585,7 @@ fun DutyHistoryOverlay(
     onDateSelected: (String?) -> Unit,
     onClear: () -> Unit,
     onApply: () -> Unit,
-    isFilterApplied: Boolean
+    isFilerSelected: Boolean
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -679,7 +703,7 @@ fun DutyHistoryOverlay(
                     }
 
                     Button(
-                        enabled = isFilterApplied,
+                        enabled = isFilerSelected,
                         onClick = onApply,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
