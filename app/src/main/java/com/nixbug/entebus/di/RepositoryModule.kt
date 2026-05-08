@@ -21,6 +21,7 @@ import com.nixbug.entebus.data.repository.OperatorAccountRepositoryImpl
 import com.nixbug.entebus.data.repository.PublicCompanyRepositoryImpl
 import com.nixbug.entebus.data.repository.AssignedServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.DutyHistoryRepositoryImpl
+import com.nixbug.entebus.data.repository.ServiceCollectionRepositoryImpl
 import com.nixbug.entebus.data.repository.ServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.SessionRepositoryImpl
 import com.nixbug.entebus.data.repository.SyncQueueRepositoryImpl
@@ -33,6 +34,7 @@ import com.nixbug.entebus.domain.repository.OperatorAccountRepository
 import com.nixbug.entebus.domain.repository.PublicCompanyRepository
 import com.nixbug.entebus.domain.repository.AssignedServiceRepository
 import com.nixbug.entebus.domain.repository.DutyHistoryRepository
+import com.nixbug.entebus.domain.repository.ServiceCollectionRepository
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.domain.repository.SessionRepository
 import com.nixbug.entebus.domain.repository.SyncQueueRepository
@@ -123,8 +125,11 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideAssignedServiceRepository(api: OperatorServiceAssignmentApi): AssignedServiceRepository {
-        return AssignedServiceRepositoryImpl(api)
+    fun provideAssignedServiceRepository(
+        api: OperatorServiceAssignmentApi,
+        tokenManager: TokenManager
+    ): AssignedServiceRepository {
+        return AssignedServiceRepositoryImpl(api, tokenManager)
     }
 
     @Provides
@@ -139,6 +144,14 @@ object RepositoryModule {
             gson = gson,
             processor = processor
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideServiceCollectionRepository(
+        impl: ServiceCollectionRepositoryImpl
+    ): ServiceCollectionRepository {
+        return impl
     }
 
     @Provides

@@ -70,6 +70,8 @@ import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimme
 import com.nixbug.entebus.ui.theme.DarkOrange
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.SetStatusBarColor
+import com.nixbug.entebus.utils.titleCaseFirstChar
+import com.nixbug.entebus.utils.toCurrency
 import java.util.Locale
 
 @Composable
@@ -279,13 +281,7 @@ fun LandmarkList(
                             )
                         }
                         Text(
-                            text = landmark.name.replaceFirstChar {
-                                if (it.isLowerCase()) {
-                                    it.titlecase()
-                                } else {
-                                    it.toString()
-                                }
-                            },
+                            text = landmark.name.titleCaseFirstChar(),
                             color = Color.Black,
                             style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
@@ -585,7 +581,7 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        text = "$totalFare \u20B9",
+                        text = "${totalFare.toCurrency()} \u20B9",
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )

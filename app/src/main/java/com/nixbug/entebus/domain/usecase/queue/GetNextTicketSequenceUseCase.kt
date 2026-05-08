@@ -1,4 +1,4 @@
-package com.nixbug.entebus.domain.usecase
+package com.nixbug.entebus.domain.usecase.queue
 
 import com.nixbug.entebus.domain.repository.SyncQueueRepository
 import javax.inject.Inject

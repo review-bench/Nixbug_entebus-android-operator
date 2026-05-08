@@ -13,7 +13,6 @@ import com.nixbug.entebus.data.mapper.toVehicleEntity
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.operator.model.service.AppApiServiceOrderBy
 import com.nixbug.entebus.data.remote.operator.model.service.OrderIn
-import com.nixbug.entebus.data.remote.operator.model.service.ServiceStatus
 import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.model.MaskedServiceModel
@@ -22,6 +21,8 @@ import com.nixbug.entebus.domain.model.ServiceDetails
 import com.nixbug.entebus.domain.repository.LandmarkRepository
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.utils.network.Resource
+import java.time.Duration
+import java.time.Instant
 import javax.inject.Inject
 
 class ServiceRepositoryImpl @Inject constructor(
@@ -36,7 +37,7 @@ class ServiceRepositoryImpl @Inject constructor(
         limit: Int,
         search: String?
     ): Resource<List<MaskedServiceModel>> {
-
+        val startingAtGe = getUtc24HoursAgo()
         val excludedIds = serviceDao.getAllServiceIds()
         val safeExcludedIds = excludedIds.ifEmpty { null }
         val serviceResult = apiHelper(
@@ -47,7 +48,7 @@ class ServiceRepositoryImpl @Inject constructor(
                     search = search,
                     orderBy = AppApiServiceOrderBy.starting_at,
                     orderIn = OrderIn.desc,
-                    statusList = listOf(ServiceStatus._1, ServiceStatus._2, ServiceStatus._3),
+                    startingAtGe = startingAtGe,
                     idExcluding = safeExcludedIds
                 )
             },
@@ -207,6 +208,12 @@ class ServiceRepositoryImpl @Inject constructor(
         }
     }
 
+    private fun getUtc24HoursAgo(): String {
+        return Instant.now()
+            .minus(Duration.ofHours(24))
+            .toString()
+    }
+
     override suspend fun getLocalServicesByStatus(status: String): List<MaskedServiceModel> {
         val localData = serviceDao.getServicesByStatus(status)
         return localData.map { it.toDomain(gson) }
@@ -235,4 +242,11 @@ class ServiceRepositoryImpl @Inject constructor(
         serviceDao.deleteServicesByStatus(status = LocalServiceStatus.ASSIGNED)
     }
 
+    override suspend fun deleteAllServices() {
+        serviceDao.deleteAllServices()
+    }
+
+    override suspend fun hasServiceWithStartedStatus(): Boolean {
+        return serviceDao.hasStartedService()
+    }
 }

@@ -4,29 +4,49 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nixbug.entebus.domain.model.local.SyncEvent
+import com.nixbug.entebus.domain.usecase.queue.HasPendingSyncItemsUseCase
+import com.nixbug.entebus.domain.usecase.queue.ObserveSyncEventsUseCase
+import com.nixbug.entebus.domain.usecase.queue.TriggerSyncUseCase
+import com.nixbug.entebus.domain.usecase.collection.DeleteOldCollectionsUseCase
+import com.nixbug.entebus.domain.usecase.collection.ObserveServiceCollectionsUseCase
+import com.nixbug.entebus.domain.usecase.service.HasServiceWithStartedStatusUseCase
+import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.titleCaseFirstChar
 import com.nixbug.entebus.utils.utcToIstConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
-class SummaryScreenViewModel @Inject constructor(private val printerManager: PrinterManager) :
-    ViewModel() {
+class SummaryScreenViewModel @Inject constructor(
+    private val printerManager: PrinterManager,
+    private val observeServiceCollectionsUseCase: ObserveServiceCollectionsUseCase,
+    private val hasPendingSyncItemsUseCase: HasPendingSyncItemsUseCase,
+    private val hasServiceWithStatusStartedUseCase: HasServiceWithStartedStatusUseCase,
+    private val triggerSyncUseCase: TriggerSyncUseCase,
+    private val observeSyncEventsUseCase: ObserveSyncEventsUseCase,
+    private val getUserUseCase: GetUserUseCase,
+    private val deleteOldCollectionsUseCase: DeleteOldCollectionsUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SummaryUiState())
     val uiState: StateFlow<SummaryUiState> = _uiState.asStateFlow()
@@ -37,10 +57,82 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
     private var pendingPrintData: PrintSummaryData? = null
 
     init {
-        autoSelectTodayServices()
+        viewModelScope.launch {
+            try {
+                deleteOldCollectionsUseCase()
+            } catch (e: Exception) {
+                SnackbarManager.show(
+                    "Failed to clean old collections",
+                    SnackbarType.ERROR
+                )
+            }
+        }
+        observeCollections()
+        observeUser()
+    }
+
+    private fun observeUser() {
+        viewModelScope.launch {
+            try {
+                val user = getUserUseCase().first()
+                _uiState.update { it.copy(companyName = user.companyName) }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(
+                    "Error loading user data: ${e.message}",
+                    SnackbarType.ERROR
+                )
+            }
+        }
+    }
+
+    private fun observeCollections() {
+
+        viewModelScope.launch {
+
+            try {
+                _uiState.update { it.copy(isLoading = true) }
+                observeServiceCollectionsUseCase()
+                    .collect { collections ->
+                        val summary = collections.map { collection ->
+                            SummaryUiModel(
+                                serviceId = collection.serviceId,
+                                serviceName = collection.serviceName,
+                                startedOn = collection.startedAt,
+                                finishedOn = collection.finishOn,
+                                regNo = collection.registrationNumber,
+                                operatorId = collection.operatorId,
+                                operatorName = collection.operatorName,
+                                collection = collection.collection
+                            )
+                        }
+
+                        _uiState.update {
+                            it.copy(
+                                summary = summary,
+                                isLoading = false
+                            )
+                        }
+
+                        autoSelectTodayServices()
+                    }
+
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _uiState.update { it.copy(isLoading = false) }
+                SnackbarManager.show(
+                    "Error loading collections: ${e.message}",
+                    SnackbarType.ERROR
+                )
+            }
+        }
     }
 
     private fun autoSelectTodayServices() {
+        if (_uiState.value.selectedServiceIds.isNotEmpty()) {
+            return
+        }
+
         val today = Instant.now().toString()
 
         val todayServiceIds = _uiState.value.summary
@@ -80,7 +172,6 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
         }
     }
 
-
     fun generateReceipt(
         data: PrintSummaryData,
         hasPermission: Boolean,
@@ -101,9 +192,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
         proceedAfterBluetoothReady()
     }
 
-
     // EVENTS
-
     private fun emitPermissionRequest() {
         viewModelScope.launch {
             _events.emit(SummaryUiEvent.RequestBluetoothPermission)
@@ -123,7 +212,6 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
     }
 
     // PERMISSION RESULT CALLBACK
-
     fun onPermissionGranted(context: Context) {
         val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
         val isEnabled = BluetoothPermissionHelper.isBluetoothEnabled(context)
@@ -137,7 +225,6 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
     }
 
     // CORE FLOW CONTINUATION
-
     private fun proceedAfterBluetoothReady() {
         viewModelScope.launch {
             if (printerManager.checkConnection()) {
@@ -149,10 +236,64 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
     }
 
     fun showSummaryPreview() {
-        _uiState.update {
-            it.copy(
-                showSummaryPreviewDialog = true
-            )
+        viewModelScope.launch {
+            val hasActiveService = hasServiceWithStatusStartedUseCase()
+            if (hasActiveService) {
+                SnackbarManager.show(
+                    "You have an active service. Please end it to preview summary.",
+                    SnackbarType.ERROR
+                )
+                return@launch
+            }
+            val hasPending = hasPendingSyncItemsUseCase()
+            if (hasPending) {
+                SnackbarManager.show(
+                    message = "Unsynced data found in storage. Please sync to continue.",
+                    type = SnackbarType.ERROR,
+                    actionLabel = "Sync",
+                    onAction = { viewModelScope.launch { syncNow() } }
+                )
+                return@launch
+            }
+            _uiState.update {
+                it.copy(
+                    showSummaryPreviewDialog = true
+                )
+            }
+        }
+
+    }
+
+    fun syncNow() {
+        viewModelScope.launch {
+
+            val eventDeferred = async {
+                observeSyncEventsUseCase()
+                    .first {
+                        it is SyncEvent.Success || it is SyncEvent.Failed
+                    }
+            }
+
+            triggerSyncUseCase()
+
+            when (val event = eventDeferred.await()) {
+
+                is SyncEvent.Failed -> {
+                    SnackbarManager.show(
+                        event.message,
+                        SnackbarType.ERROR
+                    )
+                }
+
+                is SyncEvent.Success -> {
+                    SnackbarManager.show(
+                        "Sync completed",
+                        SnackbarType.SUCCESS
+                    )
+                }
+
+                else -> Unit
+            }
         }
     }
 
@@ -224,7 +365,7 @@ class SummaryScreenViewModel @Inject constructor(private val printerManager: Pri
                     builder.text("-----${data.printedAt}-----")
                     builder.addCommand(PrinterManager.Commands.BOLD_ON)
                     builder.addCommand(PrinterManager.Commands.SIZE_DOUBLE_HEIGHT)
-                    builder.text("Krishna")
+                    builder.text(uiState.value.companyName?.titleCaseFirstChar() ?: "")
                     builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
                     builder.addCommand(PrinterManager.Commands.BOLD_OFF)
                     builder.text("--------")

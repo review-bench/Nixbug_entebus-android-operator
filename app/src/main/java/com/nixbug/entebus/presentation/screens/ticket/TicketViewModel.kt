@@ -8,10 +8,12 @@ import com.nixbug.entebus.domain.model.PaperTicket
 import com.nixbug.entebus.domain.model.PaperTicketType
 import com.nixbug.entebus.domain.model.Ticket
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
-import com.nixbug.entebus.domain.usecase.EnqueuePaperTicketUseCase
-import com.nixbug.entebus.domain.usecase.GetNextTicketSequenceUseCase
+import com.nixbug.entebus.domain.usecase.queue.EnqueuePaperTicketUseCase
+import com.nixbug.entebus.domain.usecase.queue.GetNextTicketSequenceUseCase
+import com.nixbug.entebus.domain.usecase.collection.AddServiceCollectionUseCase
 import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
+import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
 import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.presentation.screens.ticket.uimapper.PassengerDefaults
 import com.nixbug.entebus.presentation.screens.ticket.uimapper.toUiModel
@@ -19,6 +21,8 @@ import com.nixbug.entebus.utils.printer.PrinterManager
 import com.nixbug.entebus.utils.printer.TicketBuilder
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.titleCaseFirstChar
+import com.nixbug.entebus.utils.toCurrency
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,6 +31,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -45,6 +50,8 @@ class TicketViewModel @Inject constructor(
     private val enqueuePaperTicketUseCase: EnqueuePaperTicketUseCase,
     private val getNextTicketSequenceUseCase: GetNextTicketSequenceUseCase,
     private val getUserUseCase: GetUserUseCase,
+    private val getTokenUseCase: GetTokenUseCase,
+    private val addServiceCollectionUseCase: AddServiceCollectionUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketUiState())
@@ -76,7 +83,6 @@ class TicketViewModel @Inject constructor(
         }
 
         return PaperTicket(
-
             ticket = Ticket(
                 id = ticketId,
                 serviceId = serviceId,
@@ -93,12 +99,16 @@ class TicketViewModel @Inject constructor(
 
     private fun loadUserData() {
         viewModelScope.launch {
-            getUserUseCase().collect { user ->
-                _uiState.update {
-                    it.copy(
-                        companyName = user.companyName ?: ""
-                    )
-                }
+
+            val user = getUserUseCase().first()
+            val token = getTokenUseCase().first()
+
+            _uiState.update {
+                it.copy(
+                    companyName = user.companyName ?: "",
+                    operatorName = user.username ?: "",
+                    operatorId = token.operatorId
+                )
             }
         }
     }
@@ -362,10 +372,19 @@ class TicketViewModel @Inject constructor(
                 val endingLandmark = state.endingLandmark
                 val passengers = state.passengers
                 val serviceId = state.serviceId
+                val operatorId = state.operatorId
                 if (serviceId == null) {
                     SnackbarManager.show(
                         message = "Service data is still loading. Please try again.",
                         type = SnackbarType.ERROR
+                    )
+                    return@launch
+                }
+                if (operatorId == null) {
+                    SnackbarManager.show(
+                        message = "Operator session expired. Please login again.",
+                        type = SnackbarType.ERROR,
+                        duration = SnackbarDuration.Long
                     )
                     return@launch
                 }
@@ -463,9 +482,9 @@ class TicketViewModel @Inject constructor(
                         )
                         .addCommand(PrinterManager.Commands.BOLD_ON)
                         .routeRow(
-                            formatText(startingLandmark.name),
+                            formatText(startingLandmark.name.titleCaseFirstChar()),
                             "To",
-                            formatText(endingLandmark.name)
+                            formatText(endingLandmark.name.titleCaseFirstChar())
                         )
                         .addCommand(PrinterManager.Commands.BOLD_OFF)
                         .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
@@ -488,7 +507,7 @@ class TicketViewModel @Inject constructor(
                         }
 
                         .addCommand(PrinterManager.Commands.SIZE_BIG)
-                        .text("RS . $totalFare")
+                        .text("RS . ${totalFare.toCurrency()}")
                         .addCommand(PrinterManager.Commands.SIZE_NORMAL)
                         .divider()
                         .addCommand(PrinterManager.Commands.ALIGN_CENTER)
@@ -519,7 +538,12 @@ class TicketViewModel @Inject constructor(
                 }
                 val request = buildPaperTicketRequest(ticketId, lineItems = lineItems)
                 enqueuePaperTicketUseCase(request)
-                resetPassengerCounts()
+                addServiceCollectionUseCase(
+                    serviceId = serviceId,
+                    operatorId = operatorId,
+                    amount = totalFare
+                )
+                resetTicketState()
 
             } catch (e: Exception) {
 
@@ -529,26 +553,24 @@ class TicketViewModel @Inject constructor(
                 )
 
             } finally {
-                _uiState.update {
-                    it.copy(
-                        isPrinting = false
-                    )
-                }
+                _uiState.update { it.copy(isPrinting = false) }
             }
         }
     }
 
-    private fun resetPassengerCounts() {
+    private fun resetTicketState() {
         _uiState.update { state ->
             state.copy(
                 passengers = state.passengers.map { passenger ->
                     passenger.copy(
                         passengerCount = PassengerDefaults.defaultCount(passenger.name)
                     )
-                }
+                },
+                endingLandmark = null,
+                endingLandmarkIndex = null,
+                totalDistanceKm = 0f,
+                totalFare = 0.0
             )
         }
-        recalculateFare()
-
     }
 }

@@ -23,7 +23,6 @@ class SyncQueueRepositoryImpl @Inject constructor(
 
     private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     override suspend fun enqueuePaperTicket(request: PaperTicket) {
-
         val entity = SyncQueueEntity(
             operationType = SyncOperationType.PAPER_TICKET,
             serviceId = request.ticket.serviceId,
@@ -54,7 +53,7 @@ class SyncQueueRepositoryImpl @Inject constructor(
         triggerSync()
     }
 
-    private fun triggerSync() {
+    override suspend fun triggerSync() {
         syncScope.launch { processor.processQueue() }
     }
 
@@ -62,4 +61,10 @@ class SyncQueueRepositoryImpl @Inject constructor(
         val lastSequence = syncQueueDao.getLastTicketSequence(serviceId)
         return (lastSequence ?: 0) + 1
     }
+
+    override suspend fun hasPendingItems(): Boolean {
+        return syncQueueDao.hasPendingItems()
+    }
+
+    override fun observeSyncEvents() = processor.events
 }

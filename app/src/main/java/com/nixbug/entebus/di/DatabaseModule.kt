@@ -3,6 +3,7 @@ package com.nixbug.entebus.di
 import android.content.Context
 import androidx.room.Room
 import com.nixbug.entebus.data.local.room.db.AppDatabase
+import com.nixbug.entebus.data.local.room.db.dao.ServiceCollectionDao
 import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
 import com.nixbug.entebus.data.local.room.db.dao.SyncQueueDao
 import dagger.Module
@@ -36,5 +37,10 @@ object DatabaseModule {
     @Provides
     fun provideSyncQueueDao(db: AppDatabase): SyncQueueDao {
         return db.syncQueueDao()
+    }
+
+    @Provides
+    fun provideServiceCollectionDao(database: AppDatabase): ServiceCollectionDao {
+        return database.serviceCollectionDao()
     }
 }
