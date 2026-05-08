@@ -30,4 +30,10 @@ interface ServiceCollectionDao {
 
     @Query("DELETE FROM service_collection WHERE datetime(startedAt) < datetime('now', '-7 days')")
     suspend fun deleteCollectionsOlderThan7Days()
+
+    @Query("SELECT lastTicketSequence FROM service_collection WHERE serviceId = :serviceId AND operatorId = :operatorId")
+    suspend fun getLastTicketSequence(serviceId: Int, operatorId: Int): Int?
+
+    @Query("UPDATE service_collection SET lastTicketSequence = :sequence WHERE serviceId = :serviceId AND operatorId = :operatorId")
+    suspend fun updateLastTicketSequence(serviceId: Int, operatorId: Int, sequence: Int)
 }

@@ -13,8 +13,6 @@ interface SyncQueueRepository {
 
     suspend fun triggerSync()
 
-    suspend fun getNextTicketSequence(serviceId: Int): Int
-
     suspend fun hasPendingItems(): Boolean
 
     fun observeSyncEvents(): Flow<SyncEvent>
