@@ -32,4 +32,6 @@ interface ServiceCollectionRepository {
     suspend fun hasCollection(serviceId: Int, operatorId: Int): Boolean
 
     suspend fun deleteOldCollections()
+
+    suspend fun getNextTicketSequence(serviceId: Int, operatorId: Int): Int
 }

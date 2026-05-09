@@ -50,7 +50,6 @@ fun SkeletonCard(
     }
 }
 
-// TODO: Currently unused – will be shown when API integration adds a loading state.
 @Composable
 fun HistoryCardSkeleton(shimmerBrush: Brush) {
     SkeletonCard(

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.nixbug.entebus.data.local.room.db.entity.ServiceCollectionEntity
 import com.nixbug.entebus.domain.model.local.CollectionStatus
 import kotlinx.coroutines.flow.Flow
@@ -30,4 +31,16 @@ interface ServiceCollectionDao {
 
     @Query("DELETE FROM service_collection WHERE datetime(startedAt) < datetime('now', '-7 days')")
     suspend fun deleteCollectionsOlderThan7Days()
+
+    @Query("SELECT lastTicketSequence FROM service_collection WHERE serviceId = :serviceId AND operatorId = :operatorId")
+    suspend fun getLastTicketSequence(serviceId: Int, operatorId: Int): Int?
+
+    @Query("UPDATE service_collection SET lastTicketSequence = lastTicketSequence + 1 WHERE serviceId = :serviceId AND operatorId = :operatorId")
+    suspend fun incrementTicketSequence(serviceId: Int, operatorId: Int)
+
+    @Transaction
+    suspend fun getAndIncrementTicketSequence(serviceId: Int, operatorId: Int): Int {
+        incrementTicketSequence(serviceId, operatorId)
+        return getLastTicketSequence(serviceId, operatorId) ?: 0
+    }
 }

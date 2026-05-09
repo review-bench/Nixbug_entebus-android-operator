@@ -92,4 +92,8 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
     override suspend fun deleteOldCollections() {
         dao.deleteCollectionsOlderThan7Days()
     }
+
+    override suspend fun getNextTicketSequence(serviceId: Int, operatorId: Int): Int {
+        return dao.getAndIncrementTicketSequence(serviceId = serviceId, operatorId = operatorId)
+    }
 }

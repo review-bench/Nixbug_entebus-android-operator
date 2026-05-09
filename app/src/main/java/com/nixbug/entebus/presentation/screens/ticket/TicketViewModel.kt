@@ -9,7 +9,7 @@ import com.nixbug.entebus.domain.model.PaperTicketType
 import com.nixbug.entebus.domain.model.Ticket
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.usecase.queue.EnqueuePaperTicketUseCase
-import com.nixbug.entebus.domain.usecase.queue.GetNextTicketSequenceUseCase
+import com.nixbug.entebus.domain.usecase.collection.GetNextTicketSequenceUseCase
 import com.nixbug.entebus.domain.usecase.collection.AddServiceCollectionUseCase
 import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
@@ -388,7 +388,6 @@ class TicketViewModel @Inject constructor(
                     )
                     return@launch
                 }
-                val ticketId = getNextTicketSequenceUseCase(serviceId)
 
                 if (startingLandmark == null || endingLandmark == null) {
                     SnackbarManager.show(
@@ -464,6 +463,11 @@ class TicketViewModel @Inject constructor(
                 }
 
                 val totalFare = lineItems.sumOf { it.singleFare * it.count }
+
+                val ticketId = getNextTicketSequenceUseCase(
+                    serviceId = serviceId,
+                    operatorId = operatorId
+                )
 
                 val ticketData = withContext(Dispatchers.Default) {
 

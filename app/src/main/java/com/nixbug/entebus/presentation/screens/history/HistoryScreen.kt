@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -31,6 +33,9 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Stop
@@ -38,6 +43,7 @@ import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DividerDefaults
@@ -54,6 +60,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,10 +76,15 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.nixbug.entebus.domain.model.DutyHistoryModel
+import com.nixbug.entebus.presentation.components.loadingskeleton.HistoryCardSkeleton
+import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
+import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.utcToIstConverter
 
@@ -81,8 +93,10 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
     var showSheet by remember { mutableStateOf(false) }
-    var searchText by remember { mutableStateOf("") }
-    // TODO: Use searchText to filter dutyHistoryData once search functionality is implemented.
+
+    LaunchedEffect(true) {
+        viewModel.onScreenVisible()
+    }
     SetStatusBarColor(
         color = Color.White,
         darkIcons = true
@@ -105,18 +119,37 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
         ) {
             HistoryHeader(
                 onFilterClick = { showSheet = true },
-                searchText,
-                onSearchTextChange = { searchText = it },
+                searchText = state.searchQuery,
+                onSearchTextChange = viewModel::onSearchQueryChange,
+                isFilterApplied = state.isFilterApplied
             )
             DutyHistoryList(
+                isLoading = state.isLoading,
                 dutyHistoryData = state.history,
                 calculateDuration = viewModel::calculateDuration,
+                onLoadMore = viewModel::loadMoreHistory,
+                isLoadingMore = state.isPaginationLoading,
+                hasMore = state.hasMore,
+                isFilterApplied = state.isFilterApplied
             )
         }
         DutyHistoryOverlay(
             showSheet = showSheet,
             onDismiss = { showSheet = false },
-            convertMillisToDate = viewModel::convertMillisToDate
+            convertMillisToDate = viewModel::convertMillisToDate,
+            selectedStatus = state.selectedStatus,
+            selectedDate = state.selectedDate,
+            onStatusSelected = viewModel::onStatusSelected,
+            onDateSelected = viewModel::onDateSelected,
+            onClear = {
+                showSheet = false
+                viewModel.clearFilters()
+            },
+            onApply = {
+                showSheet = false
+                viewModel.applyFilters()
+            },
+            isFilterSelected = state.isFilterSelected
         )
     }
 }
@@ -125,7 +158,8 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
 fun HistoryHeader(
     onFilterClick: () -> Unit,
     searchText: String,
-    onSearchTextChange: (String) -> Unit
+    onSearchTextChange: (String) -> Unit,
+    isFilterApplied: Boolean = false
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -145,12 +179,27 @@ fun HistoryHeader(
                 )
             }
             IconButton(onClick = onFilterClick) {
-                Icon(
-                    imageVector = Icons.Default.FilterAlt,
-                    contentDescription = "Filter",
-                    tint = Color.Black,
-                    modifier = Modifier.size(30.dp)
-                )
+                Box {
+                    Icon(
+                        imageVector = Icons.Default.FilterAlt,
+                        contentDescription = "Filter",
+                        tint = Color.Black,
+                        modifier = Modifier.size(35.dp)
+                    )
+
+                    if (isFilterApplied) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .align(Alignment.TopEnd)
+                                .offset(x = (-4).dp, y = 2.5.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    MaterialTheme.colorScheme.error
+                                )
+                        )
+                    }
+                }
             }
         }
 
@@ -159,7 +208,7 @@ fun HistoryHeader(
         OutlinedTextField(
             value = searchText,
             onValueChange = onSearchTextChange,
-            label = { Text("Search...") },
+            label = { Text("Search by duty ID...") },
             modifier = Modifier
                 .fillMaxWidth()
                 .semantics {
@@ -167,7 +216,10 @@ fun HistoryHeader(
                 },
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Search
+            )
         )
         Spacer(Modifier.height(8.dp))
     }
@@ -175,24 +227,60 @@ fun HistoryHeader(
 
 @Composable
 fun DutyHistoryList(
-    dutyHistoryData: List<HistoryUiModel>,
-    calculateDuration: (String?, String?) -> String
+    isLoading: Boolean = true,
+    dutyHistoryData: List<DutyHistoryModel>,
+    calculateDuration: (String?, String?) -> String,
+    onLoadMore: (() -> Unit)? = null,
+    isLoadingMore: Boolean = false,
+    hasMore: Boolean = true,
+    isFilterApplied: Boolean
 ) {
+    if (isLoading) {
+        val shimmerBrush = rememberShimmerBrush()
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(5) {
+                HistoryCardSkeleton(
+                    shimmerBrush = shimmerBrush
+                )
+            }
+        }
+        return
+    }
     if (dutyHistoryData.isEmpty()) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize(),
-            contentAlignment = Alignment.Center
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            Icon(
+                imageVector = Icons.Default.History,
+                contentDescription = null,
+                tint = DisabledButtonColor,
+                modifier = Modifier
+                    .size(90.dp)
+                    .padding(bottom = 16.dp)
+            )
             Text(
                 text = "No history available!",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = if (isFilterApplied) "No duty history found for the applied filters." else "No history is available right now. Please check back later.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
             )
         }
         return
     }
-
     LazyColumn(
         modifier = Modifier.fillMaxHeight(),
         contentPadding = WindowInsets.ime.asPaddingValues(),
@@ -205,30 +293,55 @@ fun DutyHistoryList(
             )
             Spacer(Modifier.height(15.dp))
         }
+        item {
+            Spacer(Modifier.height(10.dp))
+            if (onLoadMore != null) {
+                when {
+                    isLoadingMore -> {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    hasMore -> {
+                        ViewMoreText(
+                            text = "Load More",
+                            onClick = onLoadMore,
+                            isExpanded = false
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(20.dp))
+        }
     }
 }
 
 @Composable
-fun DutyHistoryCard(history: HistoryUiModel, calculateDuration: (String?, String?) -> String) {
+fun DutyHistoryCard(history: DutyHistoryModel, calculateDuration: (String?, String?) -> String) {
 
     val (statusText, bgColor, textColor) = when (history.status) {
-        2 -> Triple(
+        1 -> Triple(
             "STARTED",
             Color(0xFFDFF3E1),
             Color(0xFF2E7D32)
         )
 
-        3 -> Triple(
-            "TERMINATED",
-            Color(0xFFFDECEA),
-            Color(0xFFC62828)
-        )
-
-        4 -> Triple(
+        2 -> Triple(
             "ENDED",
             Color(0xFFFDEED6),
             Color(0xFFEF6C00)
         )
+
+        3 -> Triple(
+            "AUDITED",
+            Color(0xFFFDEED6),
+            Color(0xFFEF6C00)
+        )
+
 
         else -> Triple(
             "UNKNOWN",
@@ -308,11 +421,7 @@ fun DutyHistoryCard(history: HistoryUiModel, calculateDuration: (String?, String
             InfoRow(
                 icon = Icons.Outlined.Stop,
                 contentDescription = "Finished on",
-                label = if (history.status == 3) {
-                    "Terminated on"
-                } else {
-                    "Finished on"
-                },
+                label = "Finished on",
                 value = finishDateTime?.let { (date, time) -> "$date, $time" } ?: "Not finished yet"
             )
 
@@ -465,11 +574,16 @@ private fun LabeledIdRow(
 fun DutyHistoryOverlay(
     showSheet: Boolean,
     onDismiss: () -> Unit,
-    convertMillisToDate: (Long) -> String
+    convertMillisToDate: (Long) -> String,
+    selectedStatus: Int?,
+    selectedDate: String?,
+    onStatusSelected: (Int?) -> Unit,
+    onDateSelected: (String?) -> Unit,
+    onClear: () -> Unit,
+    onApply: () -> Unit,
+    isFilterSelected: Boolean
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedDateText by remember { mutableStateOf("Select Date") }
-    var selectedStatus by remember { mutableStateOf<String?>(null) }
 
     if (showSheet) {
         val sheetState = rememberModalBottomSheetState(
@@ -523,20 +637,20 @@ fun DutyHistoryOverlay(
 
                     StatusOption(
                         label = "Started",
-                        isSelected = selectedStatus == "STARTED",
-                        onClick = { selectedStatus = "STARTED" }
+                        isSelected = selectedStatus == 1,
+                        onClick = { onStatusSelected(1) }
                     )
 
                     StatusOption(
                         label = "Ended",
-                        isSelected = selectedStatus == "ENDED",
-                        onClick = { selectedStatus = "ENDED" }
+                        isSelected = selectedStatus == 2,
+                        onClick = { onStatusSelected(2) }
                     )
 
                     StatusOption(
-                        label = "Terminated",
-                        isSelected = selectedStatus == "TERMINATED",
-                        onClick = { selectedStatus = "TERMINATED" }
+                        label = "Audited",
+                        isSelected = selectedStatus == 3,
+                        onClick = { onStatusSelected(3) }
                     )
                 }
 
@@ -559,7 +673,7 @@ fun DutyHistoryOverlay(
                         ) {
                             Icon(Icons.Default.DateRange, contentDescription = "Calendar")
                             Text(
-                                text = selectedDateText,
+                                text = selectedDate ?: "Select Date",
                                 modifier = Modifier.padding(6.dp),
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.SemiBold
@@ -574,10 +688,7 @@ fun DutyHistoryOverlay(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     OutlinedButton(
-                        onClick = {
-                            selectedStatus = null
-                            selectedDateText = "Select Date"
-                        },
+                        onClick = onClear,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -588,10 +699,8 @@ fun DutyHistoryOverlay(
                     }
 
                     Button(
-                        onClick = {
-                            // TODO: Implement filter application logic in a future PR
-                            onDismiss()
-                        },
+                        enabled = isFilterSelected,
+                        onClick = onApply,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -613,7 +722,7 @@ fun DutyHistoryOverlay(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
-                        selectedDateText = convertMillisToDate(it)
+                        onDateSelected(convertMillisToDate(it))
                     }
                     showDatePicker = false
                 }) {
@@ -684,3 +793,38 @@ fun StatusOption(
         )
     }
 }
+
+@Composable
+fun ViewMoreText(
+    text: String = "View More",
+    onClick: () -> Unit,
+    isExpanded: Boolean,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Icon(
+            imageVector = if (isExpanded) Icons.Filled.KeyboardDoubleArrowUp else Icons.Filled.KeyboardDoubleArrowDown,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .size(25.dp)
+        )
+    }
+}
+

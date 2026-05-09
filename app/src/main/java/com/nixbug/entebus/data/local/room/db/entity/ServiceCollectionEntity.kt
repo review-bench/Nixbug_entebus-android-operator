@@ -27,5 +27,6 @@ data class ServiceCollectionEntity(
     val totalCollection: Double = 0.0,
     val status: CollectionStatus = CollectionStatus.WORKING,
     val startedAt: String,
-    val finishOn: String
+    val finishOn: String,
+    val lastTicketSequence: Int = 0
 )
