@@ -13,7 +13,9 @@ interface OperatorServiceAssignmentApi {
     /**
      * GET company/service/assignment
      * Fetch Assignment Operator
-     * **Fetches a list of service assignments.**                 - Requires a valid access token for authentication.
+     * **Fetches a list of service assignments.**
+     * - Requires a valid access token for authentication.
+     *
      * Responses:
      *  - 200: Successful Response
      *  - 401: Unauthorized
@@ -30,6 +32,7 @@ interface OperatorServiceAssignmentApi {
      * @param offset  (optional, default to 0)
      * @param limit  (optional, default to 20)
      * @param serviceId  (optional)
+     * @param serviceIdExcluding Excludes assignments for the given service IDs (optional)
      * @param operatorId  (optional)
      * @param orderBy ID: id, CREATED_ON: created_on, UPDATED_ON: updated_on (optional)
      * @param orderIn ASCENDING: asc, DESCENDING: desc (optional)

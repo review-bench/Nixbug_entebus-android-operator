@@ -293,6 +293,7 @@ class HomeScreenViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 SnackbarManager.show(
                     e.message ?: "Failed to load downloaded services",
                     SnackbarType.ERROR
@@ -511,7 +512,6 @@ class HomeScreenViewModel @Inject constructor(
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-
             SnackbarManager.show(
                 e.message ?: "Something went wrong",
                 SnackbarType.ERROR
