@@ -127,6 +127,9 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
             )
         }
     }
+    LaunchedEffect(true) {
+        viewModel.onScreenVisible()
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->

@@ -7,7 +7,6 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.nixbug.entebus.data.local.room.db.entity.ServiceCollectionEntity
 import com.nixbug.entebus.domain.model.local.CollectionStatus
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ServiceCollectionDao {
@@ -24,7 +23,7 @@ interface ServiceCollectionDao {
     suspend fun updateStatus(serviceId: Int, status: CollectionStatus)
 
     @Query("SELECT * FROM service_collection ORDER BY startedAt DESC")
-    fun observeCollections(): Flow<List<ServiceCollectionEntity>>
+    suspend fun getCollections(): List<ServiceCollectionEntity>
 
     @Query("SELECT EXISTS(SELECT 1 FROM service_collection WHERE serviceId = :serviceId AND operatorId = :operatorId AND totalCollection > 0)")
     suspend fun hasCollection(serviceId: Int, operatorId: Int): Boolean
