@@ -48,6 +48,7 @@ interface OperatorServiceAssignmentApi {
         @Query("offset") offset: kotlin.Int? = 0,
         @Query("limit") limit: kotlin.Int? = 20,
         @Query("service_id") serviceId: kotlin.Int? = null,
+        @Query("service_id_excluding") serviceIdExcluding: @JvmSuppressWildcards kotlin.collections.List<kotlin.Int>? = null,
         @Query("operator_id") operatorId: kotlin.Int? = null,
         @Query("order_by") orderBy: AppApiServiceAssignmentOrderBy? = null,
         @Query("order_in") orderIn: OrderIn? = null
