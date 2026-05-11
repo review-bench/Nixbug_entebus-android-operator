@@ -51,7 +51,9 @@ class RoleAndPermissionRepositoryImpl @Inject constructor(
             }
 
             is Resource.Empty -> {
-                return Resource.Success(OperatorPermission())
+                val defaultPermission = OperatorPermission()
+                permissionLocalDataSource.savePermission(defaultPermission)
+                return Resource.Success(defaultPermission)
             }
 
             is Resource.Error -> {
