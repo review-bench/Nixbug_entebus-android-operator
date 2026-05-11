@@ -74,4 +74,7 @@ interface ServiceDao {
 
     @Query("SELECT COUNT(*) > 0 FROM services WHERE localStatus = 'STARTED'")
     suspend fun hasStartedService(): Boolean
+
+    @Query("SELECT id FROM services WHERE localStatus != 'ASSIGNED'")
+    suspend fun getAllServiceIdsExcludingAssigned(): List<Int>
 }

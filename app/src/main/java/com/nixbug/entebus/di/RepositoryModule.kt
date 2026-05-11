@@ -132,9 +132,10 @@ object RepositoryModule {
     @Singleton
     fun provideAssignedServiceRepository(
         api: OperatorServiceAssignmentApi,
-        tokenManager: TokenManager
+        tokenManager: TokenManager,
+        serviceDao: ServiceDao
     ): AssignedServiceRepository {
-        return AssignedServiceRepositoryImpl(api, tokenManager)
+        return AssignedServiceRepositoryImpl(api, tokenManager, serviceDao)
     }
 
     @Provides

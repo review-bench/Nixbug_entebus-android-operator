@@ -9,7 +9,7 @@ import com.nixbug.entebus.domain.usecase.queue.HasPendingSyncItemsUseCase
 import com.nixbug.entebus.domain.usecase.queue.ObserveSyncEventsUseCase
 import com.nixbug.entebus.domain.usecase.queue.TriggerSyncUseCase
 import com.nixbug.entebus.domain.usecase.collection.DeleteOldCollectionsUseCase
-import com.nixbug.entebus.domain.usecase.collection.ObserveServiceCollectionsUseCase
+import com.nixbug.entebus.domain.usecase.collection.GetServiceCollectionsUseCase
 import com.nixbug.entebus.domain.usecase.service.HasServiceWithStartedStatusUseCase
 import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
@@ -39,8 +39,8 @@ import kotlin.coroutines.cancellation.CancellationException
 @HiltViewModel
 class SummaryScreenViewModel @Inject constructor(
     private val printerManager: PrinterManager,
-    private val observeServiceCollectionsUseCase: ObserveServiceCollectionsUseCase,
     private val hasPendingSyncItemsUseCase: HasPendingSyncItemsUseCase,
+    private val getServiceCollectionsUseCase: GetServiceCollectionsUseCase,
     private val hasServiceWithStatusStartedUseCase: HasServiceWithStartedStatusUseCase,
     private val triggerSyncUseCase: TriggerSyncUseCase,
     private val observeSyncEventsUseCase: ObserveSyncEventsUseCase,
@@ -56,7 +56,7 @@ class SummaryScreenViewModel @Inject constructor(
 
     private var pendingPrintData: PrintSummaryData? = null
 
-    init {
+    fun onScreenVisible() {
         viewModelScope.launch {
             try {
                 deleteOldCollectionsUseCase()
@@ -67,7 +67,7 @@ class SummaryScreenViewModel @Inject constructor(
                 )
             }
         }
-        observeCollections()
+        loadCollections()
         observeUser()
     }
 
@@ -86,40 +86,50 @@ class SummaryScreenViewModel @Inject constructor(
         }
     }
 
-    private fun observeCollections() {
+    private fun loadCollections() {
 
         viewModelScope.launch {
 
             try {
-                _uiState.update { it.copy(isLoading = true) }
-                observeServiceCollectionsUseCase()
-                    .collect { collections ->
-                        val summary = collections.map { collection ->
-                            SummaryUiModel(
-                                serviceId = collection.serviceId,
-                                serviceName = collection.serviceName,
-                                startedOn = collection.startedAt,
-                                finishedOn = collection.finishOn,
-                                regNo = collection.registrationNumber,
-                                operatorId = collection.operatorId,
-                                operatorName = collection.operatorName,
-                                collection = collection.collection
-                            )
-                        }
 
-                        _uiState.update {
-                            it.copy(
-                                summary = summary,
-                                isLoading = false
-                            )
-                        }
+                _uiState.update {
+                    it.copy(isLoading = true)
+                }
 
-                        autoSelectTodayServices()
-                    }
+                val collections = getServiceCollectionsUseCase()
+
+                val summary = collections.map { collection ->
+
+                    SummaryUiModel(
+                        serviceId = collection.serviceId,
+                        serviceName = collection.serviceName,
+                        startedOn = collection.startedAt,
+                        finishedOn = collection.finishOn,
+                        regNo = collection.registrationNumber,
+                        operatorId = collection.operatorId,
+                        operatorName = collection.operatorName,
+                        collection = collection.collection
+                    )
+                }
+
+                val selectedIds = getTodayServiceIds(summary)
+
+                _uiState.update {
+                    it.copy(
+                        summary = summary,
+                        selectedServiceIds = selectedIds,
+                        isLoading = false
+                    )
+                }
 
             } catch (e: Exception) {
+
                 if (e is CancellationException) throw e
-                _uiState.update { it.copy(isLoading = false) }
+
+                _uiState.update {
+                    it.copy(isLoading = false)
+                }
+
                 SnackbarManager.show(
                     "Error loading collections: ${e.message}",
                     SnackbarType.ERROR
@@ -128,31 +138,29 @@ class SummaryScreenViewModel @Inject constructor(
         }
     }
 
-    private fun autoSelectTodayServices() {
-        if (_uiState.value.selectedServiceIds.isNotEmpty()) {
-            return
-        }
+    private fun getTodayServiceIds(
+        summary: List<SummaryUiModel>
+    ): Set<Int> {
 
         val today = Instant.now().toString()
 
-        val todayServiceIds = _uiState.value.summary
+        return summary
             .groupBy { it.serviceId }
             .filter { (_, group) ->
-                val first = group.first()
-                val (date, _) = utcToIstConverter(first.startedOn)
-                    ?: return@filter false
-                val (currentDate, _) = utcToIstConverter(today)
-                    ?: return@filter false
 
-                currentDate == date
+                val first = group.first()
+
+                val (serviceDate, _) =
+                    utcToIstConverter(first.startedOn)
+                        ?: return@filter false
+
+                val (currentDate, _) =
+                    utcToIstConverter(today)
+                        ?: return@filter false
+
+                serviceDate == currentDate
             }
             .keys
-
-        _uiState.update { currentState ->
-            currentState.copy(
-                selectedServiceIds = todayServiceIds
-            )
-        }
     }
 
     fun toggleSelection(serviceId: Int) {

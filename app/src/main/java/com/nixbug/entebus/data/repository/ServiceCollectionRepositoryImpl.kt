@@ -6,8 +6,6 @@ import com.nixbug.entebus.domain.model.local.CollectionStatus
 import com.nixbug.entebus.domain.model.local.CollectionSummary
 import com.nixbug.entebus.domain.model.local.OperatorInfo
 import com.nixbug.entebus.domain.repository.ServiceCollectionRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class ServiceCollectionRepositoryImpl @Inject constructor(
@@ -58,30 +56,22 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
         dao.updateStatus(serviceId = serviceId, status = status)
     }
 
-    override fun observeCollections(): Flow<List<CollectionSummary>> {
+    override suspend fun getCollections(): List<CollectionSummary> {
 
-        return dao.observeCollections()
-            .map { entities ->
+        return dao.getCollections()
+            .map { entity ->
 
-                entities.map { entity ->
-
-                    CollectionSummary(
-                        serviceId = entity.serviceId,
-                        serviceName = entity.serviceName,
-                        registrationNumber = entity.regNo,
-
-                        startedAt = entity.startedAt,
-                        finishOn = entity.finishOn,
-
-
-                        status = entity.status,
-
-                        operatorId = entity.operatorId,
-                        operatorName = entity.operatorName,
-
-                        collection = entity.totalCollection
-                    )
-                }
+                CollectionSummary(
+                    serviceId = entity.serviceId,
+                    serviceName = entity.serviceName,
+                    registrationNumber = entity.regNo,
+                    startedAt = entity.startedAt,
+                    finishOn = entity.finishOn,
+                    status = entity.status,
+                    operatorId = entity.operatorId,
+                    operatorName = entity.operatorName,
+                    collection = entity.totalCollection
+                )
             }
     }
 
