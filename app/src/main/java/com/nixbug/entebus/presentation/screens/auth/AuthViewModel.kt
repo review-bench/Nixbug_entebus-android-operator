@@ -326,12 +326,21 @@ class AuthViewModel @Inject constructor(
                             )
                         }
                     }
-                    val operatorId = result.data?.operatorId ?: 0
+                    val operatorId = result.data?.operatorId
+                    if (operatorId == null || operatorId <= 0) {
+                        tokenManager.accessToken = null
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                loginError = "Invalid login response. Please try again."
+                            )
+                        }
+                        return@launch
+                    }
                     val permissionResult = getRoleAndPermissionUseCase(operatorId)
                     when (permissionResult) {
 
                         is Resource.Success -> {
-                            val permissions = permissionResult.data
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -346,7 +355,8 @@ class AuthViewModel @Inject constructor(
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    loginError = result.message
+                                    loginError = permissionResult.message
+                                        ?: "Unable to fetch role and permissions."
                                 )
                             }
                         }

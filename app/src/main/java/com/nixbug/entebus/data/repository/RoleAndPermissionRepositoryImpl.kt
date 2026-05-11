@@ -1,7 +1,7 @@
 package com.nixbug.entebus.data.repository
 
 import com.nixbug.entebus.data.local.datastore.permission.PermissionLocalDataSource
-import com.nixbug.entebus.data.mapper.toDomain
+import com.nixbug.entebus.data.mapper.toOperatorPermission
 import com.nixbug.entebus.data.remote.operator.api.OperatorRoleApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorRoleMapApi
 import com.nixbug.entebus.data.remote.utils.apiHelper
@@ -39,7 +39,7 @@ class RoleAndPermissionRepositoryImpl @Inject constructor(
                         roleApi.fetchRoleOperatorCompanyRoleGet(id = roleId)
                     },
                     mapper = { roles ->
-                        roles.firstOrNull()?.toDomain() ?: OperatorPermission()
+                        roles.firstOrNull()?.toOperatorPermission() ?: OperatorPermission()
                     }
                 )
                 if (roleResult is Resource.Success) {
