@@ -313,18 +313,7 @@ class AuthViewModel @Inject constructor(
 
                 is Resource.Success -> {
                     result.data?.let { token ->
-                        saveTokenUseCase(token)
                         tokenManager.accessToken = token.accessToken
-                        val company = _uiState.value.selectedCompany
-                        val persistedUsername = username
-
-                        if (company != null) {
-                            saveUserUseCase(
-                                companyId = company.id,
-                                companyName = company.name,
-                                username = persistedUsername
-                            )
-                        }
                     }
                     val operatorId = result.data?.operatorId
                     if (operatorId == null || operatorId <= 0) {
@@ -341,6 +330,18 @@ class AuthViewModel @Inject constructor(
                     when (permissionResult) {
 
                         is Resource.Success -> {
+                            result.data.let { token ->
+                                saveTokenUseCase(token)
+                                val company = _uiState.value.selectedCompany
+                                if (company != null) {
+                                    saveUserUseCase(
+                                        companyId = company.id,
+                                        companyName = company.name,
+                                        username = username
+                                    )
+                                }
+                            }
+
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,

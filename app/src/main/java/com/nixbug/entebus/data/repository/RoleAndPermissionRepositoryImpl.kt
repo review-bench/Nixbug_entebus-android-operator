@@ -17,7 +17,7 @@ class RoleAndPermissionRepositoryImpl @Inject constructor(
 ) : RoleAndPermissionRepository {
 
     override suspend fun fetchRoleAndPermission(operatorId: Int): Resource<OperatorPermission> {
-
+        permissionLocalDataSource.savePermission(OperatorPermission())
         val roleMapResult =
             apiHelper(apiCall = { roleMapApi.getRoleMap(operatorId = operatorId) }, mapper = { it })
 
@@ -27,9 +27,7 @@ class RoleAndPermissionRepositoryImpl @Inject constructor(
                 val roleMap = roleMapResult.data?.firstOrNull()
 
                 if (roleMap == null) {
-                    val defaultPermission = OperatorPermission()
-                    permissionLocalDataSource.savePermission(defaultPermission)
-                    return Resource.Success(defaultPermission)
+                    return Resource.Success(OperatorPermission())
                 }
 
                 val roleId = roleMap.roleId
@@ -51,9 +49,7 @@ class RoleAndPermissionRepositoryImpl @Inject constructor(
             }
 
             is Resource.Empty -> {
-                val defaultPermission = OperatorPermission()
-                permissionLocalDataSource.savePermission(defaultPermission)
-                return Resource.Success(defaultPermission)
+                return Resource.Success(OperatorPermission())
             }
 
             is Resource.Error -> {
