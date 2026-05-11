@@ -1,5 +1,6 @@
 package com.nixbug.entebus.data.repository
 
+import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
 import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.data.mapper.toDomain
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceAssignmentApi
@@ -14,6 +15,7 @@ import java.time.Instant
 class AssignedServiceRepositoryImpl @Inject constructor(
     private val serviceAssignmentApi: OperatorServiceAssignmentApi,
     private val tokenManager: TokenManager,
+    private val serviceDao: ServiceDao,
 ) : AssignedServiceRepository {
 
     override suspend fun fetchAssignedServices(
@@ -27,13 +29,16 @@ class AssignedServiceRepositoryImpl @Inject constructor(
                 message = "Session expired. Please login again."
             )
         }
+        val excludedServiceIds = serviceDao.getAllServiceIdsExcludingAssigned()
+        val safeExcludedServiceIds = excludedServiceIds.ifEmpty { null }
         return apiHelper(
             apiCall = {
                 serviceAssignmentApi.getAssignedServices(
                     offset = offset,
                     limit = limit,
                     operatorId = operatorId,
-                    createdOnGe = createdOnGe
+                    createdOnGe = createdOnGe,
+                    serviceIdExcluding = safeExcludedServiceIds
                 )
             },
             mapper = { responseList -> responseList.map { it.toDomain() } }

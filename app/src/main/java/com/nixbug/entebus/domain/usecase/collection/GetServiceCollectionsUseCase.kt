@@ -3,8 +3,8 @@ package com.nixbug.entebus.domain.usecase.collection
 import com.nixbug.entebus.domain.repository.ServiceCollectionRepository
 import javax.inject.Inject
 
-class ObserveServiceCollectionsUseCase @Inject constructor(
+class GetServiceCollectionsUseCase @Inject constructor(
     private val repository: ServiceCollectionRepository
 ) {
-    operator fun invoke() = repository.observeCollections()
+    suspend operator fun invoke() = repository.getCollections()
 }

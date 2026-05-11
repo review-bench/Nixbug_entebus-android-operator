@@ -95,36 +95,38 @@ class HomeScreenViewModel @Inject constructor(
     private val fetchedAssignedServiceIds = mutableSetOf<Int>()
     private val finishServiceRequest = ServiceUpdate(status = ServicePatchStatus.FINISHED)
 
-    fun loadMoreAssignedServices() {
-        fetchAssignedService(isPagination = true)
-    }
-
-    private fun clearAssignedServices() {
+    init {
+        _uiState.update { it.copy(serviceLoading = true) }
         viewModelScope.launch {
             try {
-                clearAssignedServicesUseCase()
+                cleanOldServicesUseCase()
+                val currentlyStartedServiceList = getLocalServices(LocalServiceStatus.STARTED)
+                val currentService = currentlyStartedServiceList.firstOrNull()
+                _uiState.update { state -> state.copy(ongoingService = currentService?.toHomeUiModel()) }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-
                 SnackbarManager.show(
-                    e.message ?: "Failed to clear assigned services",
+                    e.message ?: "Failed to load ongoing service",
                     SnackbarType.ERROR
                 )
             }
         }
+        fetchAssignedService()
     }
 
-    private fun deleteMissingAssignedServices(ids: List<Int>) {
-        viewModelScope.launch {
-            try {
-                deleteAssignedServicesUseCase(ids)
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                SnackbarManager.show(
-                    e.message ?: "Failed to sync deleted services",
-                    SnackbarType.ERROR
-                )
-            }
+    fun onTabSelected(tab: Int) {
+        _uiState.update { it.copy(selectedTab = tab) }
+        if (tab == 0) {
+            fetchAssignedService()
+        }
+        if (tab == 1) {
+            fetchDownloadedServices()
+        }
+        if (tab == 2) {
+            fetchRecentServices()
+        }
+        if (tab == 3) {
+            fetchOtherServices()
         }
     }
 
@@ -132,7 +134,6 @@ class HomeScreenViewModel @Inject constructor(
         viewModelScope.launch {
 
             val currentState = _uiState.value
-
             if (isPagination && (currentState.isAssignedPaginationLoading || !currentState.assignedHasMore)) {
                 return@launch
             }
@@ -174,6 +175,7 @@ class HomeScreenViewModel @Inject constructor(
                             }
                             return@launch
                         }
+
                         val ids = services.map { it.serviceId }
                         fetchedAssignedServiceIds.addAll(ids)
 
@@ -278,38 +280,57 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    init {
-        _uiState.update { it.copy(serviceLoading = true) }
+    private fun fetchDownloadedServices() {
         viewModelScope.launch {
+            _uiState.update { it.copy(serviceLoading = true) }
             try {
-                cleanOldServicesUseCase()
-                val currentServiceList = getLocalServices(LocalServiceStatus.STARTED)
-                val currentService = currentServiceList.firstOrNull()
-                _uiState.update { state -> state.copy(ongoingService = currentService?.toHomeUiModel()) }
+                val services = getLocalServices(LocalServiceStatus.DOWNLOADED)
+                _uiState.update {
+                    it.copy(
+                        downloadedServiceList = services.map { service ->
+                            service.toHomeUiModel()
+                        }
+                    )
+                }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 SnackbarManager.show(
-                    e.message ?: "Failed to load ongoing service",
+                    e.message ?: "Failed to load downloaded services",
                     SnackbarType.ERROR
                 )
+            } finally {
+                _uiState.update { it.copy(serviceLoading = false) }
             }
         }
-        fetchAssignedService()
     }
 
-    fun onTabSelected(tab: Int) {
-        _uiState.update { it.copy(selectedTab = tab) }
-        if (tab == 0) {
-            fetchAssignedService()
+    private fun fetchRecentServices() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(serviceLoading = true) }
+            try {
+                val services = getLocalServices(LocalServiceStatus.RECENT)
+                _uiState.update {
+                    it.copy(
+                        recentServiceList = services.map { service ->
+                            service.toHomeUiModel()
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(
+                    e.message ?: "Failed to load recent services",
+                    SnackbarType.ERROR
+                )
+            } finally {
+                _uiState.update { it.copy(serviceLoading = false) }
+            }
         }
-        if (tab == 1) {
-            fetchDownloadedServices()
-        }
-        if (tab == 2) {
-            fetchRecentServices()
-        }
-        if (tab == 3) {
-            fetchOtherServices()
+    }
+
+    private fun fetchOtherServices() {
+        viewModelScope.launch {
+            fetchOtherServicesInternal()
         }
     }
 
@@ -355,52 +376,39 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    private fun fetchDownloadedServices() {
+    fun loadMoreAssignedServices() {
+        fetchAssignedService(isPagination = true)
+    }
+
+    private fun clearAssignedServices() {
         viewModelScope.launch {
-            _uiState.update { it.copy(serviceLoading = true) }
             try {
-                val services = getLocalServices(LocalServiceStatus.DOWNLOADED)
-                _uiState.update {
-                    it.copy(
-                        downloadedServiceList = services.map { service ->
-                            service.toHomeUiModel()
-                        }
-                    )
-                }
+                clearAssignedServicesUseCase()
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
+
                 SnackbarManager.show(
-                    e.message ?: "Failed to load downloaded services",
+                    e.message ?: "Failed to clear assigned services",
                     SnackbarType.ERROR
                 )
-            } finally {
-                _uiState.update { it.copy(serviceLoading = false) }
             }
         }
     }
 
-    private fun fetchRecentServices() {
+    private fun deleteMissingAssignedServices(ids: List<Int>) {
         viewModelScope.launch {
-            _uiState.update { it.copy(serviceLoading = true) }
             try {
-                val services = getLocalServices(LocalServiceStatus.RECENT)
-                _uiState.update {
-                    it.copy(
-                        recentServiceList = services.map { service ->
-                            service.toHomeUiModel()
-                        }
-                    )
-                }
+                deleteAssignedServicesUseCase(ids)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 SnackbarManager.show(
-                    e.message ?: "Failed to load recent services",
+                    e.message ?: "Failed to sync deleted services",
                     SnackbarType.ERROR
                 )
-            } finally {
-                _uiState.update { it.copy(serviceLoading = false) }
             }
         }
     }
+
 
     fun onSearchQueryChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
@@ -424,11 +432,6 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    private fun fetchOtherServices() {
-        viewModelScope.launch {
-            fetchOtherServicesInternal()
-        }
-    }
 
     fun loadMoreServices() {
         viewModelScope.launch {
@@ -509,7 +512,6 @@ class HomeScreenViewModel @Inject constructor(
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-
             SnackbarManager.show(
                 e.message ?: "Something went wrong",
                 SnackbarType.ERROR
