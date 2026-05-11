@@ -10,7 +10,6 @@ import com.google.gson.annotations.SerializedName
  * @param price
  */
 
-
 data class TicketTypeOutput (
 
     @SerializedName("id")
@@ -21,5 +20,4 @@ data class TicketTypeOutput (
 
     @SerializedName("price")
     val price: String
-
 )

@@ -8,8 +8,7 @@ import com.google.gson.annotations.SerializedName
  * @param ticket
  */
 
-
-data class AppApiPaperTicketCreateForm (
+data class AppApiPaperTicketCreateForm(
     @SerializedName("ticket")
     val ticket: TicketSchemaInput
 )

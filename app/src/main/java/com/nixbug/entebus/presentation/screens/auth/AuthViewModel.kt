@@ -9,6 +9,7 @@ import com.nixbug.entebus.domain.model.PublicCompanyModel
 import com.nixbug.entebus.domain.repository.SessionRepository
 import com.nixbug.entebus.domain.usecase.token.CreateTokenUseCase
 import com.nixbug.entebus.domain.usecase.FetchPublicCompanyUseCase
+import com.nixbug.entebus.domain.usecase.roleandpermission.GetRoleAndPermissionUseCase
 import com.nixbug.entebus.domain.usecase.token.SaveTokenUseCase
 import com.nixbug.entebus.domain.usecase.user.SaveUserUseCase
 import com.nixbug.entebus.utils.LocationHelper
@@ -37,7 +38,8 @@ class AuthViewModel @Inject constructor(
     private val saveUserUseCase: SaveUserUseCase,
     private val tokenManager: TokenManager,
     private val sessionRepository: SessionRepository,
-    private val gson: Gson
+    private val gson: Gson,
+    private val getRoleAndPermissionUseCase: GetRoleAndPermissionUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -324,14 +326,33 @@ class AuthViewModel @Inject constructor(
                             )
                         }
                     }
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            loginSuccess = true,
-                            isNavigating = true
-                        )
+                    val operatorId = result.data?.operatorId ?: 0
+                    val permissionResult = getRoleAndPermissionUseCase(operatorId)
+                    when (permissionResult) {
+
+                        is Resource.Success -> {
+                            val permissions = permissionResult.data
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    loginSuccess = true,
+                                    isNavigating = true
+                                )
+                            }
+                            sessionRepository.resetSession()
+                        }
+
+                        is Resource.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    loginError = result.message
+                                )
+                            }
+                        }
+
+                        else -> Unit
                     }
-                    sessionRepository.resetSession()
                 }
 
                 is Resource.Error -> {

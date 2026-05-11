@@ -15,7 +15,7 @@ import com.google.gson.annotations.SerializedName
  */
 
 
-data class CompanyPermissionOutput (
+data class CompanyPermissionOutput(
 
     /* Allow updating company details */
     @SerializedName("update")
@@ -39,7 +39,4 @@ data class CompanyPermissionOutput (
     @SerializedName("schedule")
     val schedule: CRUDPermission
 
-) {
-
-
-}
+)
