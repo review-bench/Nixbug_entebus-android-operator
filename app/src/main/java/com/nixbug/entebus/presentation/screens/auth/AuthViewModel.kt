@@ -330,16 +330,17 @@ class AuthViewModel @Inject constructor(
                     when (permissionResult) {
 
                         is Resource.Success -> {
-                            result.data.let { token ->
-                                saveTokenUseCase(token)
-                                val company = _uiState.value.selectedCompany
-                                if (company != null) {
-                                    saveUserUseCase(
-                                        companyId = company.id,
-                                        companyName = company.name,
-                                        username = username
-                                    )
-                                }
+                            val token = result.data
+
+                            saveTokenUseCase(token)
+
+                            val company = _uiState.value.selectedCompany
+                            if (company != null) {
+                                saveUserUseCase(
+                                    companyId = company.id,
+                                    companyName = company.name,
+                                    username = username
+                                )
                             }
 
                             _uiState.update {
@@ -349,10 +350,12 @@ class AuthViewModel @Inject constructor(
                                     isNavigating = true
                                 )
                             }
+
                             sessionRepository.resetSession()
                         }
 
                         is Resource.Error -> {
+                            tokenManager.accessToken = null
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
