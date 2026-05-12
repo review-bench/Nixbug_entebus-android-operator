@@ -1064,8 +1064,16 @@ fun String.delayText(): String? {
         val minutes = Duration.between(start, now).toMinutes()
 
         when {
-            minutes >= 60 -> "Delayed ${minutes / 60} hr"
-            else -> "Delayed $minutes min"
+            minutes >= 60 -> {
+                val hours = minutes / 60
+                val unit = if (hours == 1L) "hr" else "hrs"
+                "Delayed • $hours $unit"
+            }
+
+            else -> {
+                val unit = if (minutes == 1L) "min" else "mins"
+                "Delayed • $minutes $unit"
+            }
         }
     } catch (e: Exception) {
         null
