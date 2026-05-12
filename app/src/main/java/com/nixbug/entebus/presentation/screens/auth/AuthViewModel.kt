@@ -9,6 +9,7 @@ import com.nixbug.entebus.domain.model.PublicCompanyModel
 import com.nixbug.entebus.domain.repository.SessionRepository
 import com.nixbug.entebus.domain.usecase.token.CreateTokenUseCase
 import com.nixbug.entebus.domain.usecase.FetchPublicCompanyUseCase
+import com.nixbug.entebus.domain.usecase.roleandpermission.GetRoleAndPermissionUseCase
 import com.nixbug.entebus.domain.usecase.token.SaveTokenUseCase
 import com.nixbug.entebus.domain.usecase.user.SaveUserUseCase
 import com.nixbug.entebus.utils.LocationHelper
@@ -37,7 +38,8 @@ class AuthViewModel @Inject constructor(
     private val saveUserUseCase: SaveUserUseCase,
     private val tokenManager: TokenManager,
     private val sessionRepository: SessionRepository,
-    private val gson: Gson
+    private val gson: Gson,
+    private val getRoleAndPermissionUseCase: GetRoleAndPermissionUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -311,27 +313,60 @@ class AuthViewModel @Inject constructor(
 
                 is Resource.Success -> {
                     result.data?.let { token ->
-                        saveTokenUseCase(token)
                         tokenManager.accessToken = token.accessToken
-                        val company = _uiState.value.selectedCompany
-                        val persistedUsername = username
-
-                        if (company != null) {
-                            saveUserUseCase(
-                                companyId = company.id,
-                                companyName = company.name,
-                                username = persistedUsername
+                    }
+                    val operatorId = result.data?.operatorId
+                    if (operatorId == null || operatorId <= 0) {
+                        tokenManager.accessToken = null
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                loginError = "Invalid login response. Please try again."
                             )
                         }
+                        return@launch
                     }
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            loginSuccess = true,
-                            isNavigating = true
-                        )
+                    val permissionResult = getRoleAndPermissionUseCase(operatorId)
+                    when (permissionResult) {
+
+                        is Resource.Success -> {
+                            val token = result.data
+
+                            saveTokenUseCase(token)
+
+                            val company = _uiState.value.selectedCompany
+                            if (company != null) {
+                                saveUserUseCase(
+                                    companyId = company.id,
+                                    companyName = company.name,
+                                    username = username
+                                )
+                            }
+
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    loginSuccess = true,
+                                    isNavigating = true
+                                )
+                            }
+
+                            sessionRepository.resetSession()
+                        }
+
+                        is Resource.Error -> {
+                            tokenManager.accessToken = null
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    loginError = permissionResult.message
+                                        ?: "Unable to fetch role and permissions."
+                                )
+                            }
+                        }
+
+                        else -> Unit
                     }
-                    sessionRepository.resetSession()
                 }
 
                 is Resource.Error -> {

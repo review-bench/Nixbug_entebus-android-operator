@@ -1,6 +1,7 @@
 package com.nixbug.entebus.di
 
 import com.google.gson.Gson
+import com.nixbug.entebus.data.local.datastore.permission.PermissionLocalDataSource
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
 import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
 import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
@@ -11,6 +12,8 @@ import com.nixbug.entebus.data.remote.operator.api.OperatorAccountApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorDutyApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorLandmarkApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorRoleApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorRoleMapApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceAssignmentApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
@@ -21,6 +24,7 @@ import com.nixbug.entebus.data.repository.OperatorAccountRepositoryImpl
 import com.nixbug.entebus.data.repository.PublicCompanyRepositoryImpl
 import com.nixbug.entebus.data.repository.AssignedServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.DutyHistoryRepositoryImpl
+import com.nixbug.entebus.data.repository.RoleAndPermissionRepositoryImpl
 import com.nixbug.entebus.data.repository.ServiceCollectionRepositoryImpl
 import com.nixbug.entebus.data.repository.ServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.SessionRepositoryImpl
@@ -34,6 +38,7 @@ import com.nixbug.entebus.domain.repository.OperatorAccountRepository
 import com.nixbug.entebus.domain.repository.PublicCompanyRepository
 import com.nixbug.entebus.domain.repository.AssignedServiceRepository
 import com.nixbug.entebus.domain.repository.DutyHistoryRepository
+import com.nixbug.entebus.domain.repository.RoleAndPermissionRepository
 import com.nixbug.entebus.domain.repository.ServiceCollectionRepository
 import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.domain.repository.SessionRepository
@@ -162,5 +167,15 @@ object RepositoryModule {
         tokenManager: TokenManager
     ): DutyHistoryRepository {
         return DutyHistoryRepositoryImpl(api, tokenManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRoleAndPermissionRepository(
+        roleMapApi: OperatorRoleMapApi,
+        roleApi: OperatorRoleApi,
+        permissionLocalDataSource: PermissionLocalDataSource
+    ): RoleAndPermissionRepository {
+        return RoleAndPermissionRepositoryImpl(roleMapApi, roleApi, permissionLocalDataSource)
     }
 }

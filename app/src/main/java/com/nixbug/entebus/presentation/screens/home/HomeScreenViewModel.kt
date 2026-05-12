@@ -16,6 +16,8 @@ import com.nixbug.entebus.domain.usecase.assignedservice.GetAssignedServiceUseCa
 import com.nixbug.entebus.domain.usecase.collection.CreateServiceCollectionUseCase
 import com.nixbug.entebus.domain.usecase.collection.HasServiceCollectionUseCase
 import com.nixbug.entebus.domain.usecase.collection.UpdateServiceCollectionStatusUseCase
+import com.nixbug.entebus.domain.usecase.roleandpermission.CanCreateTicketUseCase
+import com.nixbug.entebus.domain.usecase.roleandpermission.CanUpdateServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.ClearAssignedServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.GetLocalServicesByStatusUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceDetailUseCase
@@ -70,7 +72,9 @@ class HomeScreenViewModel @Inject constructor(
     private val getTokenUseCase: GetTokenUseCase,
     private val createServiceCollectionUseCase: CreateServiceCollectionUseCase,
     private val updateServiceCollectionStatusUseCase: UpdateServiceCollectionStatusUseCase,
-    private val hasServiceCollectionUseCase: HasServiceCollectionUseCase
+    private val hasServiceCollectionUseCase: HasServiceCollectionUseCase,
+    private val canCreateTicketUseCase: CanCreateTicketUseCase,
+    private val canUpdateServiceUseCase: CanUpdateServiceUseCase
 ) : ViewModel() {
 
     // STATE
@@ -545,31 +549,46 @@ class HomeScreenViewModel @Inject constructor(
         hasPermission: Boolean,
         isBluetoothEnabled: Boolean
     ) {
+        viewModelScope.launch {
 
-        if (action != ServiceAction.RESUME && checkIfServiceAlreadyRunning()) return
-
-        pendingAction = action
-        pendingService = service
-
-        if (service != null && action != ServiceAction.RESUME) {
-            _uiState.update {
-                it.copy(
-                    startingServiceId = service.id,
+            if (!canCreateTicketUseCase()) {
+                SnackbarManager.show(
+                    "Ticketing access is not available for your account. Please contact your owner.",
+                    SnackbarType.ERROR
                 )
+                return@launch
             }
-        }
 
-        if (!hasPermission) {
-            emitPermissionRequest()
-            return
-        }
+            if (!canUpdateServiceUseCase()) {
+                SnackbarManager.show(
+                    "You don't have permission to manage this service. Please contact your owner.",
+                    SnackbarType.ERROR
+                )
+                return@launch
+            }
 
-        if (!isBluetoothEnabled) {
-            emitEnableBluetoothRequest()
-            return
+            if (action != ServiceAction.RESUME && checkIfServiceAlreadyRunning()) {
+                return@launch
+            }
+            pendingAction = action
+            pendingService = service
+            if (service != null && action != ServiceAction.RESUME) {
+                _uiState.update {
+                    it.copy(
+                        startingServiceId = service.id,
+                    )
+                }
+            }
+            if (!hasPermission) {
+                emitPermissionRequest()
+                return@launch
+            }
+            if (!isBluetoothEnabled) {
+                emitEnableBluetoothRequest()
+                return@launch
+            }
+            proceedAfterBluetoothReady()
         }
-
-        proceedAfterBluetoothReady()
     }
 
     // PERMISSION RESULT CALLBACK
@@ -682,7 +701,6 @@ class HomeScreenViewModel @Inject constructor(
                         )
                         return@launch
                     }
-
                     createServiceCollectionUseCase(
                         serviceId = service.id,
                         serviceName = "${service.startingLandmarkName.titleCaseFirstChar()} -> ${service.endingLandmarkName.titleCaseFirstChar()}",

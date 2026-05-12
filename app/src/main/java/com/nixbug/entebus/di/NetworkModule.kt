@@ -8,6 +8,8 @@ import com.nixbug.entebus.data.remote.operator.api.OperatorAccountImageApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorDutyApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorLandmarkApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorPaperTicketApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorRoleApi
+import com.nixbug.entebus.data.remote.operator.api.OperatorRoleMapApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceAssignmentApi
 import com.nixbug.entebus.data.remote.operator.api.OperatorTokenApi
@@ -115,5 +117,15 @@ object NetworkModule {
     @Provides
     fun provideDutyApi(@OperatorApi retrofit: Retrofit): OperatorDutyApi {
         return retrofit.create(OperatorDutyApi::class.java)
+    }
+
+    @Provides
+    fun provideRoleMapApi(@OperatorApi retrofit: Retrofit): OperatorRoleMapApi {
+        return retrofit.create(OperatorRoleMapApi::class.java)
+    }
+
+    @Provides
+    fun provideRoleApi(@OperatorApi retrofit: Retrofit): OperatorRoleApi {
+        return retrofit.create(OperatorRoleApi::class.java)
     }
 }
