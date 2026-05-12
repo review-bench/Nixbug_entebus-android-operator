@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -81,6 +80,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.platform.LocalContext
 import com.nixbug.entebus.presentation.components.loadingskeleton.ServiceCardSkeleton
@@ -91,6 +91,8 @@ import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.titleCaseFirstChar
+import java.time.Duration
+import java.time.Instant
 
 @Composable
 fun HomeScreen(
@@ -750,7 +752,7 @@ fun ServiceCard(
     isStarting: Boolean = false,
     isAnyStarting: Boolean = false
 ) {
-
+    val delayText = remember(service.startingAt) { service.startingAt.delayText() }
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -767,9 +769,14 @@ fun ServiceCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(15.dp)
+                .padding(10.dp)
+                .fillMaxWidth()
         ) {
-
+            ServiceCardHeader(
+                serviceId = service.id,
+                cardType = cardType,
+                delayText = delayText
+            )
             //-------------- ROUTE NAME ----------------------//
             Text(
                 text = "${service.startingLandmarkName.titleCaseFirstChar()}-> ${service.endingLandmarkName.titleCaseFirstChar()}",
@@ -823,7 +830,10 @@ fun ServiceCard(
                 Column(horizontalAlignment = Alignment.End) {
 
                     //-------------- TIME ----------------------//
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(end = 2.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.AccessTime,
                             contentDescription = "Service time",
@@ -863,6 +873,69 @@ fun ServiceCard(
         }
     }
 
+}
+
+@Composable
+fun StatusChip(
+    text: String?
+) {
+    val delayText = text ?: ""
+
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color(0xFFFFF3E0))
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color(0xFFFF6D00))
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = delayText,
+            color = Color(0xFFFF6D00),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+fun ServiceCardHeader(serviceId: Int, cardType: CardType, delayText: String?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(start = 3.dp)
+        ) {
+            Text(
+                text = "Service ID",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = ":",
+                modifier = Modifier.width(12.dp),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = serviceId.toString(),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if ((cardType == CardType.DOWNLOADED || cardType == CardType.ASSIGNED) && delayText != null)
+            StatusChip(delayText)
+    }
 }
 
 @Composable
@@ -978,5 +1051,31 @@ fun ViewMoreText(
             modifier = Modifier
                 .size(25.dp)
         )
+    }
+}
+
+fun String.delayText(): String? {
+    return try {
+        val start = Instant.parse(this)
+        val now = Instant.now()
+
+        if (start.isAfter(now)) return null
+
+        val minutes = Duration.between(start, now).toMinutes()
+
+        when {
+            minutes >= 60 -> {
+                val hours = minutes / 60
+                val unit = if (hours == 1L) "hr" else "hrs"
+                "Delayed $hours $unit"
+            }
+
+            else -> {
+                val unit = if (minutes == 1L) "min" else "mins"
+                "Delayed $minutes $unit"
+            }
+        }
+    } catch (e: Exception) {
+        null
     }
 }
