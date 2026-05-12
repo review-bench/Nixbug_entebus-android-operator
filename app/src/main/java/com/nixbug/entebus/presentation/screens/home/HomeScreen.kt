@@ -1067,12 +1067,12 @@ fun String.delayText(): String? {
             minutes >= 60 -> {
                 val hours = minutes / 60
                 val unit = if (hours == 1L) "hr" else "hrs"
-                "Delayed • $hours $unit"
+                "Delayed $hours $unit"
             }
 
             else -> {
                 val unit = if (minutes == 1L) "min" else "mins"
-                "Delayed • $minutes $unit"
+                "Delayed $minutes $unit"
             }
         }
     } catch (e: Exception) {
