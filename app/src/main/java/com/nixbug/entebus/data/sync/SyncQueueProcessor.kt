@@ -57,7 +57,7 @@ class SyncQueueProcessor @Inject constructor(
                             )
                             val response = paperTicketApi.createPaperTicket(request)
                             if (!response.isSuccessful) {
-                                throw Exception("Ticket sync failed")
+                                throw Exception("Unable to sync ticket. Verify your ticket printing permission or contact your owner.")
                             }
                         }
 
@@ -71,7 +71,7 @@ class SyncQueueProcessor @Inject constructor(
                                 appApiServiceUpdateForm = request
                             )
                             if (!response.isSuccessful) {
-                                throw Exception("Service sync failed")
+                                throw Exception("Unable to sync service. Please verify your service update permission. If the issue persists, contact your owner.")
                             }
                         }
                     }

@@ -516,7 +516,7 @@ class TicketViewModel @Inject constructor(
                         .divider()
                         .addCommand(PrinterManager.Commands.ALIGN_CENTER)
                         .text("Not Transferable")
-                        .text("Nixbug softwares")
+                        .text("Entebus")
                         .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
                         .addCommand(PrinterManager.Commands.BOLD_OFF)
                         .build()
