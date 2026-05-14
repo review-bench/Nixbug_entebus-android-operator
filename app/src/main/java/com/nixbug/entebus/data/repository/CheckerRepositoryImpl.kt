@@ -21,13 +21,9 @@ class CheckerRepositoryImpl(
     ): List<PassengerTypeCount> {
 
         val service = serviceDao.getServiceWithDetails(serviceId) ?: return emptyList()
-        println("ServiceBus = $service")
         val landmarkDistanceMap = service.landmarks.associate { it.landmarkId to it.distance }
         val fromDistance = landmarkDistanceMap[fromLandmarkId] ?: return emptyList()
         val toDistance = landmarkDistanceMap[toLandmarkId] ?: return emptyList()
-        println("Landmark map = $landmarkDistanceMap")
-        println("from Landmark= $fromLandmarkId")
-        println("to Landmark = $toLandmarkId")
         if (fromDistance == toDistance) {
             return emptyList()
         }
@@ -44,9 +40,6 @@ class CheckerRepositoryImpl(
         val typeCountMap = mutableMapOf<Int, Int>()
         val queuedTickets =
             syncQueueDao.getPaperTicketsByService(serviceId)
-
-        println("Queued tickets count = ${queuedTickets.size}")
-        println("Queued tickets = $queuedTickets")
 
         queuedTickets.forEach { entity ->
                 val payload = runCatching {

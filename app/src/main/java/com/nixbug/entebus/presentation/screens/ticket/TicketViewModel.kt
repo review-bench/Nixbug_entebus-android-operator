@@ -638,6 +638,7 @@ class TicketViewModel @Inject constructor(
                     type = SnackbarType.ERROR,
                     duration = SnackbarDuration.Long
                 )
+                _uiState.update { it.copy(isLoadingPassengerStats = false) }
                 return@launch
             }
             val lastSequence = getLastTicketSequenceUseCase(serviceId, operatorId)
