@@ -696,7 +696,7 @@ class TicketViewModel @Inject constructor(
                         }
                         .addCommand(PrinterManager.Commands.ALIGN_CENTER)
                         .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
-                        .text("Ticket ID's")
+                        .text("Ticket IDs")
                         .text("--------")
                         .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
                         .addCommand(PrinterManager.Commands.ALIGN_LEFT)
