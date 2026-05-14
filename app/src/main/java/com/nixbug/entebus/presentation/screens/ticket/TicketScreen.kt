@@ -114,6 +114,10 @@ fun TicketScreen(
         AppHeader(
             title = "Ticket",
             onBackClick = { navController.popBackStack() },
+            showTopBarActions = true,
+            primaryActionText = "Audit",
+            primaryActionIcon = Icons.Default.Print,
+            onPrimaryActionClick = { viewModel.loadPassengerStats() }
         )
         if (state.isLoading) {
             val shimmerBrush = rememberShimmerBrush()

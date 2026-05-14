@@ -36,13 +36,11 @@ class SyncQueueProcessor @Inject constructor(
     suspend fun processQueue() {
 
         mutex.withLock {
-            var processedAny = false
             _events.emit(SyncEvent.Started)
             while (true) {
                 val item = syncQueueDao.getNextPending() ?: break
 
                 try {
-                    processedAny = true
                     syncQueueDao.updateStatus(
                         queueOrder = item.queueOrder,
                         status = SyncStatus.SYNCING
@@ -108,9 +106,6 @@ class SyncQueueProcessor @Inject constructor(
                 }
             }
 
-            if (processedAny) {
-                syncQueueDao.clearSynced()
-            }
             _events.emit(SyncEvent.Success)
         }
     }

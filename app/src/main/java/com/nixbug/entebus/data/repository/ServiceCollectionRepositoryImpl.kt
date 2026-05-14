@@ -86,4 +86,8 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
     override suspend fun getNextTicketSequence(serviceId: Int, operatorId: Int): Int {
         return dao.getAndIncrementTicketSequence(serviceId = serviceId, operatorId = operatorId)
     }
+
+    override suspend fun getLastSequenceByServiceId(serviceId: Int, operatorId: Int): Int {
+        return dao.getLastSequenceByServiceId(serviceId, operatorId) ?: 0
+    }
 }

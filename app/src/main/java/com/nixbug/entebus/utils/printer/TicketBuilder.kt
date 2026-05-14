@@ -38,7 +38,7 @@ class TicketBuilder {
     fun threeColumnRow(left: String, center: String, right: String): TicketBuilder {
         val total = currentLineWidth
         val colLeftWidth = 9
-        val colRightWidth = 13
+        val colRightWidth = 14
         val colCenterWidth = total - colLeftWidth - colRightWidth
 
         val fLeft = left.take(colLeftWidth).padEnd(colLeftWidth)
