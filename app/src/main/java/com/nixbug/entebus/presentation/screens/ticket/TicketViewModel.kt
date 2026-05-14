@@ -641,18 +641,18 @@ class TicketViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoadingPassengerStats = false) }
                 return@launch
             }
-            val lastSequence = getLastTicketSequenceUseCase(serviceId, operatorId)
-            if (!printerManager.checkConnection()) {
-                SnackbarManager.show(
-                    message = "Printer connection failed. Please reconnect the printer and resume the service.",
-                    type = SnackbarType.ERROR,
-                    duration = SnackbarDuration.Long
-                )
-                emitNavigateBack()
-                _uiState.update { it.copy(isLoadingPassengerStats = false) }
-                return@launch
-            }
             try {
+                val lastSequence = getLastTicketSequenceUseCase(serviceId, operatorId)
+                if (!printerManager.checkConnection()) {
+                    SnackbarManager.show(
+                        message = "Printer connection failed. Please reconnect the printer and resume the service.",
+                        type = SnackbarType.ERROR,
+                        duration = SnackbarDuration.Long
+                    )
+                    emitNavigateBack()
+                    _uiState.update { it.copy(isLoadingPassengerStats = false) }
+                    return@launch
+                }
                 val result =
                     getPassengerStatsUseCase(
                         serviceId = serviceId,

@@ -118,7 +118,7 @@ fun TicketScreen(
             primaryActionText = "Audit",
             primaryActionIcon = Icons.Default.Print,
             onPrimaryActionClick = { viewModel.loadPassengerStats() },
-            isPrimaryActionEnabled = !state.isLoadingPassengerStats
+            isPrimaryActionEnabled = !state.isLoadingPassengerStats && !state.isPrinting
         )
         if (state.isLoading) {
             val shimmerBrush = rememberShimmerBrush()
