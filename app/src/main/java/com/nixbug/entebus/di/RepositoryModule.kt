@@ -23,6 +23,7 @@ import com.nixbug.entebus.data.repository.OperatorAccountImageRepositoryImpl
 import com.nixbug.entebus.data.repository.OperatorAccountRepositoryImpl
 import com.nixbug.entebus.data.repository.PublicCompanyRepositoryImpl
 import com.nixbug.entebus.data.repository.AssignedServiceRepositoryImpl
+import com.nixbug.entebus.data.repository.CheckerRepositoryImpl
 import com.nixbug.entebus.data.repository.DutyHistoryRepositoryImpl
 import com.nixbug.entebus.data.repository.RoleAndPermissionRepositoryImpl
 import com.nixbug.entebus.data.repository.ServiceCollectionRepositoryImpl
@@ -37,6 +38,7 @@ import com.nixbug.entebus.domain.repository.OperatorAccountImageRepository
 import com.nixbug.entebus.domain.repository.OperatorAccountRepository
 import com.nixbug.entebus.domain.repository.PublicCompanyRepository
 import com.nixbug.entebus.domain.repository.AssignedServiceRepository
+import com.nixbug.entebus.domain.repository.CheckerRepository
 import com.nixbug.entebus.domain.repository.DutyHistoryRepository
 import com.nixbug.entebus.domain.repository.RoleAndPermissionRepository
 import com.nixbug.entebus.domain.repository.ServiceCollectionRepository
@@ -177,5 +179,19 @@ object RepositoryModule {
         permissionLocalDataSource: PermissionLocalDataSource
     ): RoleAndPermissionRepository {
         return RoleAndPermissionRepositoryImpl(roleMapApi, roleApi, permissionLocalDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCheckerRepository(
+        serviceDao: ServiceDao,
+        syncQueueDao: SyncQueueDao,
+        gson: Gson
+    ): CheckerRepository {
+        return CheckerRepositoryImpl(
+            serviceDao = serviceDao,
+            syncQueueDao = syncQueueDao,
+            gson = gson
+        )
     }
 }

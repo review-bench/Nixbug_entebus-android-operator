@@ -16,6 +16,7 @@ import com.nixbug.entebus.domain.usecase.assignedservice.GetAssignedServiceUseCa
 import com.nixbug.entebus.domain.usecase.collection.CreateServiceCollectionUseCase
 import com.nixbug.entebus.domain.usecase.collection.HasServiceCollectionUseCase
 import com.nixbug.entebus.domain.usecase.collection.UpdateServiceCollectionStatusUseCase
+import com.nixbug.entebus.domain.usecase.queue.ClearSyncedItemsUseCase
 import com.nixbug.entebus.domain.usecase.roleandpermission.CanCreateTicketUseCase
 import com.nixbug.entebus.domain.usecase.roleandpermission.CanUpdateServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.ClearAssignedServicesUseCase
@@ -74,7 +75,8 @@ class HomeScreenViewModel @Inject constructor(
     private val updateServiceCollectionStatusUseCase: UpdateServiceCollectionStatusUseCase,
     private val hasServiceCollectionUseCase: HasServiceCollectionUseCase,
     private val canCreateTicketUseCase: CanCreateTicketUseCase,
-    private val canUpdateServiceUseCase: CanUpdateServiceUseCase
+    private val canUpdateServiceUseCase: CanUpdateServiceUseCase,
+    private val clearSyncedItemsUseCase: ClearSyncedItemsUseCase
 ) : ViewModel() {
 
     // STATE
@@ -817,6 +819,7 @@ class HomeScreenViewModel @Inject constructor(
                         ongoingService = null
                     )
                 }
+                clearSyncedItemsUseCase()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

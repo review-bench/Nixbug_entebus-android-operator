@@ -62,4 +62,7 @@ class SyncQueueRepositoryImpl @Inject constructor(
     }
 
     override fun observeSyncEvents() = processor.events
+
+    override suspend fun clearSyncedItems() { syncQueueDao.clearSynced() }
+
 }

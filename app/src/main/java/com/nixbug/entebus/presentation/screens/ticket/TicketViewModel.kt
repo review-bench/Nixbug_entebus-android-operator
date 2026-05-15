@@ -8,9 +8,11 @@ import com.nixbug.entebus.domain.model.PaperTicket
 import com.nixbug.entebus.domain.model.PaperTicketType
 import com.nixbug.entebus.domain.model.Ticket
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
+import com.nixbug.entebus.domain.usecase.GetPassengerStatsUseCase
 import com.nixbug.entebus.domain.usecase.queue.EnqueuePaperTicketUseCase
 import com.nixbug.entebus.domain.usecase.collection.GetNextTicketSequenceUseCase
 import com.nixbug.entebus.domain.usecase.collection.AddServiceCollectionUseCase
+import com.nixbug.entebus.domain.usecase.collection.GetLastTicketSequenceUseCase
 import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
 import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
@@ -35,12 +37,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.security.MessageDigest
 import java.time.Instant
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 private const val MAX_PASSENGER_COUNT = 99
 private const val METERS_PER_KILOMETER = 1000f
+private val SYMBOLS = charArrayOf('-', '*', '+', '#')
 
 @HiltViewModel
 class TicketViewModel @Inject constructor(
@@ -51,7 +55,9 @@ class TicketViewModel @Inject constructor(
     private val getNextTicketSequenceUseCase: GetNextTicketSequenceUseCase,
     private val getUserUseCase: GetUserUseCase,
     private val getTokenUseCase: GetTokenUseCase,
-    private val addServiceCollectionUseCase: AddServiceCollectionUseCase
+    private val addServiceCollectionUseCase: AddServiceCollectionUseCase,
+    private val getPassengerStatsUseCase: GetPassengerStatsUseCase,
+    private val getLastTicketSequenceUseCase: GetLastTicketSequenceUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketUiState())
@@ -413,7 +419,6 @@ class TicketViewModel @Inject constructor(
                         type = SnackbarType.ERROR,
                         duration = SnackbarDuration.Long
                     )
-
                     emitNavigateBack()
                     return@launch
                 }
@@ -468,6 +473,7 @@ class TicketViewModel @Inject constructor(
                     serviceId = serviceId,
                     operatorId = operatorId
                 )
+                val serviceIdDivider = generateServiceVisualPattern(serviceId)
 
                 val ticketData = withContext(Dispatchers.Default) {
 
@@ -480,9 +486,7 @@ class TicketViewModel @Inject constructor(
                         .threeColumnRow(
                             dateStr,
                             timeStr,
-                            "T-${
-                                serviceId.toString().padStart(6, '0')
-                            }-${ticketId.toString().padStart(4, '0')}"
+                            "T-${serviceId}-${ticketId}"
                         )
                         .addCommand(PrinterManager.Commands.BOLD_ON)
                         .routeRow(
@@ -513,10 +517,10 @@ class TicketViewModel @Inject constructor(
                         .addCommand(PrinterManager.Commands.SIZE_BIG)
                         .text("RS . ${totalFare.toCurrency()}")
                         .addCommand(PrinterManager.Commands.SIZE_NORMAL)
-                        .divider()
+                        .text(serviceIdDivider)
                         .addCommand(PrinterManager.Commands.ALIGN_CENTER)
                         .text("Not Transferable")
-                        .text("Nixbug softwares")
+                        .text("Entebus")
                         .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
                         .addCommand(PrinterManager.Commands.BOLD_OFF)
                         .build()
@@ -575,6 +579,164 @@ class TicketViewModel @Inject constructor(
                 totalDistanceKm = 0f,
                 totalFare = 0.0
             )
+        }
+    }
+
+    fun generateServiceVisualPattern(serviceId: Int): String {
+        // Hash the service ID
+        val hash = MessageDigest
+            .getInstance("SHA-256")
+            .digest(serviceId.toString().toByteArray())
+
+        // Determine symbol order from hash
+        val shuffled = SYMBOLS.clone()
+        for (i in shuffled.indices) {
+            val swapIndex = (hash[i].toInt() and 0xFF) % shuffled.size
+            val temp = shuffled[i]
+            shuffled[i] = shuffled[swapIndex]
+            shuffled[swapIndex] = temp
+        }
+
+        // Build final string: 4 segments × 8 characters = 32 characters
+        val result = StringBuilder()
+        for (i in 0 until 4) {
+            repeat(8) {
+                result.append(shuffled[i])
+            }
+        }
+
+        return result.toString()
+    }
+
+    fun loadPassengerStats() {
+        viewModelScope.launch {
+            val state = _uiState.value
+            _uiState.update { it.copy(isLoadingPassengerStats = true) }
+            val serviceId = state.serviceId
+            val operatorId = state.operatorId
+            val start = state.startingLandmark?.id
+            val end = state.endingLandmark?.id
+            if (serviceId == null) {
+                SnackbarManager.show(
+                    message = "Service data is still loading. Please try again.",
+                    type = SnackbarType.ERROR
+                )
+                _uiState.update { it.copy(isLoadingPassengerStats = false) }
+                return@launch
+            }
+            if (start == null || end == null) {
+                SnackbarManager.show(
+                    message = "Please select starting and ending points",
+                    type = SnackbarType.ERROR
+                )
+                _uiState.update { it.copy(isLoadingPassengerStats = false) }
+                return@launch
+            }
+            if (operatorId == null) {
+                SnackbarManager.show(
+                    message = "Operator session expired. Please login again.",
+                    type = SnackbarType.ERROR,
+                    duration = SnackbarDuration.Long
+                )
+                _uiState.update { it.copy(isLoadingPassengerStats = false) }
+                return@launch
+            }
+            try {
+                val lastSequence = getLastTicketSequenceUseCase(serviceId, operatorId)
+                if (!printerManager.checkConnection()) {
+                    SnackbarManager.show(
+                        message = "Printer connection failed. Please reconnect the printer and resume the service.",
+                        type = SnackbarType.ERROR,
+                        duration = SnackbarDuration.Long
+                    )
+                    emitNavigateBack()
+                    _uiState.update { it.copy(isLoadingPassengerStats = false) }
+                    return@launch
+                }
+                val result =
+                    getPassengerStatsUseCase(
+                        serviceId = serviceId,
+                        fromLandmarkId = start,
+                        toLandmarkId = end
+                    )
+                if (result.isEmpty()) {
+                    SnackbarManager.show(
+                        message = "Issue at least one ticket to print passenger statistics.",
+                        type = SnackbarType.WARNING
+                    )
+                    _uiState.update { it.copy(isLoadingPassengerStats = false) }
+                    return@launch
+                }
+                _uiState.update { it.copy(passengerStats = result) }
+                val serviceIdDivider = generateServiceVisualPattern(serviceId)
+                val ticketData = withContext(Dispatchers.Default) {
+                    TicketBuilder()
+                        .addCommand(PrinterManager.Commands.ALIGN_CENTER)
+                        .addCommand(PrinterManager.Commands.BOLD_ON)
+                        .addCommand(PrinterManager.Commands.SIZE_DOUBLE_HEIGHT)
+                        .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
+                        .text("Passenger Statistics")
+                        .addCommand(PrinterManager.Commands.BOLD_OFF)
+                        .addCommand(PrinterManager.Commands.SIZE_NORMAL)
+                        .text("------------------")
+                        .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
+                        .addCommand(PrinterManager.Commands.ALIGN_LEFT)
+                        .text("From : ${state.startingLandmark.name}")
+                        .text("To   : ${state.endingLandmark.name}")
+                        .addCommand(PrinterManager.Commands.ALIGN_CENTER)
+                        .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
+                        .text("Expected count(approximate)")
+                        .text("--------------")
+                        .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
+                        .addCommand(PrinterManager.Commands.ALIGN_LEFT)
+                        .apply {
+                            result.forEach {
+                                leftRightRow("   ${it.typeName}", "${it.count}   ")
+                            }
+                        }
+                        .addCommand(PrinterManager.Commands.ALIGN_CENTER)
+                        .addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
+                        .text("Ticket IDs")
+                        .text("--------")
+                        .addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
+                        .addCommand(PrinterManager.Commands.ALIGN_LEFT)
+                        .text("First Ticket ID : T-${state.serviceId}-1")
+                        .text("Final Ticket ID : T-${state.serviceId}-${lastSequence}")
+                        .text(serviceIdDivider)
+                        .text("Remark : ")
+                        .text("")
+                        .text("")
+                        .text("")
+                        .build()
+                }
+
+                try {
+                    val result = printerManager.sendData(ticketData)
+                    if (!result.isSuccess) {
+                        throw (
+                                result.exceptionOrNull()
+                                    ?: Exception("Unknown error")
+                                )
+                    }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    SnackbarManager.show(
+                        "Printing failed. Please check the printer and try again.",
+                        SnackbarType.ERROR,
+                        SnackbarDuration.Long
+                    )
+                    emitNavigateBack()
+                    return@launch
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                SnackbarManager.show(
+                    message = "Failed to load passenger stats",
+                    type = SnackbarType.ERROR
+                )
+            } finally {
+                _uiState.update { it.copy(isLoadingPassengerStats = false) }
+            }
         }
     }
 }

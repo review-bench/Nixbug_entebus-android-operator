@@ -16,4 +16,6 @@ interface SyncQueueRepository {
     suspend fun hasPendingItems(): Boolean
 
     fun observeSyncEvents(): Flow<SyncEvent>
+
+    suspend fun clearSyncedItems()
 }

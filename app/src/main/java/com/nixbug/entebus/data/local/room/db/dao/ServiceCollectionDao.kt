@@ -42,4 +42,7 @@ interface ServiceCollectionDao {
         incrementTicketSequence(serviceId, operatorId)
         return getLastTicketSequence(serviceId, operatorId) ?: 0
     }
+
+    @Query("SELECT lastTicketSequence FROM service_collection WHERE serviceId = :serviceId AND operatorId = :operatorId LIMIT 1")
+    suspend fun getLastSequenceByServiceId(serviceId: Int, operatorId: Int): Int?
 }

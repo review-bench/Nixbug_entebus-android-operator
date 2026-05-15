@@ -25,4 +25,6 @@ interface SyncQueueDao {
     @Query("SELECT COUNT(*) > 0 FROM sync_queue WHERE status IN ('PENDING', 'FAILED', 'SYNCING')")
     suspend fun hasPendingItems(): Boolean
 
+    @Query("SELECT * FROM sync_queue WHERE serviceId = :serviceId AND operationType = 'PAPER_TICKET'")
+    suspend fun getPaperTicketsByService(serviceId: Int): List<SyncQueueEntity>
 }

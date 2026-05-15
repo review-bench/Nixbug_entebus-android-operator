@@ -1,5 +1,7 @@
 package com.nixbug.entebus.presentation.screens.ticket
 
+import com.nixbug.entebus.domain.model.checker.PassengerTypeCount
+
 data class TicketUiState(
     val landmarks: List<Landmark> = emptyList(),
     val passengers: List<Passenger> = emptyList(),
@@ -15,5 +17,7 @@ data class TicketUiState(
     val serviceId: Int? = null,
     val companyName: String = "",
     val operatorName: String = "",
-    val operatorId: Int? = null
+    val operatorId: Int? = null,
+    val passengerStats: List<PassengerTypeCount> = emptyList(),
+    val isLoadingPassengerStats: Boolean = false
 )

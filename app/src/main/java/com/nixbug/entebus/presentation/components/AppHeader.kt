@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +34,8 @@ fun AppHeader(
     primaryActionText: String = "",
     primaryActionIcon: ImageVector? = null,
     onPrimaryActionClick: () -> Unit = {},
-    paddingEnd: Dp = 9.dp
+    paddingEnd: Dp = 9.dp,
+    isPrimaryActionEnabled: Boolean = true
 ) {
     Surface(
         color = Color.White
@@ -65,6 +67,7 @@ fun AppHeader(
             if (showTopBarActions) {
                 if (primaryActionIcon != null) {
                     Button(
+                        enabled = isPrimaryActionEnabled,
                         onClick = onPrimaryActionClick,
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
@@ -75,6 +78,13 @@ fun AppHeader(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
+                        if (!isPrimaryActionEnabled) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        }
                         Text(
                             text = primaryActionText,
                             style = MaterialTheme.typography.titleMedium,

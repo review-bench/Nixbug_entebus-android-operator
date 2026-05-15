@@ -404,7 +404,7 @@ class SummaryScreenViewModel @Inject constructor(
                     builder.addCommand(PrinterManager.Commands.ALIGN_CENTER)
                     builder.text("GRAND TOTAL : ${data.grandTotal} Rs")
                     builder.addCommand(PrinterManager.Commands.SIZE_NORMAL)
-                    builder.text("--Nixbug Softwares OPC Pvt Ltd--")
+                    builder.text("-----------Entebus-----------")
 
                     builder.build() // Return the final ByteArray
                 }

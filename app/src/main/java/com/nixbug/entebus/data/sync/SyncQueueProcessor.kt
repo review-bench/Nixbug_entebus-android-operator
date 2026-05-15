@@ -36,13 +36,11 @@ class SyncQueueProcessor @Inject constructor(
     suspend fun processQueue() {
 
         mutex.withLock {
-            var processedAny = false
             _events.emit(SyncEvent.Started)
             while (true) {
                 val item = syncQueueDao.getNextPending() ?: break
 
                 try {
-                    processedAny = true
                     syncQueueDao.updateStatus(
                         queueOrder = item.queueOrder,
                         status = SyncStatus.SYNCING
@@ -57,7 +55,7 @@ class SyncQueueProcessor @Inject constructor(
                             )
                             val response = paperTicketApi.createPaperTicket(request)
                             if (!response.isSuccessful) {
-                                throw Exception("Ticket sync failed")
+                                throw Exception("Unable to sync ticket. Verify your ticket printing permission or contact your owner.")
                             }
                         }
 
@@ -71,7 +69,7 @@ class SyncQueueProcessor @Inject constructor(
                                 appApiServiceUpdateForm = request
                             )
                             if (!response.isSuccessful) {
-                                throw Exception("Service sync failed")
+                                throw Exception("Unable to sync service. Please verify your service update permission. If the issue persists, contact your owner.")
                             }
                         }
                     }
@@ -108,9 +106,6 @@ class SyncQueueProcessor @Inject constructor(
                 }
             }
 
-            if (processedAny) {
-                syncQueueDao.clearSynced()
-            }
             _events.emit(SyncEvent.Success)
         }
     }
