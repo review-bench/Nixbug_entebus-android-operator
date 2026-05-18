@@ -195,11 +195,13 @@ class HistoryScreenViewModel @Inject constructor(
 
             val hours = duration.toHours()
             val minutes = duration.minusHours(hours).toMinutes()
+            val seconds = duration.minusHours(hours).minusMinutes(minutes).seconds
 
             when {
-                hours > 0 -> "${hours}h ${minutes}m"
-                minutes > 0 -> "${minutes}m"
-                else -> "Less than a minute"
+                hours > 0 -> "${hours}h ${minutes}m ${seconds}s"
+                minutes > 0 -> "${minutes}m ${seconds}s"
+                seconds > 0 -> "${seconds}s"
+                else -> "Less than a second"
             }
         } catch (e: Exception) {
             "N/A"
