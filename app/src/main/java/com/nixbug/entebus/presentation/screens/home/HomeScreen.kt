@@ -77,6 +77,7 @@ import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -131,6 +132,12 @@ fun HomeScreen(
                 viewModel.cancelPendingServiceAction()
             }
         }
+
+    val dialogMessage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        "Nearby Devices permission is required to start or resume services. Without it, device connection and ticket printing will not work properly."
+    } else {
+        "Bluetooth and Location access are required to start or resume services. Without it, device connection and ticket printing will not work properly."
+    }
 
     fun openPrinterPicker() {
         val hasPermission = BluetoothPermissionHelper.hasBluetoothPermissions(context)
@@ -293,7 +300,7 @@ fun HomeScreen(
     if (showPermissionDialog) {
         DialogBox(
             title = "Permission Required",
-            message = "Bluetooth permission is required to start or resume services. Without it, ticket printing and device connection will not work properly.",
+            message = dialogMessage,
             confirmText = if (isPermanentDenial) "Open Settings" else "Retry",
             dismissible = true,
             onDismiss = { showPermissionDialog = false },

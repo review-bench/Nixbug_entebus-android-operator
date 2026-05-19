@@ -4,11 +4,13 @@ import android.Manifest
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -87,7 +89,7 @@ fun LocationRequestScreen(
     if (showSettingsDialog) {
         DialogBox(
             title = "Location Access Denied",
-            message = "To enable nearby company suggestions and real-time bus tracking, please allow location access from Settings. You may continue without location access, but some features will be limited.",
+            message = "To enable nearby company suggestions, please allow location access from Settings. You may continue without location access, but some features will be limited.",
             confirmText = "Open Settings",
             onConfirmClick = {
                 showSettingsDialog = false
@@ -110,7 +112,7 @@ fun LocationRequestScreen(
     if (showRationale) {
         DialogBox(
             title = "Location Importance",
-            message = "We use your location to show nearby companies and track buses in real time. Without it, the app's features will be limited.",
+            message = "We use your location to show nearby transport operators and companies for a faster setup. You may continue without location access, but some features will be limited.",
             confirmText = "Allow Location Access",
             onConfirmClick = {
                 showRationale = false
@@ -134,6 +136,7 @@ fun LocationRequestScreen(
             exitBtnBorderColor = MaterialTheme.colorScheme.primary
         )
     }
+
     SetStatusBarColor(
         color = Color.White,
         darkIcons = true
@@ -164,13 +167,13 @@ fun LocationRequestScreen(
                 text = "Enable Location Access",
                 style = MaterialTheme.typography.titleLarge,
                 color = Color(0xFF1E1E1E),
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = 10.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "We use your location to show nearby companies and enable real-time bus tracking during your shift. Your location data is used only while you are on duty and is kept secure.",
+                text = "We use your location to show nearby transport operators and companies for a faster setup. Your location data is used only for this purpose and is kept secure. You can also continue without location access.",
                 textAlign = TextAlign.Center,
                 color = Color.Gray,
                 style = MaterialTheme.typography.bodyLarge,
@@ -182,7 +185,7 @@ fun LocationRequestScreen(
 
         }
 
-        Spacer(modifier = Modifier.height(15.dp))
+        Spacer(modifier = Modifier.height(5.dp))
 
         Button(
             onClick = {
@@ -198,7 +201,8 @@ fun LocationRequestScreen(
                 .height(50.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-        ) {
+        )
+        {
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -222,5 +226,44 @@ fun LocationRequestScreen(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedButton(
+            onClick = { navigateToAuth() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.primary
+            )
+        )
+        {
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Skip Arrow Icon",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(20.dp)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = "Skip For Now",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(25.dp))
     }
 }
