@@ -221,7 +221,7 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
     val dialogMessage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         "Nearby Devices permission is required to connect your printer and print summary. Printing will not work unless this permission is granted."
     } else {
-        "Bluetooth and Location access are required to connect your printer and print summary.  Printing will not work unless this permission is granted."
+        "Bluetooth and Location access are required to connect your printer and print summary. Printing will not work unless this permission is granted."
     }
     if (showPermissionDialog) {
         DialogBox(

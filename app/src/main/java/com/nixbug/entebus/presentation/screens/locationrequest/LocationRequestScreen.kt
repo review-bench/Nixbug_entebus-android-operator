@@ -173,7 +173,7 @@ fun LocationRequestScreen(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "We use your location to show nearby transport operators and companies for a faster setup. Your location data is used only for this purpose and is kept secure.You can also continue without location access",
+                text = "We use your location to show nearby transport operators and companies for a faster setup. Your location data is used only for this purpose and is kept secure. You can also continue without location access.",
                 textAlign = TextAlign.Center,
                 color = Color.Gray,
                 style = MaterialTheme.typography.bodyLarge,
