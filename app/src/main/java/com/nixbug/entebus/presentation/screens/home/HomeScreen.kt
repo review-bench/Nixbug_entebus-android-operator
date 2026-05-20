@@ -759,7 +759,7 @@ fun ServiceCard(
     isStarting: Boolean = false,
     isAnyStarting: Boolean = false
 ) {
-    val delayText = remember(service.startingAt) { service.startingAt.delayText() }
+    val statusText = remember(service.startingAt) { service.startingAt.serviceStatusText() }
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -782,7 +782,7 @@ fun ServiceCard(
             ServiceCardHeader(
                 serviceId = service.id,
                 cardType = cardType,
-                delayText = delayText
+                delayText = statusText
             )
             //-------------- ROUTE NAME ----------------------//
             Text(
@@ -884,14 +884,14 @@ fun ServiceCard(
 
 @Composable
 fun StatusChip(
-    text: String?
+    text: String,
+    backgroundColor: Color,
+    contentColor: Color
 ) {
-    val delayText = text ?: ""
-
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .background(Color(0xFFFFF3E0))
+            .background(backgroundColor)
             .padding(horizontal = 10.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -899,12 +899,12 @@ fun StatusChip(
             modifier = Modifier
                 .size(6.dp)
                 .clip(RoundedCornerShape(50))
-                .background(Color(0xFFFF6D00))
+                .background(contentColor)
         )
         Spacer(Modifier.width(6.dp))
         Text(
-            text = delayText,
-            color = Color(0xFFFF6D00),
+            text = text,
+            color = contentColor,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold
         )
@@ -940,8 +940,22 @@ fun ServiceCardHeader(serviceId: Int, cardType: CardType, delayText: String?) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        if ((cardType == CardType.DOWNLOADED || cardType == CardType.ASSIGNED) && delayText != null)
-            StatusChip(delayText)
+        if ((cardType == CardType.DOWNLOADED || cardType == CardType.ASSIGNED) && delayText != null) {
+
+            val isUpcoming = delayText.startsWith("Starts in")
+            StatusChip(
+                text = delayText,
+                backgroundColor = if (isUpcoming)
+                    Color(0xFFE3F2FD)
+                else
+                    Color(0xFFFFF3E0),
+
+                contentColor = if (isUpcoming)
+                    Color(0xFF1976D2)
+                else
+                    Color(0xFFFF6D00)
+            )
+        }
     }
 }
 
@@ -1061,27 +1075,48 @@ fun ViewMoreText(
     }
 }
 
-fun String.delayText(): String? {
+fun String.serviceStatusText(): String? {
     return try {
         val start = Instant.parse(this)
         val now = Instant.now()
 
-        if (start.isAfter(now)) return null
-
-        val minutes = Duration.between(start, now).toMinutes()
+        val duration = Duration.between(now, start)
 
         when {
-            minutes >= 60 -> {
-                val hours = minutes / 60
-                val unit = if (hours == 1L) "hr" else "hrs"
-                "Delayed $hours $unit"
+
+            !duration.isNegative -> {
+
+                val minutes =
+                    kotlin.math.ceil(duration.seconds / 60.0).toLong()
+
+                if (minutes >= 60) {
+                    val hours = minutes / 60
+                    val unit = if (hours == 1L) "hr" else "hrs"
+                    "Starts in $hours $unit"
+                } else {
+                    val unit = if (minutes == 1L) "min" else "mins"
+                    "Starts in $minutes $unit"
+                }
             }
 
             else -> {
-                val unit = if (minutes == 1L) "min" else "mins"
-                "Delayed $minutes $unit"
+
+                val delayMinutes =
+                    kotlin.math.abs(duration.toMinutes())
+
+                if (delayMinutes >= 60) {
+                    val hours = delayMinutes / 60
+                    val unit = if (hours == 1L) "hr" else "hrs"
+                    "Delayed $hours $unit"
+                } else {
+                    val unit =
+                        if (delayMinutes == 1L) "min" else "mins"
+
+                    "Delayed $delayMinutes $unit"
+                }
             }
         }
+
     } catch (e: Exception) {
         null
     }

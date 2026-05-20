@@ -196,12 +196,10 @@ class HomeScreenViewModel @Inject constructor(
                         val detailedServices = coroutineScope {
                             assignedOnlyServices.map { service ->
                                 async {
-                                    when (
-                                        val detailResult = getServiceDetailsForHomeUseCase(
-                                            service.serviceId,
-                                            LocalServiceStatus.ASSIGNED
-                                        )
-                                    ) {
+                                    when (val detailResult = getServiceDetailsForHomeUseCase(
+                                        service.serviceId,
+                                        LocalServiceStatus.ASSIGNED
+                                    )) {
                                         is Resource.Success -> detailResult.data?.toHomeUiModel()
                                         else -> null
                                     }
@@ -210,13 +208,16 @@ class HomeScreenViewModel @Inject constructor(
                         }
 
                         val isLastPage = services.size < currentState.assignedLimit
+                        val updatedList =
+                            if (isPagination)
+                                (_uiState.value.assignedServiceList + detailedServices)
+                                    .sortedBy { service -> service.startingAt }
+                            else
+                                detailedServices.sortedBy { service -> service.startingAt }
+
                         _uiState.update {
                             it.copy(
-                                assignedServiceList =
-                                    if (isPagination)
-                                        it.assignedServiceList + detailedServices
-                                    else
-                                        detailedServices,
+                                assignedServiceList = updatedList,
 
                                 assignedOffset =
                                     if (isPagination)
