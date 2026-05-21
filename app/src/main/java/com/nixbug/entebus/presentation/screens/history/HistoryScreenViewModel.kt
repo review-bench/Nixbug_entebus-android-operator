@@ -23,6 +23,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class HistoryScreenViewModel @Inject constructor(
@@ -41,7 +42,15 @@ class HistoryScreenViewModel @Inject constructor(
                 it.copy(isRefreshing = true)
             }
 
-            fetchHistory()
+            try {
+                fetchHistory()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+            } finally {
+                _uiState.update {
+                    it.copy(isRefreshing = false)
+                }
+            }
 
             _uiState.update {
                 it.copy(isRefreshing = false)
