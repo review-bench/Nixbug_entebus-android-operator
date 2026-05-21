@@ -51,10 +51,6 @@ class HistoryScreenViewModel @Inject constructor(
                     it.copy(isRefreshing = false)
                 }
             }
-
-            _uiState.update {
-                it.copy(isRefreshing = false)
-            }
         }
     }
 

@@ -1127,7 +1127,9 @@ fun String.serviceStatusText(): String? {
                 val delayMinutes =
                     abs(duration.toMinutes())
 
-                if (delayMinutes >= 60) {
+                if (delayMinutes == 0L) {
+                    null
+                } else if (delayMinutes >= 60) {
                     val hours = delayMinutes / 60
                     val unit = if (hours == 1L) "hr" else "hrs"
                     "Delayed $hours $unit"

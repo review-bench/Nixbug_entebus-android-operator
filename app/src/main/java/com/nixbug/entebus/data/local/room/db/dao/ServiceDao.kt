@@ -44,7 +44,7 @@ interface ServiceDao {
     @Query("SELECT * FROM services WHERE id = :serviceId")
     suspend fun getServiceWithDetails(serviceId: Int): ServiceWithDetails?
 
-    @Query("SELECT * FROM services WHERE localStatus = :status ORDER BY startingAt DESC")
+    @Query("SELECT * FROM services WHERE localStatus = :status ORDER BY startingAt ASC")
     suspend fun getServicesByStatus(status: String): List<ServiceEntity>
 
     @Transaction
