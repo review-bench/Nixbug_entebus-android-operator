@@ -34,4 +34,5 @@ data class HomeUiState(
     val assignedLimit: Int = 10,
     val assignedHasMore: Boolean = true,
     val isAssignedPaginationLoading: Boolean = false,
+    val isRefreshing: Boolean = false
 )

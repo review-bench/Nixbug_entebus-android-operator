@@ -47,7 +47,7 @@ class ServiceRepositoryImpl @Inject constructor(
                     limit = limit,
                     search = search,
                     orderBy = AppApiServiceOrderBy.starting_at,
-                    orderIn = OrderIn.desc,
+                    orderIn = OrderIn.asc,
                     startingAtGe = startingAtGe,
                     idExcluding = safeExcludedIds
                 )

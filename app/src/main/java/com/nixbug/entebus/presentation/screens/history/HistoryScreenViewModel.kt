@@ -23,6 +23,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.coroutines.cancellation.CancellationException
 
 @HiltViewModel
 class HistoryScreenViewModel @Inject constructor(
@@ -33,6 +34,25 @@ class HistoryScreenViewModel @Inject constructor(
 
     private val searchQuery = MutableStateFlow("")
     private var searchJob: Job? = null
+
+    fun refreshHistory() {
+        viewModelScope.launch {
+
+            _uiState.update {
+                it.copy(isRefreshing = true)
+            }
+
+            try {
+                fetchHistory()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+            } finally {
+                _uiState.update {
+                    it.copy(isRefreshing = false)
+                }
+            }
+        }
+    }
 
     fun onScreenVisible() {
         viewModelScope.launch {

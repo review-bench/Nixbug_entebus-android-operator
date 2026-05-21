@@ -16,5 +16,6 @@ data class HistoryUiState(
     val selectedStatus: Int? = null,
     val selectedDate: String? = null,
     val isFilterApplied: Boolean = false,
-    val isFilterSelected: Boolean = false
+    val isFilterSelected: Boolean = false,
+    val isRefreshing: Boolean = false
 )

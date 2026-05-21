@@ -83,6 +83,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.ui.platform.LocalContext
 import com.nixbug.entebus.presentation.components.loadingskeleton.ServiceCardSkeleton
 import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
@@ -94,6 +96,8 @@ import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.titleCaseFirstChar
 import java.time.Duration
 import java.time.Instant
+import kotlin.math.abs
+import kotlin.math.ceil
 
 @Composable
 fun HomeScreen(
@@ -269,8 +273,9 @@ fun HomeScreen(
                 onLoadMoreAssigned = viewModel::loadMoreAssignedServices,
                 isAssignedLoadingMore = state.isAssignedPaginationLoading,
                 assignedHasMore = state.assignedHasMore,
-
-                )
+                isRefreshing = state.isRefreshing,
+                onRefresh = viewModel::refreshServices,
+            )
         }
     }
 
@@ -522,6 +527,8 @@ fun ServiceList(
     assignedHasMore: Boolean,
     startingServiceId: Int?,
     downloadingServiceId: Int?,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
 ) {
 
     val currentList = when (selectedTab) {
@@ -586,7 +593,9 @@ fun ServiceList(
             onLoadMore = onLoadMoreAssigned,
             isLoadingMore = isAssignedLoadingMore,
             hasMore = assignedHasMore,
-            startingServiceId = startingServiceId
+            startingServiceId = startingServiceId,
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh
         )
 
         1 -> ServiceTabContent(
@@ -596,7 +605,9 @@ fun ServiceList(
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp),
             downloadingServiceId = downloadingServiceId,
-            startingServiceId = startingServiceId
+            startingServiceId = startingServiceId,
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh
         )
 
         2 -> ServiceTabContent(
@@ -606,7 +617,9 @@ fun ServiceList(
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp),
             downloadingServiceId = downloadingServiceId,
-            startingServiceId = startingServiceId
+            startingServiceId = startingServiceId,
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh
         )
 
         3 -> ServiceTabContent(
@@ -619,11 +632,14 @@ fun ServiceList(
             isLoadingMore = isLoadingMore,
             downloadingServiceId = downloadingServiceId,
             hasMore = hasMore,
-            startingServiceId = startingServiceId
+            startingServiceId = startingServiceId,
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServiceTabContent(
     services: List<HomeUiModel>,
@@ -635,69 +651,77 @@ fun ServiceTabContent(
     isLoadingMore: Boolean = false,
     hasMore: Boolean = true,
     downloadingServiceId: Int?,
-    startingServiceId: Int?
+    startingServiceId: Int?,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
 ) {
-
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = WindowInsets.ime.asPaddingValues()
+    val pullToRefreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        state = pullToRefreshState,
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh
     ) {
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            contentPadding = WindowInsets.ime.asPaddingValues()
+        ) {
 
-        item { Spacer(modifier = Modifier.height(10.dp)) }
+            item { Spacer(modifier = Modifier.height(10.dp)) }
 
-        items(services) { service ->
+            items(services) { service ->
 
-            val startDateTime = utcToIstConverter(service.startingAt)
-            val isAnyDownloading = downloadingServiceId != null
-            val isAnyStarting = startingServiceId != null
+                val startDateTime = utcToIstConverter(service.startingAt)
+                val isAnyDownloading = downloadingServiceId != null
+                val isAnyStarting = startingServiceId != null
 
-            ServiceCard(
-                service = service,
-                cardType = cardType,
-                onActionClick = { onActionClick(service) },
-                date = startDateTime?.first ?: "Date unavailable",
-                time = startDateTime?.second ?: "Time unavailable",
-                isDownloading = service.id == downloadingServiceId,
-                isStarting = service.id == startingServiceId,
-                isEnabled = when (cardType) {
-                    CardType.ASSIGNED,
-                    CardType.DOWNLOADED -> canStartService(service.startingAt)
+                ServiceCard(
+                    service = service,
+                    cardType = cardType,
+                    onActionClick = { onActionClick(service) },
+                    date = startDateTime?.first ?: "Date unavailable",
+                    time = startDateTime?.second ?: "Time unavailable",
+                    isDownloading = service.id == downloadingServiceId,
+                    isStarting = service.id == startingServiceId,
+                    isEnabled = when (cardType) {
+                        CardType.ASSIGNED,
+                        CardType.DOWNLOADED -> canStartService(service.startingAt)
 
-                    else -> true
-                },
-                isAnyDownloading = isAnyDownloading,
-                isAnyStarting = isAnyStarting
-            )
+                        else -> true
+                    },
+                    isAnyDownloading = isAnyDownloading,
+                    isAnyStarting = isAnyStarting
+                )
 
-            Spacer(modifier = Modifier.height(15.dp))
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(10.dp))
-
-            if (onLoadMore != null) {
-
-                when {
-                    isLoadingMore -> {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
-
-                    hasMore -> {
-                        ViewMoreText(
-                            text = "Load More",
-                            onClick = onLoadMore,
-                            isExpanded = false
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(15.dp))
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            item {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                if (onLoadMore != null) {
+
+                    when {
+                        isLoadingMore -> {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+
+                        hasMore -> {
+                            ViewMoreText(
+                                text = "Load More",
+                                onClick = onLoadMore,
+                                isExpanded = false
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
         }
     }
 }
@@ -759,7 +783,7 @@ fun ServiceCard(
     isStarting: Boolean = false,
     isAnyStarting: Boolean = false
 ) {
-    val delayText = remember(service.startingAt) { service.startingAt.delayText() }
+    val statusText = remember(service.startingAt) { service.startingAt.serviceStatusText() }
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -782,7 +806,7 @@ fun ServiceCard(
             ServiceCardHeader(
                 serviceId = service.id,
                 cardType = cardType,
-                delayText = delayText
+                statusText = statusText
             )
             //-------------- ROUTE NAME ----------------------//
             Text(
@@ -884,14 +908,14 @@ fun ServiceCard(
 
 @Composable
 fun StatusChip(
-    text: String?
+    text: String,
+    backgroundColor: Color,
+    contentColor: Color
 ) {
-    val delayText = text ?: ""
-
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .background(Color(0xFFFFF3E0))
+            .background(backgroundColor)
             .padding(horizontal = 10.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -899,12 +923,12 @@ fun StatusChip(
             modifier = Modifier
                 .size(6.dp)
                 .clip(RoundedCornerShape(50))
-                .background(Color(0xFFFF6D00))
+                .background(contentColor)
         )
         Spacer(Modifier.width(6.dp))
         Text(
-            text = delayText,
-            color = Color(0xFFFF6D00),
+            text = text,
+            color = contentColor,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold
         )
@@ -912,7 +936,7 @@ fun StatusChip(
 }
 
 @Composable
-fun ServiceCardHeader(serviceId: Int, cardType: CardType, delayText: String?) {
+fun ServiceCardHeader(serviceId: Int, cardType: CardType, statusText: String?) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
@@ -940,8 +964,22 @@ fun ServiceCardHeader(serviceId: Int, cardType: CardType, delayText: String?) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        if ((cardType == CardType.DOWNLOADED || cardType == CardType.ASSIGNED) && delayText != null)
-            StatusChip(delayText)
+        if ((cardType == CardType.DOWNLOADED || cardType == CardType.ASSIGNED) && statusText != null) {
+
+            val isUpcoming = statusText.startsWith("Starts in")
+            StatusChip(
+                text = statusText,
+                backgroundColor = if (isUpcoming)
+                    Color(0xFFE3F2FD)
+                else
+                    Color(0xFFFFF3E0),
+
+                contentColor = if (isUpcoming)
+                    Color(0xFF1976D2)
+                else
+                    Color(0xFFFF6D00)
+            )
+        }
     }
 }
 
@@ -1061,27 +1099,50 @@ fun ViewMoreText(
     }
 }
 
-fun String.delayText(): String? {
+fun String.serviceStatusText(): String? {
     return try {
         val start = Instant.parse(this)
         val now = Instant.now()
 
-        if (start.isAfter(now)) return null
-
-        val minutes = Duration.between(start, now).toMinutes()
+        val duration = Duration.between(now, start)
 
         when {
-            minutes >= 60 -> {
-                val hours = minutes / 60
-                val unit = if (hours == 1L) "hr" else "hrs"
-                "Delayed $hours $unit"
+
+            !duration.isNegative -> {
+
+                val minutes =
+                    ceil(duration.seconds / 60.0).toLong()
+
+                if (minutes >= 60) {
+                    val hours = minutes / 60
+                    val unit = if (hours == 1L) "hr" else "hrs"
+                    "Starts in $hours $unit"
+                } else {
+                    val unit = if (minutes == 1L) "min" else "mins"
+                    "Starts in $minutes $unit"
+                }
             }
 
             else -> {
-                val unit = if (minutes == 1L) "min" else "mins"
-                "Delayed $minutes $unit"
+
+                val delayMinutes =
+                    abs(duration.toMinutes())
+
+                if (delayMinutes == 0L) {
+                    null
+                } else if (delayMinutes >= 60) {
+                    val hours = delayMinutes / 60
+                    val unit = if (hours == 1L) "hr" else "hrs"
+                    "Delayed $hours $unit"
+                } else {
+                    val unit =
+                        if (delayMinutes == 1L) "min" else "mins"
+
+                    "Delayed $delayMinutes $unit"
+                }
             }
         }
+
     } catch (e: Exception) {
         null
     }
