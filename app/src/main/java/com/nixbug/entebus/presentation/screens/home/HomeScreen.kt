@@ -639,6 +639,7 @@ fun ServiceList(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServiceTabContent(
     services: List<HomeUiModel>,
@@ -805,7 +806,7 @@ fun ServiceCard(
             ServiceCardHeader(
                 serviceId = service.id,
                 cardType = cardType,
-                delayText = statusText
+                statusText = statusText
             )
             //-------------- ROUTE NAME ----------------------//
             Text(
@@ -935,7 +936,7 @@ fun StatusChip(
 }
 
 @Composable
-fun ServiceCardHeader(serviceId: Int, cardType: CardType, delayText: String?) {
+fun ServiceCardHeader(serviceId: Int, cardType: CardType, statusText: String?) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
@@ -963,11 +964,11 @@ fun ServiceCardHeader(serviceId: Int, cardType: CardType, delayText: String?) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        if ((cardType == CardType.DOWNLOADED || cardType == CardType.ASSIGNED) && delayText != null) {
+        if ((cardType == CardType.DOWNLOADED || cardType == CardType.ASSIGNED) && statusText != null) {
 
-            val isUpcoming = delayText.startsWith("Starts in")
+            val isUpcoming = statusText.startsWith("Starts in")
             StatusChip(
-                text = delayText,
+                text = statusText,
                 backgroundColor = if (isUpcoming)
                     Color(0xFFE3F2FD)
                 else

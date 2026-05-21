@@ -229,6 +229,7 @@ fun HistoryHeader(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DutyHistoryList(
     isLoading: Boolean = true,
