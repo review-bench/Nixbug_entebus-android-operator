@@ -83,6 +83,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.ui.platform.LocalContext
 import com.nixbug.entebus.presentation.components.loadingskeleton.ServiceCardSkeleton
 import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
@@ -94,6 +96,8 @@ import com.nixbug.entebus.utils.snackbar.SnackbarType
 import com.nixbug.entebus.utils.titleCaseFirstChar
 import java.time.Duration
 import java.time.Instant
+import kotlin.math.abs
+import kotlin.math.ceil
 
 @Composable
 fun HomeScreen(
@@ -269,8 +273,9 @@ fun HomeScreen(
                 onLoadMoreAssigned = viewModel::loadMoreAssignedServices,
                 isAssignedLoadingMore = state.isAssignedPaginationLoading,
                 assignedHasMore = state.assignedHasMore,
-
-                )
+                isRefreshing = state.isRefreshing,
+                onRefresh = viewModel::refreshServices,
+            )
         }
     }
 
@@ -522,6 +527,8 @@ fun ServiceList(
     assignedHasMore: Boolean,
     startingServiceId: Int?,
     downloadingServiceId: Int?,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
 ) {
 
     val currentList = when (selectedTab) {
@@ -586,7 +593,9 @@ fun ServiceList(
             onLoadMore = onLoadMoreAssigned,
             isLoadingMore = isAssignedLoadingMore,
             hasMore = assignedHasMore,
-            startingServiceId = startingServiceId
+            startingServiceId = startingServiceId,
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh
         )
 
         1 -> ServiceTabContent(
@@ -596,7 +605,9 @@ fun ServiceList(
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp),
             downloadingServiceId = downloadingServiceId,
-            startingServiceId = startingServiceId
+            startingServiceId = startingServiceId,
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh
         )
 
         2 -> ServiceTabContent(
@@ -606,7 +617,9 @@ fun ServiceList(
             canStartService = canStartService,
             modifier = modifier.padding(horizontal = 16.dp),
             downloadingServiceId = downloadingServiceId,
-            startingServiceId = startingServiceId
+            startingServiceId = startingServiceId,
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh
         )
 
         3 -> ServiceTabContent(
@@ -619,7 +632,9 @@ fun ServiceList(
             isLoadingMore = isLoadingMore,
             downloadingServiceId = downloadingServiceId,
             hasMore = hasMore,
-            startingServiceId = startingServiceId
+            startingServiceId = startingServiceId,
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh
         )
     }
 }
@@ -635,69 +650,77 @@ fun ServiceTabContent(
     isLoadingMore: Boolean = false,
     hasMore: Boolean = true,
     downloadingServiceId: Int?,
-    startingServiceId: Int?
+    startingServiceId: Int?,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
 ) {
-
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = WindowInsets.ime.asPaddingValues()
+    val pullToRefreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        state = pullToRefreshState,
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh
     ) {
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            contentPadding = WindowInsets.ime.asPaddingValues()
+        ) {
 
-        item { Spacer(modifier = Modifier.height(10.dp)) }
+            item { Spacer(modifier = Modifier.height(10.dp)) }
 
-        items(services) { service ->
+            items(services) { service ->
 
-            val startDateTime = utcToIstConverter(service.startingAt)
-            val isAnyDownloading = downloadingServiceId != null
-            val isAnyStarting = startingServiceId != null
+                val startDateTime = utcToIstConverter(service.startingAt)
+                val isAnyDownloading = downloadingServiceId != null
+                val isAnyStarting = startingServiceId != null
 
-            ServiceCard(
-                service = service,
-                cardType = cardType,
-                onActionClick = { onActionClick(service) },
-                date = startDateTime?.first ?: "Date unavailable",
-                time = startDateTime?.second ?: "Time unavailable",
-                isDownloading = service.id == downloadingServiceId,
-                isStarting = service.id == startingServiceId,
-                isEnabled = when (cardType) {
-                    CardType.ASSIGNED,
-                    CardType.DOWNLOADED -> canStartService(service.startingAt)
+                ServiceCard(
+                    service = service,
+                    cardType = cardType,
+                    onActionClick = { onActionClick(service) },
+                    date = startDateTime?.first ?: "Date unavailable",
+                    time = startDateTime?.second ?: "Time unavailable",
+                    isDownloading = service.id == downloadingServiceId,
+                    isStarting = service.id == startingServiceId,
+                    isEnabled = when (cardType) {
+                        CardType.ASSIGNED,
+                        CardType.DOWNLOADED -> canStartService(service.startingAt)
 
-                    else -> true
-                },
-                isAnyDownloading = isAnyDownloading,
-                isAnyStarting = isAnyStarting
-            )
+                        else -> true
+                    },
+                    isAnyDownloading = isAnyDownloading,
+                    isAnyStarting = isAnyStarting
+                )
 
-            Spacer(modifier = Modifier.height(15.dp))
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(10.dp))
-
-            if (onLoadMore != null) {
-
-                when {
-                    isLoadingMore -> {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
-
-                    hasMore -> {
-                        ViewMoreText(
-                            text = "Load More",
-                            onClick = onLoadMore,
-                            isExpanded = false
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(15.dp))
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            item {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                if (onLoadMore != null) {
+
+                    when {
+                        isLoadingMore -> {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+
+                        hasMore -> {
+                            ViewMoreText(
+                                text = "Load More",
+                                onClick = onLoadMore,
+                                isExpanded = false
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
         }
     }
 }
@@ -1087,7 +1110,7 @@ fun String.serviceStatusText(): String? {
             !duration.isNegative -> {
 
                 val minutes =
-                    kotlin.math.ceil(duration.seconds / 60.0).toLong()
+                    ceil(duration.seconds / 60.0).toLong()
 
                 if (minutes >= 60) {
                     val hours = minutes / 60
@@ -1102,7 +1125,7 @@ fun String.serviceStatusText(): String? {
             else -> {
 
                 val delayMinutes =
-                    kotlin.math.abs(duration.toMinutes())
+                    abs(duration.toMinutes())
 
                 if (delayMinutes >= 60) {
                     val hours = delayMinutes / 60

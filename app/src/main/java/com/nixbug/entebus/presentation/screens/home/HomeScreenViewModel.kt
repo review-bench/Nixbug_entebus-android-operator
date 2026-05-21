@@ -116,229 +116,265 @@ class HomeScreenViewModel @Inject constructor(
                     SnackbarType.ERROR
                 )
             }
+            fetchAssignedService()
         }
-        fetchAssignedService()
+
+    }
+
+    fun refreshServices() {
+
+        viewModelScope.launch {
+
+            _uiState.update {
+                it.copy(isRefreshing = true)
+            }
+
+            try {
+
+                when (_uiState.value.selectedTab) {
+
+                    0 -> {
+                        fetchAssignedService()
+                    }
+
+                    1 -> {
+                        fetchDownloadedServices()
+                    }
+
+                    2 -> {
+                        fetchRecentServices()
+                    }
+
+                    3 -> {
+                        fetchOtherServices()
+                    }
+                }
+
+            } finally {
+
+                _uiState.update {
+                    it.copy(isRefreshing = false)
+                }
+            }
+        }
     }
 
     fun onTabSelected(tab: Int) {
         _uiState.update { it.copy(selectedTab = tab) }
-        if (tab == 0) {
-            fetchAssignedService()
-        }
-        if (tab == 1) {
-            fetchDownloadedServices()
-        }
-        if (tab == 2) {
-            fetchRecentServices()
-        }
-        if (tab == 3) {
-            fetchOtherServices()
+        viewModelScope.launch {
+            if (tab == 0) {
+                fetchAssignedService()
+            }
+            if (tab == 1) {
+                fetchDownloadedServices()
+            }
+            if (tab == 2) {
+                fetchRecentServices()
+            }
+            if (tab == 3) {
+                fetchOtherServices()
+            }
         }
     }
 
-    private fun fetchAssignedService(isPagination: Boolean = false) {
-        viewModelScope.launch {
+    private suspend fun fetchAssignedService(isPagination: Boolean = false) {
 
-            val currentState = _uiState.value
-            if (isPagination && (currentState.isAssignedPaginationLoading || !currentState.assignedHasMore)) {
-                return@launch
-            }
 
-            if (isPagination) {
-                _uiState.update { it.copy(isAssignedPaginationLoading = true) }
-            } else {
-                fetchedAssignedServiceIds.clear()
-                _uiState.update {
-                    it.copy(
-                        assignedOffset = 0,
-                        assignedHasMore = true,
-                        serviceLoading = true
-                    )
-                }
-            }
+        val currentState = _uiState.value
+        if (isPagination && (currentState.isAssignedPaginationLoading || !currentState.assignedHasMore)) {
+            return
+        }
 
-            try {
-                val result = getAssignedServices(
-                    offset = if (isPagination) currentState.assignedOffset else 0,
-                    limit = currentState.assignedLimit
+        if (isPagination) {
+            _uiState.update { it.copy(isAssignedPaginationLoading = true) }
+        } else {
+            fetchedAssignedServiceIds.clear()
+            _uiState.update {
+                it.copy(
+                    assignedOffset = 0,
+                    assignedHasMore = true,
+                    serviceLoading = true
                 )
+            }
+        }
 
-                when (result) {
+        try {
+            val result = getAssignedServices(
+                offset = if (isPagination) currentState.assignedOffset else 0,
+                limit = currentState.assignedLimit
+            )
 
-                    is Resource.Success -> {
-                        val services = result.data ?: emptyList()
-                        if (services.isEmpty()) {
-                            if (isPagination) {
-                                _uiState.update { it.copy(assignedHasMore = false) }
-                            } else {
-                                clearAssignedServices()
-                                _uiState.update {
-                                    it.copy(
-                                        assignedServiceList = emptyList(),
-                                        assignedHasMore = false
-                                    )
-                                }
-                            }
-                            return@launch
-                        }
+            when (result) {
 
-                        val ids = services.map { it.serviceId }
-                        fetchedAssignedServiceIds.addAll(ids)
-
-                        val startedServiceIds = getLocalServices(LocalServiceStatus.STARTED)
-                            .map { it.id }
-                            .toSet()
-
-                        val assignedOnlyServices = services.filter { service ->
-                            service.serviceId !in startedServiceIds
-                        }
-
-                        val detailedServices = coroutineScope {
-                            assignedOnlyServices.map { service ->
-                                async {
-                                    when (val detailResult = getServiceDetailsForHomeUseCase(
-                                        service.serviceId,
-                                        LocalServiceStatus.ASSIGNED
-                                    )) {
-                                        is Resource.Success -> detailResult.data?.toHomeUiModel()
-                                        else -> null
-                                    }
-                                }
-                            }.awaitAll().filterNotNull()
-                        }
-
-                        val isLastPage = services.size < currentState.assignedLimit
-                        val updatedList =
-                            if (isPagination)
-                                (_uiState.value.assignedServiceList + detailedServices)
-                                    .sortedBy { service -> service.startingAt }
-                            else
-                                detailedServices.sortedBy { service -> service.startingAt }
-
-                        _uiState.update {
-                            it.copy(
-                                assignedServiceList = updatedList,
-
-                                assignedOffset =
-                                    if (isPagination)
-                                        it.assignedOffset + it.assignedLimit
-                                    else
-                                        it.assignedLimit,
-
-                                assignedHasMore = services.size == it.assignedLimit
-                            )
-                        }
-
-                        if (isLastPage && fetchedAssignedServiceIds.isNotEmpty()) {
-                            deleteMissingAssignedServices(fetchedAssignedServiceIds.toList())
-                        }
-                    }
-
-                    is Resource.Error -> {
+                is Resource.Success -> {
+                    val services = result.data ?: emptyList()
+                    if (services.isEmpty()) {
                         if (isPagination) {
-                            _uiState.update { state ->
-                                state.copy(
-                                    assignedHasMore = false
-                                )
-                            }
+                            _uiState.update { it.copy(assignedHasMore = false) }
                         } else {
-                            val services = getLocalServices(LocalServiceStatus.ASSIGNED)
-                            _uiState.update { state ->
-                                state.copy(
-                                    assignedHasMore = false,
-                                    assignedServiceList = services.map { service -> service.toHomeUiModel() }
-                                )
-                            }
-                        }
-                    }
-
-                    is Resource.Empty -> {
-                        _uiState.update {
-                            if (isPagination) {
-                                it.copy(assignedHasMore = false)
-                            } else {
+                            clearAssignedServices()
+                            _uiState.update {
                                 it.copy(
                                     assignedServiceList = emptyList(),
                                     assignedHasMore = false
                                 )
                             }
                         }
+                        return
                     }
 
-                    else -> {}
+                    val ids = services.map { it.serviceId }
+                    fetchedAssignedServiceIds.addAll(ids)
+
+                    val startedServiceIds = getLocalServices(LocalServiceStatus.STARTED)
+                        .map { it.id }
+                        .toSet()
+
+                    val assignedOnlyServices = services.filter { service ->
+                        service.serviceId !in startedServiceIds
+                    }
+
+                    val detailedServices = coroutineScope {
+                        assignedOnlyServices.map { service ->
+                            async {
+                                when (val detailResult = getServiceDetailsForHomeUseCase(
+                                    service.serviceId,
+                                    LocalServiceStatus.ASSIGNED
+                                )) {
+                                    is Resource.Success -> detailResult.data?.toHomeUiModel()
+                                    else -> null
+                                }
+                            }
+                        }.awaitAll().filterNotNull()
+                    }
+
+                    val isLastPage = services.size < currentState.assignedLimit
+                    val updatedList =
+                        if (isPagination)
+                            (_uiState.value.assignedServiceList + detailedServices)
+                                .sortedBy { service -> service.startingAt }
+                        else
+                            detailedServices.sortedBy { service -> service.startingAt }
+
+                    _uiState.update {
+                        it.copy(
+                            assignedServiceList = updatedList,
+
+                            assignedOffset =
+                                if (isPagination)
+                                    it.assignedOffset + it.assignedLimit
+                                else
+                                    it.assignedLimit,
+
+                            assignedHasMore = services.size == it.assignedLimit
+                        )
+                    }
+
+                    if (isLastPage && fetchedAssignedServiceIds.isNotEmpty()) {
+                        deleteMissingAssignedServices(fetchedAssignedServiceIds.toList())
+                    }
                 }
 
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                val services = getLocalServices(LocalServiceStatus.ASSIGNED)
-                _uiState.update { state ->
-                    state.copy(
-                        assignedHasMore = false,
-                        assignedServiceList = services.map { service -> service.toHomeUiModel() }
-                    )
-                }
-            } finally {
-                if (isPagination) {
-                    _uiState.update { it.copy(isAssignedPaginationLoading = false) }
-                } else {
-                    _uiState.update { it.copy(serviceLoading = false) }
-                }
-            }
-        }
-    }
-
-    private fun fetchDownloadedServices() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(serviceLoading = true) }
-            try {
-                val services = getLocalServices(LocalServiceStatus.DOWNLOADED)
-                _uiState.update {
-                    it.copy(
-                        downloadedServiceList = services.map { service ->
-                            service.toHomeUiModel()
+                is Resource.Error -> {
+                    if (isPagination) {
+                        _uiState.update { state ->
+                            state.copy(
+                                assignedHasMore = false
+                            )
                         }
-                    )
+                    } else {
+                        val services = getLocalServices(LocalServiceStatus.ASSIGNED)
+                        _uiState.update { state ->
+                            state.copy(
+                                assignedHasMore = false,
+                                assignedServiceList = services.map { service -> service.toHomeUiModel() }
+                            )
+                        }
+                    }
                 }
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                SnackbarManager.show(
-                    e.message ?: "Failed to load downloaded services",
-                    SnackbarType.ERROR
+
+                is Resource.Empty -> {
+                    _uiState.update {
+                        if (isPagination) {
+                            it.copy(assignedHasMore = false)
+                        } else {
+                            it.copy(
+                                assignedServiceList = emptyList(),
+                                assignedHasMore = false
+                            )
+                        }
+                    }
+                }
+
+                else -> {}
+            }
+
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            val services = getLocalServices(LocalServiceStatus.ASSIGNED)
+            _uiState.update { state ->
+                state.copy(
+                    assignedHasMore = false,
+                    assignedServiceList = services.map { service -> service.toHomeUiModel() }
                 )
-            } finally {
+            }
+        } finally {
+            if (isPagination) {
+                _uiState.update { it.copy(isAssignedPaginationLoading = false) }
+            } else {
                 _uiState.update { it.copy(serviceLoading = false) }
             }
         }
+
     }
 
-    private fun fetchRecentServices() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(serviceLoading = true) }
-            try {
-                val services = getLocalServices(LocalServiceStatus.RECENT)
-                _uiState.update {
-                    it.copy(
-                        recentServiceList = services.map { service ->
-                            service.toHomeUiModel()
-                        }
-                    )
-                }
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                SnackbarManager.show(
-                    e.message ?: "Failed to load recent services",
-                    SnackbarType.ERROR
+    private suspend fun fetchDownloadedServices() {
+        _uiState.update { it.copy(serviceLoading = true) }
+        try {
+            val services = getLocalServices(LocalServiceStatus.DOWNLOADED)
+            _uiState.update {
+                it.copy(
+                    downloadedServiceList = services.map { service ->
+                        service.toHomeUiModel()
+                    }
                 )
-            } finally {
-                _uiState.update { it.copy(serviceLoading = false) }
             }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            SnackbarManager.show(
+                e.message ?: "Failed to load downloaded services",
+                SnackbarType.ERROR
+            )
+        } finally {
+            _uiState.update { it.copy(serviceLoading = false) }
         }
     }
 
-    private fun fetchOtherServices() {
-        viewModelScope.launch {
-            fetchOtherServicesInternal()
+    private suspend fun fetchRecentServices() {
+        _uiState.update { it.copy(serviceLoading = true) }
+        try {
+            val services = getLocalServices(LocalServiceStatus.RECENT)
+            _uiState.update {
+                it.copy(
+                    recentServiceList = services.map { service ->
+                        service.toHomeUiModel()
+                    }
+                )
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            SnackbarManager.show(
+                e.message ?: "Failed to load recent services",
+                SnackbarType.ERROR
+            )
+        } finally {
+            _uiState.update { it.copy(serviceLoading = false) }
         }
+
+    }
+
+    private suspend fun fetchOtherServices() {
+        fetchOtherServicesInternal()
     }
 
     fun onDownloadService(service: HomeUiModel) {
@@ -384,7 +420,9 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     fun loadMoreAssignedServices() {
-        fetchAssignedService(isPagination = true)
+        viewModelScope.launch {
+            fetchAssignedService(isPagination = true)
+        }
     }
 
     private fun clearAssignedServices() {
@@ -438,7 +476,6 @@ class HomeScreenViewModel @Inject constructor(
                 }
         }
     }
-
 
     fun loadMoreServices() {
         viewModelScope.launch {

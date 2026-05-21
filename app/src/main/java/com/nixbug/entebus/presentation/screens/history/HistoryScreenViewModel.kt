@@ -34,6 +34,21 @@ class HistoryScreenViewModel @Inject constructor(
     private val searchQuery = MutableStateFlow("")
     private var searchJob: Job? = null
 
+    fun refreshHistory() {
+        viewModelScope.launch {
+
+            _uiState.update {
+                it.copy(isRefreshing = true)
+            }
+
+            fetchHistory()
+
+            _uiState.update {
+                it.copy(isRefreshing = false)
+            }
+        }
+    }
+
     fun onScreenVisible() {
         viewModelScope.launch {
             fetchHistory()

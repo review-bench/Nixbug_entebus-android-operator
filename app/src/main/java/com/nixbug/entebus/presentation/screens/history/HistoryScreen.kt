@@ -57,6 +57,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -130,7 +132,9 @@ fun HistoryScreen(viewModel: HistoryScreenViewModel = hiltViewModel()) {
                 onLoadMore = viewModel::loadMoreHistory,
                 isLoadingMore = state.isPaginationLoading,
                 hasMore = state.hasMore,
-                isFilterApplied = state.isFilterApplied
+                isFilterApplied = state.isFilterApplied,
+                isRefreshing = state.isRefreshing,
+                onRefresh = viewModel::refreshHistory,
             )
         }
         DutyHistoryOverlay(
@@ -233,89 +237,100 @@ fun DutyHistoryList(
     onLoadMore: (() -> Unit)? = null,
     isLoadingMore: Boolean = false,
     hasMore: Boolean = true,
-    isFilterApplied: Boolean
+    isFilterApplied: Boolean,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {}
 ) {
-    if (isLoading) {
-        val shimmerBrush = rememberShimmerBrush()
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(5) {
-                HistoryCardSkeleton(
-                    shimmerBrush = shimmerBrush
-                )
-            }
-        }
-        return
-    }
-    if (dutyHistoryData.isEmpty()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(
-                imageVector = Icons.Default.History,
-                contentDescription = null,
-                tint = DisabledButtonColor,
-                modifier = Modifier
-                    .size(90.dp)
-                    .padding(bottom = 16.dp)
-            )
-            Text(
-                text = "No history available!",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.Gray
-            )
-            Spacer(modifier = Modifier.height(4.dp))
+    val pullToRefreshState = rememberPullToRefreshState()
 
-            Text(
-                text = if (isFilterApplied) "No duty history found for the applied filters." else "No history is available right now. Please check back later.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                textAlign = TextAlign.Center
-            )
-        }
-        return
-    }
-    LazyColumn(
-        modifier = Modifier.fillMaxHeight(),
-        contentPadding = WindowInsets.ime.asPaddingValues(),
+    PullToRefreshBox(
+        state = pullToRefreshState,
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh
     ) {
-        item { Spacer(Modifier.height(10.dp)) }
-        items(dutyHistoryData) { history ->
-            DutyHistoryCard(
-                history = history,
-                calculateDuration = calculateDuration
-            )
-            Spacer(Modifier.height(15.dp))
-        }
-        item {
-            Spacer(Modifier.height(10.dp))
-            if (onLoadMore != null) {
-                when {
-                    isLoadingMore -> {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
+        if (isLoading) {
+            val shimmerBrush = rememberShimmerBrush()
 
-                    hasMore -> {
-                        ViewMoreText(
-                            text = "Load More",
-                            onClick = onLoadMore,
-                            isExpanded = false
-                        )
-                    }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(5) {
+                    HistoryCardSkeleton(
+                        shimmerBrush = shimmerBrush
+                    )
                 }
             }
-            Spacer(Modifier.height(20.dp))
+            return@PullToRefreshBox
+        }
+        if (dutyHistoryData.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = null,
+                    tint = DisabledButtonColor,
+                    modifier = Modifier
+                        .size(90.dp)
+                        .padding(bottom = 16.dp)
+                )
+                Text(
+                    text = "No history available!",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = if (isFilterApplied) "No duty history found for the applied filters." else "No history is available right now. Please check back later.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+            }
+            return@PullToRefreshBox
+        }
+        LazyColumn(
+            modifier = Modifier.fillMaxHeight(),
+            contentPadding = WindowInsets.ime.asPaddingValues(),
+        ) {
+            item { Spacer(Modifier.height(10.dp)) }
+            items(dutyHistoryData) { history ->
+                DutyHistoryCard(
+                    history = history,
+                    calculateDuration = calculateDuration
+                )
+                Spacer(Modifier.height(15.dp))
+            }
+            item {
+                Spacer(Modifier.height(10.dp))
+                if (onLoadMore != null) {
+                    when {
+                        isLoadingMore -> {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+
+                        hasMore -> {
+                            ViewMoreText(
+                                text = "Load More",
+                                onClick = onLoadMore,
+                                isExpanded = false
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(20.dp))
+            }
         }
     }
 }
