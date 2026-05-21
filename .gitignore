@@ -25,4 +25,5 @@
 .cxx
 local.properties
 /app/src/main/java/com/nixbug/entebus/data/openapigenerator
+/app/release
 
