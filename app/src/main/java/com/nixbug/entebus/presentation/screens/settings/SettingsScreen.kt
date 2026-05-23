@@ -1,5 +1,7 @@
 package com.nixbug.entebus.presentation.screens.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,9 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -121,18 +124,62 @@ fun ScreenPreferenceItem(
             onDismissRequest = { expanded = false },
             modifier = Modifier
                 .fillMaxWidth(0.92f)
+                .border(
+                    width = 1.dp,
+                    color = Color(0xFFE0E0E0),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .background(
+                    color = Color(0xFFF8F9FA),
+                    shape = RoundedCornerShape(12.dp)
+                )
         ) {
 
             DropdownMenuItem(
                 text = { Text("Modern (Default)") },
+                trailingIcon = {
+                    if (selectedOption == UiMode.MODERN) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color(0xFF4CAF50)
+                        )
+                    }
+                },
+                modifier = Modifier.background(
+                    if (selectedOption == UiMode.MODERN)
+                        Color(0xFFE8F5E9)
+                    else
+                        Color.Transparent
+                ),
                 onClick = {
                     onOptionSelected(UiMode.MODERN)
                     expanded = false
                 }
             )
 
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = Color(0xFFE5E7EB)
+            )
+
             DropdownMenuItem(
                 text = { Text("Legacy") },
+                trailingIcon = {
+                    if (selectedOption == UiMode.LEGACY) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color(0xFF4CAF50)
+                        )
+                    }
+                },
+                modifier = Modifier.background(
+                    if (selectedOption == UiMode.LEGACY)
+                        Color(0xFFE8F5E9)
+                    else
+                        Color.Transparent
+                ),
                 onClick = {
                     onOptionSelected(UiMode.LEGACY)
                     expanded = false
