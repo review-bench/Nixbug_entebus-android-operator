@@ -9,4 +9,5 @@ sealed class AppNavItem(val route: String) {
     data object PersonalDetailsScreen : AppNavItem("personalDetailsScreen")
     data object TermsAndConditionsScreen : AppNavItem("termsAndConditionsScreen")
     data object LegacyTicketScreen : AppNavItem("legacyTicketScreen")
+    data object SettingsScreen : AppNavItem("settingsScreen")
 }

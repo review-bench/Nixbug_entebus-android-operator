@@ -3,6 +3,7 @@ package com.nixbug.entebus.di
 import com.google.gson.Gson
 import com.nixbug.entebus.data.local.datastore.permission.PermissionLocalDataSource
 import com.nixbug.entebus.data.local.datastore.token.TokenLocalDataSource
+import com.nixbug.entebus.data.local.datastore.uipreference.UiPreferenceLocalDataSource
 import com.nixbug.entebus.data.local.datastore.user.UserLocalDataSource
 import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
 import com.nixbug.entebus.data.local.room.db.dao.SyncQueueDao
@@ -31,6 +32,7 @@ import com.nixbug.entebus.data.repository.ServiceRepositoryImpl
 import com.nixbug.entebus.data.repository.SessionRepositoryImpl
 import com.nixbug.entebus.data.repository.SyncQueueRepositoryImpl
 import com.nixbug.entebus.data.repository.TokenRepositoryImpl
+import com.nixbug.entebus.data.repository.UiPreferenceRepositoryImpl
 import com.nixbug.entebus.data.repository.UserRepositoryImpl
 import com.nixbug.entebus.data.sync.SyncQueueProcessor
 import com.nixbug.entebus.domain.repository.LandmarkRepository
@@ -46,6 +48,7 @@ import com.nixbug.entebus.domain.repository.ServiceRepository
 import com.nixbug.entebus.domain.repository.SessionRepository
 import com.nixbug.entebus.domain.repository.SyncQueueRepository
 import com.nixbug.entebus.domain.repository.TokenRepository
+import com.nixbug.entebus.domain.repository.UiPreferenceRepository
 import com.nixbug.entebus.domain.repository.UserRepository
 import dagger.Module
 import dagger.Provides
@@ -193,5 +196,13 @@ object RepositoryModule {
             syncQueueDao = syncQueueDao,
             gson = gson
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideUiPreferenceRepository(
+        uiModeLocalDataSource: UiPreferenceLocalDataSource
+    ): UiPreferenceRepository {
+        return UiPreferenceRepositoryImpl(uiModeLocalDataSource)
     }
 }

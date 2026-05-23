@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.DoubleArrow
 import androidx.compose.material.icons.filled.Person2
 import androidx.compose.material.icons.filled.Policy
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -251,6 +252,16 @@ fun ProfileScreenBottom(
             title = "Personal Details",
             subtitle = "View your personal info",
             onClick = { rootNavController.navigate(AppNavItem.PersonalDetailsScreen.route) }
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        ProfileOptionCard(
+            leadingIcon = Icons.Filled.Settings,
+            leadingIconBg = DisabledButtonColor,
+            title = "Settings",
+            subtitle = "Personalize your app experience",
+            onClick = { rootNavController.navigate(AppNavItem.SettingsScreen.route) }
         )
 
         Spacer(modifier = Modifier.height(20.dp))
