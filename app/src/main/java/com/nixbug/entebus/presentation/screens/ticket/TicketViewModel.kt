@@ -66,6 +66,155 @@ class TicketViewModel @Inject constructor(
     private val _events = MutableSharedFlow<TicketUiEvent>()
     val events: SharedFlow<TicketUiEvent> = _events.asSharedFlow()
 
+    fun selectPreviousStartingLandmark() {
+
+        val currentIndex = _uiState.value.startingLandmarkIndex ?: return
+
+        if (currentIndex <= 0) return
+
+        val newIndex = currentIndex - 1
+        val landmark = _uiState.value.landmarks[newIndex]
+
+        selectStartingLandmark(
+            landmark = landmark,
+            index = newIndex
+        )
+    }
+
+    fun selectNextStartingLandmark() {
+
+        val currentIndex = _uiState.value.startingLandmarkIndex ?: return
+
+        val landmarks = _uiState.value.landmarks
+
+        if (currentIndex >= landmarks.lastIndex) return
+
+        val newIndex = currentIndex + 1
+        val landmark = landmarks[newIndex]
+
+        selectStartingLandmark(
+            landmark = landmark,
+            index = newIndex
+        )
+    }
+
+    fun selectPreviousEndingLandmark() {
+
+        val currentIndex = _uiState.value.endingLandmarkIndex ?: return
+
+        val startIndex = _uiState.value.startingLandmarkIndex ?: -1
+
+        if (currentIndex - 1 <= startIndex) return
+
+        val newIndex = currentIndex - 1
+
+        val landmark = _uiState.value.landmarks[newIndex]
+
+        selectEndingLandmark(
+            landmark = landmark,
+            index = newIndex
+        )
+    }
+
+    fun selectNextEndingLandmark() {
+
+        val currentIndex = _uiState.value.endingLandmarkIndex ?: return
+
+        val landmarks = _uiState.value.landmarks
+
+        if (currentIndex >= landmarks.lastIndex) return
+
+        val newIndex = currentIndex + 1
+
+        val landmark = landmarks[newIndex]
+
+        selectEndingLandmark(
+            landmark = landmark,
+            index = newIndex
+        )
+    }
+
+    fun selectStartingLandmark(
+        landmark: Landmark,
+        index: Int
+    ) {
+
+        val endIndex = _uiState.value.endingLandmarkIndex
+
+        if (endIndex != null && index >= endIndex) {
+
+            SnackbarManager.show(
+                message = "Starting point cannot be after ending point",
+                type = SnackbarType.ERROR
+            )
+
+            return
+        }
+
+        _uiState.update { state ->
+
+            state.copy(
+                startingLandmark = landmark,
+                startingLandmarkIndex = index,
+                totalDistanceKm = calculateDistanceKm(
+                    landmark,
+                    state.endingLandmark
+                )
+            )
+        }
+
+        recalculateFare()
+    }
+
+    fun selectEndingLandmark(
+        landmark: Landmark,
+        index: Int
+    ) {
+
+        val startIndex = _uiState.value.startingLandmarkIndex
+
+        if (startIndex != null && index <= startIndex) {
+
+            SnackbarManager.show(
+                message = "Ending point must come after starting point",
+                type = SnackbarType.ERROR
+            )
+
+            return
+        }
+
+        _uiState.update { state ->
+
+            state.copy(
+                endingLandmark = landmark,
+                endingLandmarkIndex = index,
+                totalDistanceKm = calculateDistanceKm(
+                    state.startingLandmark,
+                    landmark
+                )
+            )
+        }
+
+        recalculateFare()
+    }
+
+    fun clearStartingLandmark() {
+        _uiState.update {
+            it.copy(
+                startingLandmark = null,
+                startingLandmarkIndex = null
+            )
+        }
+    }
+
+    fun clearEndingLandmark() {
+        _uiState.update {
+            it.copy(
+                endingLandmark = null,
+                endingLandmarkIndex = null
+            )
+        }
+    }
 
     init {
         loadStartedService()
@@ -137,13 +286,15 @@ class TicketViewModel @Inject constructor(
                     return@launch
                 }
 
+                val landmarks = currentService.landmarks
+                    .sortedBy { it.distance }
+                    .map { it.toUiModel() }
                 _uiState.update { state ->
                     state.copy(
                         serviceId = currentService.service.id,
-                        landmarks = currentService.landmarks
-                            .sortedBy { it.distance }
-                            .map { it.toUiModel() },
-
+                        landmarks = landmarks,
+                        startingLandmark = landmarks.firstOrNull(),
+                        startingLandmarkIndex = 0,
                         passengers = currentService.fare.ticketTypes
                             .map { it.toUiModel() },
                         fareFunctionString = currentService.fare.function
@@ -573,13 +724,10 @@ class TicketViewModel @Inject constructor(
                     passenger.copy(
                         passengerCount = PassengerDefaults.defaultCount(passenger.name)
                     )
-                },
-                endingLandmark = null,
-                endingLandmarkIndex = null,
-                totalDistanceKm = 0f,
-                totalFare = 0.0
+                }
             )
         }
+        recalculateFare()
     }
 
     fun generateServiceVisualPattern(serviceId: Int): String {
