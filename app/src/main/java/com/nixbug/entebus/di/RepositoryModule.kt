@@ -200,9 +200,7 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideUiPreferenceRepository(
-        uiModeLocalDataSource: UiPreferenceLocalDataSource
-    ): UiPreferenceRepository {
+    fun provideUiPreferenceRepository(uiModeLocalDataSource: UiPreferenceLocalDataSource): UiPreferenceRepository {
         return UiPreferenceRepositoryImpl(uiModeLocalDataSource)
     }
 }

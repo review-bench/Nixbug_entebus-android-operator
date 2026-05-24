@@ -13,9 +13,7 @@ class UiPreferenceLocalDataSource @Inject constructor(
     }
 
     suspend fun getUiMode(): UiMode {
-        val storedValue =
-            uiPreferenceDataStore.get().firstOrNull()
-
+        val storedValue = uiPreferenceDataStore.get().firstOrNull()
         return runCatching {
             UiMode.valueOf(storedValue ?: UiMode.MODERN.name)
         }.getOrDefault(UiMode.MODERN)
