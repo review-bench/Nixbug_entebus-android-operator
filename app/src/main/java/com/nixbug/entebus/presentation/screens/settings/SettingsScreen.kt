@@ -45,29 +45,16 @@ fun SettingsScreen(
     viewModel: SettingsScreenViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    SetStatusBarColor(
-        color = Color.White,
-        darkIcons = true
-    )
+    SetStatusBarColor(color = Color.White, darkIcons = true)
     Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        AppHeader(
-            title = "Settings",
-            onBackClick = { navController.popBackStack() }
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
+        AppHeader(title = "Settings", onBackClick = { navController.popBackStack() })
+        Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 ScreenPreferenceItem(
                     selectedOption = uiState.selectedUiMode,
                     onOptionSelected = viewModel::onUiModeSelected
@@ -85,7 +72,6 @@ fun ScreenPreferenceItem(
     var expanded by remember { mutableStateOf(false) }
 
     Box {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -95,14 +81,11 @@ fun ScreenPreferenceItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Column {
-
                 Text(
                     text = "Screen Preference",
                     style = MaterialTheme.typography.titleMedium
                 )
-
                 Text(
                     text = when (selectedOption) {
                         UiMode.MODERN -> "Modern (Default)"
@@ -112,7 +95,6 @@ fun ScreenPreferenceItem(
                     color = Color.Gray
                 )
             }
-
             Icon(
                 imageVector = Icons.Default.KeyboardDoubleArrowRight,
                 contentDescription = null
@@ -129,12 +111,8 @@ fun ScreenPreferenceItem(
                     color = Color(0xFFE0E0E0),
                     shape = RoundedCornerShape(12.dp)
                 )
-                .background(
-                    color = Color(0xFFF8F9FA),
-                    shape = RoundedCornerShape(12.dp)
-                )
+                .background(color = Color(0xFFF8F9FA), shape = RoundedCornerShape(12.dp))
         ) {
-
             DropdownMenuItem(
                 text = { Text("Modern (Default)") },
                 trailingIcon = {
