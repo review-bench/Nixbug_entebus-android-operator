@@ -104,6 +104,8 @@ fun ScreenPreferenceItem(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
+            shape = RoundedCornerShape(12.dp),
+            containerColor = Color(0xFFF8F9FA),
             modifier = Modifier
                 .fillMaxWidth(0.92f)
                 .border(
@@ -111,7 +113,6 @@ fun ScreenPreferenceItem(
                     color = Color(0xFFE0E0E0),
                     shape = RoundedCornerShape(12.dp)
                 )
-                .background(color = Color(0xFFF8F9FA), shape = RoundedCornerShape(12.dp))
         ) {
             DropdownMenuItem(
                 text = { Text("Modern (Default)") },
