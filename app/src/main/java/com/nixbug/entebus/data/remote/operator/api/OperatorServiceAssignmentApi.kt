@@ -13,7 +13,9 @@ interface OperatorServiceAssignmentApi {
     /**
      * GET company/service/assignment
      * Fetch service assignment
-     * **Fetches a list of service assignments.**                 - Requires a valid access token for authentication.                 - Operators can filter service assignments by service, operator, and service starting time.
+     * **Fetches a list of service assignments.**
+     * - Requires a valid access token for authentication.
+     * - Operators can filter service assignments by service, operator, and service starting time.
      * Responses:
      *  - 200: Successful Response
      *  - 401: Unauthorized
