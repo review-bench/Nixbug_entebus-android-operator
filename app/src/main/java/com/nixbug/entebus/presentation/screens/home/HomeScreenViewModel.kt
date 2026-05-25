@@ -9,6 +9,7 @@ import com.nixbug.entebus.domain.model.ServiceUpdate
 import com.nixbug.entebus.domain.model.local.CollectionStatus
 import com.nixbug.entebus.domain.model.local.LocalServiceStatus
 import com.nixbug.entebus.domain.model.local.OperatorInfo
+import com.nixbug.entebus.domain.model.local.UiMode
 import com.nixbug.entebus.domain.usecase.queue.EnqueueServicePatchUseCase
 import com.nixbug.entebus.domain.usecase.service.CleanOldServicesUseCase
 import com.nixbug.entebus.domain.usecase.service.DeleteAssignedServicesUseCase
@@ -26,6 +27,7 @@ import com.nixbug.entebus.domain.usecase.service.GetServiceDetailsForHomeUseCase
 import com.nixbug.entebus.domain.usecase.service.GetServiceUseCase
 import com.nixbug.entebus.domain.usecase.service.UpdateLocalStatusUseCase
 import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
+import com.nixbug.entebus.domain.usecase.uimode.GetUiModeUseCase
 import com.nixbug.entebus.domain.usecase.user.GetUserUseCase
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.network.Resource
@@ -76,7 +78,8 @@ class HomeScreenViewModel @Inject constructor(
     private val hasServiceCollectionUseCase: HasServiceCollectionUseCase,
     private val canCreateTicketUseCase: CanCreateTicketUseCase,
     private val canUpdateServiceUseCase: CanUpdateServiceUseCase,
-    private val clearSyncedItemsUseCase: ClearSyncedItemsUseCase
+    private val clearSyncedItemsUseCase: ClearSyncedItemsUseCase,
+    private val getUiModeUseCase: GetUiModeUseCase
 ) : ViewModel() {
 
     // STATE
@@ -816,7 +819,16 @@ class HomeScreenViewModel @Inject constructor(
 
     private fun navigateToTicketScreen() {
         viewModelScope.launch {
-            _events.emit(HomeUiEvent.NavigateToTicketScreen)
+            when (getUiModeUseCase()) {
+
+                UiMode.MODERN -> {
+                    _events.emit(HomeUiEvent.NavigateToTicketScreen)
+                }
+
+                UiMode.LEGACY -> {
+                    _events.emit(HomeUiEvent.NavigateToLegacyTicketScreen)
+                }
+            }
         }
     }
 
