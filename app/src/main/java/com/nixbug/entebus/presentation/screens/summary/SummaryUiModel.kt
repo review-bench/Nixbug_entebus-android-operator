@@ -28,5 +28,6 @@ data class PrintServiceData(
     val regNo: String,
     val dateTimeRange: String,
     val operators: List<Pair<String, Double>>,
-    val serviceTotal: String
+    val serviceTotal: String,
+    val serviceId: Int
 )

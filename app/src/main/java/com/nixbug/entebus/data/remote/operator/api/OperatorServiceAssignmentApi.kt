@@ -53,6 +53,8 @@ interface OperatorServiceAssignmentApi {
         @Query("service_id") serviceId: kotlin.Int? = null,
         @Query("service_id_excluding") serviceIdExcluding: @JvmSuppressWildcards kotlin.collections.List<kotlin.Int>? = null,
         @Query("operator_id") operatorId: kotlin.Int? = null,
+        @Query("starting_at_ge") startingAtGe: kotlin.String? = null,
+        @Query("starting_at_le") startingAtLe: kotlin.String? = null,
         @Query("order_by") orderBy: AppApiServiceAssignmentOrderBy? = null,
         @Query("order_in") orderIn: OrderIn? = null
     ): Response<kotlin.collections.List<ServiceAssignmentSchema>>

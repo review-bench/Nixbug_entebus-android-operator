@@ -138,9 +138,9 @@ fun HomeScreen(
         }
 
     val dialogMessage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        "Nearby Devices permission is required to start or resume services. Without it, device connection and ticket printing will not work properly."
+        "Nearby Devices permission is required to start or resume trips. Without it, device connection and ticket printing will not work properly."
     } else {
-        "Bluetooth and Location access are required to start or resume services. Without it, device connection and ticket printing will not work properly."
+        "Bluetooth and Location access are required to start or resume trips. Without it, device connection and ticket printing will not work properly."
     }
 
     fun openPrinterPicker() {
@@ -281,8 +281,8 @@ fun HomeScreen(
 
     finishDutyService?.let { service ->
         DialogBox(
-            title = "Finish Service?",
-            message = "Are you sure you want to finish the service from ${
+            title = "Finish Trip?",
+            message = "Are you sure you want to finish the trip from ${
                 finishDutyService?.startingLandmarkName ?: "starting point"
             } to ${
                 finishDutyService?.endingLandmarkName ?: "ending point"
@@ -358,12 +358,12 @@ fun ServiceHeader() {
             .padding(horizontal = 12.dp)
     ) {
         Text(
-            "All Services",
+            "All Trips",
             style = MaterialTheme.typography.headlineSmall,
             color = Color.Black
         )
         Text(
-            "Displaying All Services",
+            "Displaying All Trips",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray
         )
@@ -386,7 +386,7 @@ fun OngoingServiceSection(
             val startDateTime = utcToIstConverter(service.startingAt)
 
             Text(
-                text = "ONGOING SERVICE",
+                text = "ONGOING TRIP",
                 style = MaterialTheme.typography.titleMedium,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -416,7 +416,7 @@ fun RowTab(
     searchQuery: String,
     onSearchChange: (String) -> Unit
 ) {
-    val tabs = listOf("Your Services", "Downloaded", "Recent", "Others")
+    val tabs = listOf("Your Trips", "Downloaded", "Recent", "Others")
     Row(
         modifier = Modifier
             .horizontalScroll(rememberScrollState())
@@ -569,12 +569,12 @@ fun ServiceList(
         ) {
             EmptyServiceState(
                 icon = Icons.Filled.NoTransfer,
-                title = "No services available!",
+                title = "No trips available!",
                 description = when (selectedTab) {
-                    0 -> "You don’t have any assigned services right now. You can download services from the Other Services tab."
-                    1 -> "You don’t have any downloaded services yet. Browse Other Services to download services you’d like to start."
-                    2 -> "You don’t have any recent services right now. Once you complete a service, it will appear here."
-                    else -> "No services are available right now. Please check back later."
+                    0 -> "You don’t have any assigned trips right now. You can download trips from the Other trips tab."
+                    1 -> "You don’t have any downloaded trips yet. Browse Other trips section to download trips you’d like to start."
+                    2 -> "You don’t have any recent trips right now. Once you complete a trip, it will appear here."
+                    else -> "No trips are available right now. Please check back later."
                 }
             )
         }
@@ -867,7 +867,7 @@ fun ServiceCard(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.AccessTime,
-                            contentDescription = "Service time",
+                            contentDescription = "Trip time",
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(Modifier.width(5.dp))
@@ -946,7 +946,7 @@ fun ServiceCardHeader(serviceId: Int, cardType: CardType, statusText: String?) {
             modifier = Modifier.padding(start = 3.dp)
         ) {
             Text(
-                text = "Service ID",
+                text = "Trip ID",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
