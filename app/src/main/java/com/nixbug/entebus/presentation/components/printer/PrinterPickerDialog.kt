@@ -107,13 +107,13 @@ fun PrinterPickerDialog(
                                 modifier = Modifier
                                     .size(56.dp)
                                     .clip(RoundedCornerShape(18.dp))
-                                    .background(Color(0xFFE6F0E4)),
+                                    .background(Color(0xFFF0F3FF)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Print,
                                     contentDescription = null,
-                                    tint = Color(0xFF4E7D4A)
+                                    tint = Color(0xFF4A5DB0)
                                 )
                             }
 
@@ -168,7 +168,7 @@ fun PrinterPickerDialog(
                                     shape = RoundedCornerShape(20.dp),
                                     colors = CardDefaults.cardColors(
                                         containerColor = if (isSelected)
-                                            Color(0xFFEAF4E8)
+                                            Color(0xFFE8EEFF)
                                         else
                                             Color.White
                                     ),
@@ -226,7 +226,7 @@ fun PrinterPickerDialog(
                                                     else deviceAddress
                                             },
                                             colors = RadioButtonDefaults.colors(
-                                                selectedColor = Color(0xFF7FA36C)
+                                                selectedColor = Color(0xFF5E74C7)
                                             )
                                         )
                                     }
@@ -261,7 +261,7 @@ fun PrinterPickerDialog(
                                 shape = RoundedCornerShape(16.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.primary,
-                                    disabledContainerColor = Color(0xFFD6E0D2)
+                                    disabledContainerColor = Color(0xFFDCE3F5)
                                 )
                             ) {
                                 Text("Connect")

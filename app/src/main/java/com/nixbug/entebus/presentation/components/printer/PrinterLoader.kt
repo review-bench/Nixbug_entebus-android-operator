@@ -39,9 +39,9 @@ import com.nixbug.entebus.ui.theme.DisabledButtonColor
 
 @Composable
 fun PrinterLoader(printerName: String?) {
-    val primaryGreen = Color(0xFF8BC34A)
-    val lightGreen = Color(0xFFE8F5E9)
-    val darkGreen = Color(0xFF689F38)
+    val primaryBlue = Color(0xFF1C288E)
+    val lightBlue = Color(0xFFEAF0FF)
+    val darkBlue = Color(0xFF3346A3)
 
     Column(
         modifier = Modifier
@@ -58,14 +58,14 @@ fun PrinterLoader(printerName: String?) {
 
             IconBox(
                 icon = Icons.Default.PhoneAndroid,
-                iconColor = darkGreen
+                iconColor = darkBlue
             )
 
-            ConnectingDots(color = primaryGreen)
+            ConnectingDots(color = primaryBlue)
 
             IconBox(
                 icon = Icons.Default.Print,
-                iconColor = darkGreen
+                iconColor = darkBlue
             )
         }
 
@@ -84,15 +84,15 @@ fun PrinterLoader(printerName: String?) {
             Text(
                 text = printerName,
                 style = MaterialTheme.typography.bodyLarge,
-                color = primaryGreen
+                color = primaryBlue
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         AnimatedProgressBar(
-            color = primaryGreen,
-            backgroundColor = lightGreen
+            color = primaryBlue,
+            backgroundColor = lightBlue
         )
 
         Spacer(modifier = Modifier.height(16.dp))

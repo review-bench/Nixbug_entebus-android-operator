@@ -160,7 +160,7 @@ fun TicketScreen(
                     shape = RoundedCornerShape(22.dp),
                     tonalElevation = 6.dp,
                     shadowElevation = 6.dp,
-                    color = Color(0xFFEEF6EE)
+                    color = Color(0xFFF2F5FF)
                 ) {
                     BottomSummaryCard(
                         startingLandmark = state.startingLandmark,
@@ -223,7 +223,7 @@ fun LandmarkList(
                     .clip(RoundedCornerShape(8.dp))
                     .background(
                         if (startingLandmark?.id == landmark.id) {
-                            Color(0xB59BDA54)
+                            Color(0xB55E74C7)
                         } else if (endingLandmark?.id == landmark.id) {
                             DisabledButtonColor
                         } else {

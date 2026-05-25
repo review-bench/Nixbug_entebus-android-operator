@@ -89,6 +89,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.nixbug.entebus.presentation.components.loadingskeleton.ServiceCardSkeleton
 import com.nixbug.entebus.presentation.components.loadingskeleton.rememberShimmerBrush
 import com.nixbug.entebus.presentation.components.printer.PrinterPickerDialog
+import com.nixbug.entebus.ui.theme.RowTabBg
 import com.nixbug.entebus.utils.BluetoothPermissionHelper
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
@@ -285,13 +286,13 @@ fun HomeScreen(
 
     finishDutyService?.let { service ->
         DialogBox(
-            title = "Finish Trip?",
-            message = "Are you sure you want to finish the trip from ${
+            title = "End Trip?",
+            message = "Are you sure you want to end the trip from ${
                 finishDutyService?.startingLandmarkName ?: "starting point"
             } to ${
                 finishDutyService?.endingLandmarkName ?: "ending point"
             }?",
-            confirmText = "Finish",
+            confirmText = "End Trip",
             onConfirmClick = {
                 viewModel.onFinishService(service)
                 finishDutyService = null
@@ -432,9 +433,7 @@ fun RowTab(
 
             val isSelected = selectedTab == index
             val backgroundColor by animateColorAsState(
-                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(
-                    0x45C5EAD9
-                ),
+                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else RowTabBg,
                 label = "TabColorAnimation"
             )
             val textColor by animateColorAsState(
@@ -1064,7 +1063,7 @@ fun OngoingActionButtons(
             ),
             shape = RoundedCornerShape(10.dp)
         ) {
-            Text("Finish", color = Color.White, style = MaterialTheme.typography.titleMedium)
+            Text("End Trip", color = Color.White, style = MaterialTheme.typography.titleMedium)
         }
     }
 }

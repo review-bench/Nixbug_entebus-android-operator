@@ -382,7 +382,7 @@ fun CompanyDropdown(
             onDismissRequest = { onExpandChange(false) },
             modifier = Modifier
                 .background(Color.White, RoundedCornerShape(12.dp))
-                .border(1.8.dp, Color(0xFF47C7FF), RoundedCornerShape(7.dp))
+                .border(1.8.dp, Color(0xFF172073), RoundedCornerShape(7.dp))
                 .heightIn(max = 160.dp),
         ) {
             uiState.companyList.forEachIndexed { index, company ->
@@ -519,7 +519,7 @@ fun SignInButton(
             .fillMaxWidth()
             .height(50.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF8BC34A),
+            containerColor = MaterialTheme.colorScheme.primary,
             disabledContainerColor = MaterialTheme.colorScheme.primary
         ),
         shape = RoundedCornerShape(10.dp),
@@ -568,7 +568,7 @@ fun PlaceHolderText(text: String) {
 fun defaultTextFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = Color.White,
     unfocusedContainerColor = Color.White,
-    focusedBorderColor = Color(0xFF47C7FF),
+    focusedBorderColor = Color(0xFF172073),
     unfocusedBorderColor = Color(0xFFC0C0C0),
     focusedTextColor = Color.Black,
     unfocusedTextColor = Color.Black,

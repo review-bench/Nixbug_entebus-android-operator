@@ -348,7 +348,7 @@ fun SummaryCard(
     val (finishDate, finishTime) = remember(firstItem.finishedOn) {
         utcToIstConverter(firstItem.finishedOn) ?: ("Invalid date" to "Invalid time")
     }
-    val containerColor = if (isSelected) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.surface
+    val containerColor = if (isSelected) Color(0xFFEEF2FF) else MaterialTheme.colorScheme.surface
 
     Card(
         modifier = Modifier

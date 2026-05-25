@@ -121,13 +121,13 @@ fun ScreenPreferenceItem(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
-                            tint = Color(0xFF4CAF50)
+                            tint = Color(0xFF1C288E)
                         )
                     }
                 },
                 modifier = Modifier.background(
                     if (selectedOption == UiMode.MODERN)
-                        Color(0xFFE8F5E9)
+                        Color(0xFFE8EEFF)
                     else
                         Color.Transparent
                 ),
@@ -149,13 +149,13 @@ fun ScreenPreferenceItem(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
-                            tint = Color(0xFF4CAF50)
+                            tint = Color(0xFF1C288E)
                         )
                     }
                 },
                 modifier = Modifier.background(
                     if (selectedOption == UiMode.LEGACY)
-                        Color(0xFFE8F5E9)
+                        Color(0xFFE8EEFF)
                     else
                         Color.Transparent
                 ),

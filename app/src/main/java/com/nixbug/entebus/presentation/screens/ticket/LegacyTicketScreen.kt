@@ -237,7 +237,7 @@ fun LegacyTicketScreen(
                 shape = RoundedCornerShape(22.dp),
                 tonalElevation = 6.dp,
                 shadowElevation = 6.dp,
-                color = Color(0xFFEEF6EE)
+                color = Color(0xFFF2F5FF)
             ) {
                 BottomSummaryCard(
                     startingLandmark = state.startingLandmark,
@@ -373,7 +373,7 @@ fun LandmarkNumberDropdownField(
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(Color(0xFF8BC34A).copy(alpha = 0.12f))
+            modifier = Modifier.background(Color(0xFFE8EEFF))
         ) {
             landmarks.forEachIndexed { index, landmark ->
 
