@@ -59,6 +59,7 @@ import com.nixbug.entebus.presentation.screens.ticket.components.PassengerCountL
 import com.nixbug.entebus.utils.SetStatusBarColor
 import com.nixbug.entebus.utils.snackbar.SnackbarManager
 import com.nixbug.entebus.utils.snackbar.SnackbarType
+import com.nixbug.entebus.utils.titleCaseFirstChar
 import kotlinx.coroutines.delay
 
 @Composable
@@ -271,9 +272,9 @@ fun LandmarkNumberDropdownField(
     val displayValue = selectedLandmark?.let { landmark ->
         val index = landmarks.indexOfFirst { it.id == landmark.id }
         if (index >= 0) {
-            "${displayStartIndex + index} ${landmark.name}"
+            "${displayStartIndex + index} ${landmark.name.titleCaseFirstChar()}"
         } else {
-            landmark.name
+            landmark.name.titleCaseFirstChar()
         }
     } ?: ""
 
@@ -302,7 +303,8 @@ fun LandmarkNumberDropdownField(
         if (landmarkIndex in landmarks.indices) {
             val landmark = landmarks[landmarkIndex]
             onLandmarkSelected(landmark, landmarkIndex)
-            displayText = "${displayStartIndex + landmarkIndex} ${landmark.name}"
+            displayText =
+                "${displayStartIndex + landmarkIndex} ${landmark.name.titleCaseFirstChar()}"
             focusManager.clearFocus()
         }
     }
@@ -378,7 +380,7 @@ fun LandmarkNumberDropdownField(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = landmark.name,
+                            text = landmark.name.titleCaseFirstChar(),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     },

@@ -83,7 +83,7 @@ fun ScreenPreferenceItem(
         ) {
             Column {
                 Text(
-                    text = "Screen Preference",
+                    text = "Ticket Screen Preference",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
