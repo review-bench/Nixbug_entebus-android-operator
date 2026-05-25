@@ -34,7 +34,6 @@ import com.nixbug.entebus.presentation.screens.ticket.Landmark
 import com.nixbug.entebus.presentation.screens.ticket.Passenger
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.toCurrency
-import java.util.Locale
 import androidx.compose.ui.platform.LocalLocale
 
 @Composable

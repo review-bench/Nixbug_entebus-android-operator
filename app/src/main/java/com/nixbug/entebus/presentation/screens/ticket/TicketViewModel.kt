@@ -818,7 +818,9 @@ class TicketViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 startingLandmark = null,
-                startingLandmarkIndex = null
+                startingLandmarkIndex = null,
+                totalDistanceKm = 0f,
+                totalFare = 0.0
             )
         }
     }
@@ -827,7 +829,9 @@ class TicketViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 endingLandmark = null,
-                endingLandmarkIndex = null
+                endingLandmarkIndex = null,
+                totalDistanceKm = 0f,
+                totalFare = 0.0
             )
         }
     }
