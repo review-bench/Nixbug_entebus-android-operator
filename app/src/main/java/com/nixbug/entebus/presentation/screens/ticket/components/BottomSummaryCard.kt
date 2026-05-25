@@ -35,6 +35,7 @@ import com.nixbug.entebus.presentation.screens.ticket.Passenger
 import com.nixbug.entebus.ui.theme.DisabledButtonColor
 import com.nixbug.entebus.utils.toCurrency
 import androidx.compose.ui.platform.LocalLocale
+import com.nixbug.entebus.utils.titleCaseFirstChar
 
 @Composable
 fun BottomSummaryCard(
@@ -66,7 +67,7 @@ fun BottomSummaryCard(
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        " ${startingLandmark.name} -> ${endingLandmark?.name ?: ""}",
+                        " ${startingLandmark.name.titleCaseFirstChar()} -> ${endingLandmark?.name?.titleCaseFirstChar() ?: ""}",
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -99,7 +100,11 @@ fun BottomSummaryCard(
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
                     Text(
-                        String.format(LocalLocale.current.platformLocale, "%.2f km", totalDistanceKm),
+                        String.format(
+                            LocalLocale.current.platformLocale,
+                            "%.2f km",
+                            totalDistanceKm
+                        ),
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp
                     )
