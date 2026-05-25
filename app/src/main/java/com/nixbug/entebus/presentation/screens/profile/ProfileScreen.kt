@@ -1,5 +1,6 @@
 package com.nixbug.entebus.presentation.screens.profile
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
@@ -63,6 +66,13 @@ fun ProfileScreen(
     rootNavController: NavHostController,
     viewModel: ProfileScreenViewModel = hiltViewModel()
 ) {
+    val scrollState = rememberScrollState()
+
+    val currentBackStackEntry by rootNavController.currentBackStackEntryAsState()
+
+    LaunchedEffect(currentBackStackEntry) {
+        scrollState.animateScrollTo(0)
+    }
     SetStatusBarColor(
         color = MaterialTheme.colorScheme.primary,
         darkIcons = false
@@ -111,7 +121,8 @@ fun ProfileScreen(
             ProfileScreenBottom(
                 modifier = Modifier.weight(0.6f),
                 rootNavController = rootNavController,
-                onLogoutClick = { showLogOutDialog = true }
+                onLogoutClick = { showLogOutDialog = true },
+                scrollState = scrollState
             )
 
         }
@@ -226,6 +237,7 @@ fun ProfileInitial(username: String?) {
 
 @Composable
 fun ProfileScreenBottom(
+    scrollState: ScrollState,
     modifier: Modifier = Modifier,
     rootNavController: NavHostController,
     onLogoutClick: () -> Unit
@@ -238,7 +250,7 @@ fun ProfileScreenBottom(
                 Color.White,
                 RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
             )
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
