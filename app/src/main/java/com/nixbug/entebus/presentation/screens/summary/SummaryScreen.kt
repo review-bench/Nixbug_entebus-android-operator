@@ -198,7 +198,7 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
                             viewModel.showSummaryPreview()
                         } else {
                             SnackbarManager.show(
-                                message = "Please select at least one Trip",
+                                message = "Please select at least one trip",
                                 type = SnackbarType.WARNING
                             )
                         }

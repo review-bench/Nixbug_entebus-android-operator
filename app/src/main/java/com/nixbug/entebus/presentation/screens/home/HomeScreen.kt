@@ -575,8 +575,8 @@ fun ServiceList(
                 icon = Icons.Filled.NoTransfer,
                 title = "No trips available!",
                 description = when (selectedTab) {
-                    0 -> "You don’t have any assigned trips right now. You can download trips from the Other trips tab."
-                    1 -> "You don’t have any downloaded trips yet. Browse Other trips section to download trips you’d like to start."
+                    0 -> "You don’t have any assigned trips right now. You can download trips from the Others tab."
+                    1 -> "You don’t have any downloaded trips yet. Browse the Others section to download trips you’d like to start."
                     2 -> "You don’t have any recent trips right now. Once you complete a trip, it will appear here."
                     else -> "No trips are available right now. Please check back later."
                 }
