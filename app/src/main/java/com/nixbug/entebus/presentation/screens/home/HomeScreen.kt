@@ -178,6 +178,10 @@ fun HomeScreen(
                 HomeUiEvent.NavigateToTicketScreen -> {
                     rootNavController.navigate(AppNavItem.TicketScreen.route)
                 }
+
+                HomeUiEvent.NavigateToLegacyTicketScreen -> {
+                    rootNavController.navigate(AppNavItem.LegacyTicketScreen.route)
+                }
             }
         }
     }
