@@ -13,6 +13,7 @@ import com.nixbug.entebus.domain.usecase.queue.EnqueuePaperTicketUseCase
 import com.nixbug.entebus.domain.usecase.collection.GetNextTicketSequenceUseCase
 import com.nixbug.entebus.domain.usecase.collection.AddServiceCollectionUseCase
 import com.nixbug.entebus.domain.usecase.collection.GetLastTicketSequenceUseCase
+import com.nixbug.entebus.domain.usecase.collection.GetServiceCollectionsUseCase
 import com.nixbug.entebus.domain.usecase.fare.CalculateTicketFareUseCase
 import com.nixbug.entebus.domain.usecase.service.GetDetailedServiceByStatusUseCase
 import com.nixbug.entebus.domain.usecase.token.GetTokenUseCase
@@ -58,7 +59,8 @@ class TicketViewModel @Inject constructor(
     private val getTokenUseCase: GetTokenUseCase,
     private val addServiceCollectionUseCase: AddServiceCollectionUseCase,
     private val getPassengerStatsUseCase: GetPassengerStatsUseCase,
-    private val getLastTicketSequenceUseCase: GetLastTicketSequenceUseCase
+    private val getLastTicketSequenceUseCase: GetLastTicketSequenceUseCase,
+    private val getServiceCollectionsUseCase: GetServiceCollectionsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TicketUiState())
@@ -70,6 +72,43 @@ class TicketViewModel @Inject constructor(
     init {
         loadStartedService()
         loadUserData()
+        loadPassengerCount()
+    }
+
+    private fun loadPassengerCount() {
+        viewModelScope.launch {
+            val collections = getServiceCollectionsUseCase().first()
+            val lastStartingPointId = collections.lastStartingPointId
+            val services = getDetailedServiceByStatusUseCase(LocalServiceStatus.STARTED)
+            val currentService = services.firstOrNull()
+
+            if (currentService == null) {
+                SnackbarManager.show(
+                    message = "No started service found",
+                    type = SnackbarType.ERROR
+                )
+                return@launch
+            }
+
+            val landmarks = currentService.landmarks
+                .sortedBy { it.distance }
+                .map { it.toUiModel() }
+
+            val nextLandmarkId = landmarks
+                .indexOfFirst { it.id == lastStartingPointId }
+                .takeIf { it >= 0 && it < landmarks.lastIndex }
+                ?.let { landmarks[it + 1].id }
+
+            println("Next landmark ID: $lastStartingPointId $nextLandmarkId")
+
+            val result = getPassengerStatsUseCase(
+                serviceId = currentService.service.id,
+                fromLandmarkId = lastStartingPointId ?: 0,
+                toLandmarkId = nextLandmarkId ?: 0
+            )
+            val totalPassengerCount = result.sumOf { it.count }
+            _uiState.update { it.copy(passengerCount = totalPassengerCount) }
+        }
     }
 
     private fun buildPaperTicketRequest(ticketId: Int, lineItems: List<LineItem>): PaperTicket {
@@ -550,8 +589,10 @@ class TicketViewModel @Inject constructor(
                 addServiceCollectionUseCase(
                     serviceId = serviceId,
                     operatorId = operatorId,
-                    amount = totalFare
+                    amount = totalFare,
+                    lastStartingPointId = startingLandmark.id
                 )
+                loadPassengerCount()
                 delay(500)
                 resetTicketState()
             } catch (e: Exception) {

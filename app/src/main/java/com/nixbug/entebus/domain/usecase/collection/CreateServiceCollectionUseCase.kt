@@ -14,7 +14,8 @@ class CreateServiceCollectionUseCase @Inject constructor(
         regNo: String,
         startedAt: String,
         finishOn: String,
-        operators: List<OperatorInfo>
+        operators: List<OperatorInfo>,
+        lastStartingPointId: Int?
     ) {
 
         repository.createSession(
@@ -23,7 +24,8 @@ class CreateServiceCollectionUseCase @Inject constructor(
             regNo = regNo,
             startedAt = startedAt,
             finishOn = finishOn,
-            operators = operators
+            operators = operators,
+            lastStartingPointId = lastStartingPointId
         )
     }
 }

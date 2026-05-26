@@ -35,7 +35,9 @@ fun AppHeader(
     primaryActionIcon: ImageVector? = null,
     onPrimaryActionClick: () -> Unit = {},
     paddingEnd: Dp = 9.dp,
-    isPrimaryActionEnabled: Boolean = true
+    isPrimaryActionEnabled: Boolean = true,
+    secondaryActionText: String = "",
+    secondaryActionIcon: ImageVector? = null,
 ) {
     Surface(
         color = Color.White
@@ -65,6 +67,24 @@ fun AppHeader(
             )
 
             if (showTopBarActions) {
+                if (secondaryActionIcon != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = secondaryActionIcon,
+                            contentDescription = "null",
+                            tint = Color.Black,
+                            modifier = Modifier.size(30.dp)
+                        )
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            text = secondaryActionText,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
                 if (primaryActionIcon != null) {
                     Button(
                         enabled = isPrimaryActionEnabled,
@@ -72,24 +92,25 @@ fun AppHeader(
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
                     ) {
-                        Icon(
-                            imageVector = primaryActionIcon,
-                            contentDescription = primaryActionText,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
                         if (!isPrimaryActionEnabled) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
                                 color = Color.White,
                                 strokeWidth = 2.dp
                             )
+                        } else {
+                            Icon(
+                                imageVector = primaryActionIcon,
+                                contentDescription = primaryActionText,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = primaryActionText,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White
+                            )
                         }
-                        Text(
-                            text = primaryActionText,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White
-                        )
                     }
                 }
             }

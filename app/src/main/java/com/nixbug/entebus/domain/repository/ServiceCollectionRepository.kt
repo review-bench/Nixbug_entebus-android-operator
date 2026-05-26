@@ -12,13 +12,15 @@ interface ServiceCollectionRepository {
         regNo: String,
         startedAt: String,
         finishOn: String,
-        operators: List<OperatorInfo>
+        operators: List<OperatorInfo>,
+        lastStartingPointId: Int?
     )
 
     suspend fun addCollection(
         serviceId: Int,
         operatorId: Int,
-        amount: Double
+        amount: Double,
+        lastStartingPointId: Int?
     )
 
     suspend fun updateStatus(

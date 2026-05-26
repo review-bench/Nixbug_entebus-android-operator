@@ -755,7 +755,8 @@ class HomeScreenViewModel @Inject constructor(
                                 id = operatorId,
                                 name = user.username ?: ""
                             ),
-                        )
+                        ),
+                        lastStartingPointId = service.startingLandmarkId
                     )
                 }
 

@@ -19,5 +19,6 @@ data class TicketUiState(
     val operatorName: String = "",
     val operatorId: Int? = null,
     val passengerStats: List<PassengerTypeCount> = emptyList(),
-    val isLoadingPassengerStats: Boolean = false
+    val isLoadingPassengerStats: Boolean = false,
+    val passengerCount: Int = 0
 )

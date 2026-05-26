@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -94,10 +95,12 @@ fun TicketScreen(
             title = "Ticket",
             onBackClick = { navController.popBackStack() },
             showTopBarActions = true,
-            primaryActionText = "Audit",
+            primaryActionText = "",
             primaryActionIcon = Icons.Default.Print,
             onPrimaryActionClick = { viewModel.loadPassengerStats() },
-            isPrimaryActionEnabled = !state.isLoadingPassengerStats && !state.isPrinting
+            isPrimaryActionEnabled = !state.isLoadingPassengerStats && !state.isPrinting,
+            secondaryActionText = state.passengerCount.toString(),
+            secondaryActionIcon = Icons.Default.People
         )
         if (state.isLoading) {
             val shimmerBrush = rememberShimmerBrush()

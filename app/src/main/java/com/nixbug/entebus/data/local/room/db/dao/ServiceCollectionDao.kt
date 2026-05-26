@@ -15,9 +15,14 @@ interface ServiceCollectionDao {
     suspend fun insertAll(collections: List<ServiceCollectionEntity>)
 
     @Query(
-        "UPDATE service_collection SET totalCollection = totalCollection + :amount WHERE serviceId = :serviceId AND operatorId = :operatorId"
+        "UPDATE service_collection SET totalCollection = totalCollection + :amount,lastStartingPointId = :lastStartingPointId WHERE serviceId = :serviceId AND operatorId = :operatorId"
     )
-    suspend fun incrementCollection(serviceId: Int, operatorId: Int, amount: Double)
+    suspend fun incrementCollection(
+        serviceId: Int,
+        operatorId: Int,
+        amount: Double,
+        lastStartingPointId: Int?
+    )
 
     @Query("UPDATE service_collection SET status = :status WHERE serviceId = :serviceId")
     suspend fun updateStatus(serviceId: Int, status: CollectionStatus)

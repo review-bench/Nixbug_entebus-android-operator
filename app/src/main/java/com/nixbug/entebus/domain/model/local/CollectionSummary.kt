@@ -9,7 +9,8 @@ data class CollectionSummary(
     val status: CollectionStatus,
     val operatorId: Int,
     val operatorName: String,
-    val collection: Double
+    val collection: Double,
+    val lastStartingPointId: Int?
 )
 
 data class OperatorInfo(

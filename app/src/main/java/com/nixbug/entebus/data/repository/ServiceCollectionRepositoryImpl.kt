@@ -18,7 +18,8 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
         regNo: String,
         startedAt: String,
         finishOn: String,
-        operators: List<OperatorInfo>
+        operators: List<OperatorInfo>,
+        lastStartingPointId: Int?
     ) {
 
         val entities = operators.map { operator ->
@@ -29,7 +30,8 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
                 operatorId = operator.id,
                 operatorName = operator.name,
                 startedAt = startedAt,
-                finishOn = finishOn
+                finishOn = finishOn,
+                lastStartingPointId = lastStartingPointId
             )
         }
 
@@ -39,12 +41,14 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
     override suspend fun addCollection(
         serviceId: Int,
         operatorId: Int,
-        amount: Double
+        amount: Double,
+        lastStartingPointId: Int?
     ) {
         dao.incrementCollection(
             serviceId = serviceId,
             operatorId = operatorId,
-            amount = amount
+            amount = amount,
+            lastStartingPointId = lastStartingPointId
         )
         dao.updateStatus(
             serviceId = serviceId,
@@ -70,7 +74,8 @@ class ServiceCollectionRepositoryImpl @Inject constructor(
                     status = entity.status,
                     operatorId = entity.operatorId,
                     operatorName = entity.operatorName,
-                    collection = entity.totalCollection
+                    collection = entity.totalCollection,
+                    lastStartingPointId = entity.lastStartingPointId
                 )
             }
     }

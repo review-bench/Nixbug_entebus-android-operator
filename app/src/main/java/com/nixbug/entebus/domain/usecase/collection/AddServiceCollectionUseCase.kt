@@ -10,13 +10,15 @@ class AddServiceCollectionUseCase @Inject constructor(
     suspend operator fun invoke(
         serviceId: Int,
         operatorId: Int,
-        amount: Double
+        amount: Double,
+        lastStartingPointId: Int? = null
     ) {
 
         repository.addCollection(
             serviceId = serviceId,
             operatorId = operatorId,
-            amount = amount
+            amount = amount,
+            lastStartingPointId = lastStartingPointId
         )
     }
 }
