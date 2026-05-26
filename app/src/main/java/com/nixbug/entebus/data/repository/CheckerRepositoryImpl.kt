@@ -38,8 +38,7 @@ class CheckerRepositoryImpl(
         val typeNameMap = fareTypes.associate { it.id to it.name }
 
         val typeCountMap = mutableMapOf<Int, Int>()
-        val queuedTickets =
-            syncQueueDao.getPaperTicketsByService(serviceId)
+        val queuedTickets = syncQueueDao.getPaperTicketsByService(serviceId)
 
         queuedTickets.forEach { entity ->
                 val payload = runCatching {

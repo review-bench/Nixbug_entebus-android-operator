@@ -146,8 +146,7 @@ class TicketViewModel @Inject constructor(
                         landmarks = landmarks,
                         startingLandmark = landmarks.firstOrNull(),
                         startingLandmarkIndex = 0,
-                        passengers = currentService.fare.ticketTypes
-                            .map { it.toUiModel() },
+                        passengers = currentService.fare.ticketTypes.map { it.toUiModel() },
                         fareFunctionString = currentService.fare.function
                     )
                 }
@@ -607,8 +606,6 @@ class TicketViewModel @Inject constructor(
         return result.toString()
     }
 
-    //LEGACY TICKET SCREEN
-
     fun loadPassengerStats() {
         viewModelScope.launch {
             val state = _uiState.value
@@ -654,12 +651,11 @@ class TicketViewModel @Inject constructor(
                     _uiState.update { it.copy(isLoadingPassengerStats = false) }
                     return@launch
                 }
-                val result =
-                    getPassengerStatsUseCase(
-                        serviceId = serviceId,
-                        fromLandmarkId = start,
-                        toLandmarkId = end
-                    )
+                val result = getPassengerStatsUseCase(
+                    serviceId = serviceId,
+                    fromLandmarkId = start,
+                    toLandmarkId = end
+                )
                 if (result.isEmpty()) {
                     SnackbarManager.show(
                         message = "Issue at least one ticket to print passenger statistics.",
@@ -710,7 +706,6 @@ class TicketViewModel @Inject constructor(
                         .text("")
                         .build()
                 }
-
                 try {
                     val result = printerManager.sendData(ticketData)
                     if (!result.isSuccess) {
@@ -741,6 +736,7 @@ class TicketViewModel @Inject constructor(
         }
     }
 
+    //LEGACY TICKET SCREEN
     fun selectPreviousStartingLandmark() {
         val currentIndex = _uiState.value.startingLandmarkIndex ?: return
         if (currentIndex <= 0) return
