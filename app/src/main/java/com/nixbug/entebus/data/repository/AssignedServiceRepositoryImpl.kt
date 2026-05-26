@@ -4,6 +4,8 @@ import com.nixbug.entebus.data.local.room.db.dao.ServiceDao
 import com.nixbug.entebus.data.manager.TokenManager
 import com.nixbug.entebus.data.mapper.toDomain
 import com.nixbug.entebus.data.remote.operator.api.OperatorServiceAssignmentApi
+import com.nixbug.entebus.data.remote.operator.model.serviceassignment.OrderIn
+import com.nixbug.entebus.data.remote.operator.model.serviceassignment.AppApiServiceAssignmentOrderBy
 import com.nixbug.entebus.data.remote.utils.apiHelper
 import com.nixbug.entebus.domain.repository.AssignedServiceRepository
 import com.nixbug.entebus.utils.network.Resource
@@ -22,7 +24,7 @@ class AssignedServiceRepositoryImpl @Inject constructor(
         offset: Int,
         limit: Int,
     ): Resource<List<AssignedServiceModel>> {
-        val createdOnGe = getUtc24HoursAgo()
+        val startingAtGe = getUtc24HoursAgo()
         val operatorId = tokenManager.operatorId
         if (operatorId == null) {
             return Resource.Error(
@@ -37,8 +39,10 @@ class AssignedServiceRepositoryImpl @Inject constructor(
                     offset = offset,
                     limit = limit,
                     operatorId = operatorId,
-                    createdOnGe = createdOnGe,
-                    serviceIdExcluding = safeExcludedServiceIds
+                    serviceIdExcluding = safeExcludedServiceIds,
+                    orderBy = AppApiServiceAssignmentOrderBy.starting_at,
+                    orderIn = OrderIn.asc,
+                    startingAtGe = startingAtGe
                 )
             },
             mapper = { responseList -> responseList.map { it.toDomain() } }

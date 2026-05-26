@@ -198,7 +198,7 @@ fun SummaryScreen(viewModel: SummaryScreenViewModel = hiltViewModel(), activity:
                             viewModel.showSummaryPreview()
                         } else {
                             SnackbarManager.show(
-                                message = "Please select at least one service",
+                                message = "Please select at least one trip",
                                 type = SnackbarType.WARNING
                             )
                         }
@@ -393,6 +393,7 @@ fun SummaryCardContent(
             .fillMaxWidth(),
     ) {
         SummaryCardHeader(
+            serviceId = firstItem.serviceId,
             serviceName = firstItem.serviceName,
             regNo = firstItem.regNo,
             isSelected = isSelected,
@@ -420,7 +421,8 @@ fun SummaryCardHeader(
     startDate: String,
     startTime: String,
     finishDate: String,
-    finishTime: String
+    finishTime: String,
+    serviceId: Int
 ) {
 
     Row(
@@ -438,7 +440,13 @@ fun SummaryCardHeader(
                     fontWeight = FontWeight.Bold
                 )
             )
-
+            Text(
+                text = "Trip ID : $serviceId",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
             Text(
                 text = regNo,
                 style = MaterialTheme.typography.bodyMedium,
@@ -762,12 +770,12 @@ fun SummaryPreviewDialog(
                         }
 
                         Column {
-
                             Text(
                                 text = "${index + 1}. ${first.serviceName}",
                                 fontWeight = FontWeight.Bold
                             )
 
+                            Text(text = "Trip ID : ${first.serviceId}")
                             Text(text = first.regNo)
 
                             Text(
@@ -799,7 +807,7 @@ fun SummaryPreviewDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Service Total",
+                                    text = "Trip Total",
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
@@ -889,7 +897,8 @@ private fun buildPrintSummaryData(
                 operators = serviceGroup.map {
                     it.operatorName to it.collection
                 },
-                serviceTotal = total.toCurrency()
+                serviceTotal = total.toCurrency(),
+                serviceId = first.serviceId
             )
         },
         grandTotal = grandTotal.toCurrency(),

@@ -379,12 +379,13 @@ class SummaryScreenViewModel @Inject constructor(
                     builder.text("--------")
 
                     data.services.forEachIndexed { index, service ->
-                        builder.addCommand(PrinterManager.Commands.BOLD_ON)
                         builder.addCommand(PrinterManager.Commands.ALIGN_LEFT)
+                        builder.addCommand(PrinterManager.Commands.BOLD_ON)
                         builder.text("${index + 1}.${service.serviceName}")
                         builder.addCommand(PrinterManager.Commands.BOLD_OFF)
 
                         builder.addCommand(PrinterManager.Commands.LINE_SPACE_TIGHT)
+                        builder.text("Trip ID : ${service.serviceId}")
                         builder.text(service.regNo)
                         builder.text(service.dateTimeRange)
                         builder.addCommand(PrinterManager.Commands.LINE_SPACE_DEFAULT)
