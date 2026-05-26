@@ -266,7 +266,11 @@ fun LandmarkList(
                         }
                         Text(
                             text = landmark.name.titleCaseFirstChar(),
-                            color = Color.Black,
+                            color = if (startingLandmark?.id == landmark.id || endingLandmark?.id == landmark.id) {
+                                Color.White
+                            } else {
+                                Color.Black
+                            },
                             style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
