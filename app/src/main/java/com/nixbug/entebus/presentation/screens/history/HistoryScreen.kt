@@ -393,7 +393,7 @@ fun DutyHistoryCard(history: DutyHistoryModel, calculateDuration: (String?, Stri
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     LabeledIdRow(
-                        label = "Service ID",
+                        label = "Trip ID",
                         value = history.serviceId.toString()
                     )
 
