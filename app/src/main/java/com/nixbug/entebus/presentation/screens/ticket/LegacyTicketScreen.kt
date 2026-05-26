@@ -381,7 +381,7 @@ fun LandmarkNumberDropdownField(
                     text = {
                         Text(
                             text = landmark.name.titleCaseFirstChar(),
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.titleMedium
                         )
                     },
                     leadingIcon = {
@@ -395,7 +395,8 @@ fun LandmarkNumberDropdownField(
                                     horizontal = 10.dp,
                                     vertical = 6.dp
                                 ),
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.titleMedium
                             )
                         }
                     },

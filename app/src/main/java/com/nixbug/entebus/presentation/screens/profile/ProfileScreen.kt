@@ -159,7 +159,7 @@ fun ProfileScreenTop(
                 .size(150.dp)
                 .clip(CircleShape)
                 .background(
-                    Color(0xFFE1E8F4)
+                    Color(0xFFE8EEFF)
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -231,7 +231,7 @@ fun ProfileInitial(username: String?) {
         text = username?.firstOrNull()?.uppercaseChar()?.toString() ?: "",
         style = MaterialTheme.typography.displayLarge,
         fontWeight = FontWeight.Bold,
-        color = Color(0x8699CB5E)
+        color = Color(0x865E74C7)
     )
 }
 
